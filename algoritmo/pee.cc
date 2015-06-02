@@ -18,8 +18,8 @@
 #include "grammar"
 #include "parametros"
 
-#define BITS_POR_GENE 8
-#define BITS_POR_CONSTANTE 16
+#define BITS_BY_GENE 8
+#define BITS_BY_CONSTANT 16
 
 
 /** ****************************************************************** **/
@@ -37,7 +37,7 @@ Symbol simboloInicial = NT_IF_THEN_ELSE_INICIAL;
 
 Individual melhorIndividuo = { NULL, std::numeric_limits<float>::max()};
 
-const unsigned max_tam_fenotipo = MAX_QUANT_SIMBOLOS_POR_REGRA * numeroBits/BITS_POR_GENE;
+const unsigned max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * bits_number/BITS_BY_GENE;
 
 
 /** ****************************************************************** **/
@@ -48,64 +48,64 @@ const unsigned max_tam_fenotipo = MAX_QUANT_SIMBOLOS_POR_REGRA * numeroBits/BITS
 
 double random_number() {return rand() / (RAND_MAX + 1.0);} // [0.0, 1.0)
 
-t_rule* decode_rule( const int* genome, int* const alelo, Symbol cabeca )
+t_rule* decode_rule( const int* genome, int* const allele, Symbol cabeca )
 {
    // Verifica se é possível decodificar mais uma regra, caso contrário
    // retorna uma regra nula.
-   if( *alelo + BITS_POR_GENE > numeroBits ) { return NULL; }
+   if( *allele + BITS_BY_GENE > bits_number ) { return NULL; }
 
    // Número de regras encabeçada por "cabeça"
    unsigned num_regras = tamanhos[cabeca];
 
-   // Converte BITS_POR_GENE bits em um valor integral
+   // Converte BITS_BY_GENE bits em um valor integral
    unsigned valor_bruto = 0;
-   for( int i = 0; i < BITS_POR_GENE; ++i )  
-      if( genome[(*alelo)++] ) valor_bruto += pow( 2, i );
+   for( int i = 0; i < BITS_BY_GENE; ++i )  
+      if( genome[(*allele)++] ) valor_bruto += pow( 2, i );
 
    // Seleciona uma regra no intervalo [0, num_regras - 1]
    return gramatica[cabeca][valor_bruto % num_regras];
 }
 
-double decode_real( const int* genome, int* const alelo )
+double decode_real( const int* genome, int* const allele )
 {
    // Retorna a constante zero se não há número suficiente de bits
-   if( *alelo + BITS_POR_CONSTANTE > numeroBits ) { return 0.; }
+   if( *allele + BITS_BY_CONSTANT > bits_number ) { return 0.; }
 
-   // Converte BITS_POR_CONSTANTE bits em um valor real
+   // Converte BITS_BY_CONSTANT bits em um valor real
    double valor_bruto = 0.;
-   for( int i = 0; i < BITS_POR_CONSTANTE; ++i ) 
-      if( genome[(*alelo)++] ) valor_bruto += pow( 2.0, i );
+   for( int i = 0; i < BITS_BY_CONSTANT; ++i ) 
+      if( genome[(*allele)++] ) valor_bruto += pow( 2.0, i );
 
    // Normalizar para o intervalo desejado: a + valor_bruto * (b - a)/(2^n - 1)
-   return intervalo[0] + valor_bruto * (intervalo[1] - intervalo[0]) / 
-          (pow( 2.0, BITS_POR_CONSTANTE ) - 1);
+   return interval[0] + valor_bruto * (interval[1] - interval[0]) / 
+          (pow( 2.0, BITS_BY_CONSTANT ) - 1);
 }
 
-int decode( const int* genome, int* const alelo, Symbol* fenotipo, double* efemeros, int pos, Symbol simbolo_inicial )
+int decode( const int* genome, int* const allele, Symbol* phenotype, double* ephemeral, int pos, Symbol simbolo_inicial )
 {
-   t_rule* r = decode_rule( genome, alelo, simbolo_inicial ); 
+   t_rule* r = decode_rule( genome, allele, simbolo_inicial ); 
    if( !r ) { return 0; }
 
    for( int i = 0; i < r->quantity; ++i )
       if( r->symbols[i] >= TERMINAL_MIN )
       {
-         fenotipo[pos] = r->symbols[i];
+         phenotype[pos] = r->symbols[i];
 
          // Tratamento especial para constantes efêmeras
          if( r->symbols[i] == T_EFEMERO )
          {
            /* 
               Esta estratégia faz uso do próprio código genético do indivíduo 
-              para extrair uma constante real. Extrai-se BITS_POR_CONSTANTE bits a 
+              para extrair uma constante real. Extrai-se BITS_BY_CONSTANT bits a 
               partir da posição atual e os decodifica como um valor real.
             */
-            efemeros[pos] = decode_real( genome, alelo );
+            ephemeral[pos] = decode_real( genome, allele );
          }
          ++pos;
       }
       else
       {
-         pos = decode( genome, alelo, fenotipo, efemeros, pos, r->symbols[i] );
+         pos = decode( genome, allele, phenotype, ephemeral, pos, r->symbols[i] );
          if( !pos ) return 0;
       }
 
@@ -119,22 +119,22 @@ int decode( const int* genome, int* const alelo, Symbol* fenotipo, double* efeme
 
 void evaluate( Individual* individual, double **input, double **model, double *obs, int start, int end )
 {
-   Symbol fenotipo[max_tam_fenotipo];
-   double  efemeros[max_tam_fenotipo];
+   Symbol phenotype[max_size_phenotype];
+   double  ephemeral[max_size_phenotype];
 
-   int alelo = 0;
-   int tam = decode( individual->genome, &alelo, fenotipo, efemeros, 0, simboloInicial );
-   if( !tam ) { individual->fitness = std::numeric_limits<float>::max(); return; }
+   int allele = 0;
+   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, simboloInicial );
+   if( !size ) { individual->fitness = std::numeric_limits<float>::max(); return; }
 
-   double pilha[max_tam_fenotipo];
+   double pilha[max_size_phenotype];
    double erro = 0.0; double soma = 0.0;
    int topo;
    for( int ponto = start; ponto <= end; ++ponto )
    {
       topo = -1;
-      for( int i = tam - 1; i >= 0; --i )
+      for( int i = size - 1; i >= 0; --i )
       {
-         switch( fenotipo[i] )
+         switch( phenotype[i] )
          {
             case T_IF_THEN_ELSE:
                if( pilha[topo] == 1.0 ) { --topo; }
@@ -302,7 +302,7 @@ void evaluate( Individual* individual, double **input, double **model, double *o
                pilha[++topo] = 4;
                break;
             case T_EFEMERO:
-               pilha[++topo] = efemeros[i];
+               pilha[++topo] = ephemeral[i];
                break;
          }
       }
@@ -311,7 +311,7 @@ void evaluate( Individual* individual, double **input, double **model, double *o
 
    if( isnan( erro ) || isinf( erro ) ) { individual->fitness = std::numeric_limits<float>::max(); return; } 
 
-   individual->fitness = erro/(end-start+1) + 0.00001*tam; 
+   individual->fitness = erro/(end-start+1) + 0.00001*size; 
 
    if( individual->fitness < melhorIndividuo.fitness )
    {
@@ -321,16 +321,16 @@ void evaluate( Individual* individual, double **input, double **model, double *o
 
 void individual_print( const Individual* individual, FILE* out )
 {
-   Symbol fenotipo[max_tam_fenotipo];
-   double  efemeros[max_tam_fenotipo];
+   Symbol phenotype[max_size_phenotype];
+   double  ephemeral[max_size_phenotype];
 
-   int alelo = 0;
-   int tam = decode( individual->genome, &alelo, fenotipo, efemeros, 0, simboloInicial );
-   if( !tam ) { return; }
+   int allele = 0;
+   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, simboloInicial );
+   if( !size ) { return; }
 
-   fprintf( out, "{%d} ", tam );
-   for( int i = 0; i < tam; ++i )
-      switch( fenotipo[i] )
+   fprintf( out, "{%d} ", size );
+   for( int i = 0; i < size; ++i )
+      switch( phenotype[i] )
       {
             case T_IF_THEN_ELSE:
                fprintf( out, "IF-THEN-ELSE " );
@@ -492,7 +492,7 @@ void individual_print( const Individual* individual, FILE* out )
                fprintf( out, "4 " );
                break;
             case T_EFEMERO:
-               fprintf( out, "%.12f ",  efemeros[i] );
+               fprintf( out, "%.12f ",  ephemeral[i] );
                break;
       } 
    fprintf( out, " [Aptidao: %.12f]\n", individual->fitness );
@@ -500,9 +500,9 @@ void individual_print( const Individual* individual, FILE* out )
 
 void generate_population( Individual* population, double **input, double **model, double *obs, int start, int end )
 {
-   for( int i = 0; i < tamanhoPopulacao; ++i)
+   for( int i = 0; i < population_size; ++i)
    {
-      for( int j = 0; j < numeroBits; j++ )
+      for( int j = 0; j < bits_number; j++ )
       {
          population[i].genome[j] = (random_number() < 0.5) ? 1 : 0;
       }
@@ -518,8 +518,8 @@ void crossover( const int* father, const int* mother, int* offspring1, int* offs
    int pontos[2];
 
    // Cortar apenas nas bordas dos genes
-   pontos[0] = ((int)(random_number() * numeroBits))/BITS_POR_GENE * BITS_POR_GENE;
-   pontos[1] = ((int)(random_number() * numeroBits))/BITS_POR_GENE * BITS_POR_GENE;
+   pontos[0] = ((int)(random_number() * bits_number))/BITS_BY_GENE * BITS_BY_GENE;
+   pontos[1] = ((int)(random_number() * bits_number))/BITS_BY_GENE * BITS_BY_GENE;
 
    int tmp;
    if( pontos[0] > pontos[1] ) { tmp = pontos[0]; pontos[0] = pontos[1]; pontos[1] = tmp; }
@@ -534,21 +534,21 @@ void crossover( const int* father, const int* mother, int* offspring1, int* offs
       offspring1[i] = mother[i];
       offspring2[i] = father[i];
    }
-   for( int i = pontos[1]; i < numeroBits; ++i )
+   for( int i = pontos[1]; i < bits_number; ++i )
    {
       offspring1[i] = father[i];
       offspring2[i] = mother[i];
    }
 #else
    // Cruzamento de um ponto
-   int pontoDeCruzamento = (int)(random_number() * numeroBits);
+   int pontoDeCruzamento = (int)(random_number() * bits_number);
 
    for( int i = 0; i < pontoDeCruzamento; ++i )
    {
       offspring1[i] = father[i];
       offspring2[i] = mother[i];
    }
-   for( int i = pontoDeCruzamento; i < numeroBits; ++i )
+   for( int i = pontoDeCruzamento; i < bits_number; ++i )
    {
       offspring1[i] = mother[i];
       offspring2[i] = father[i];
@@ -558,24 +558,24 @@ void crossover( const int* father, const int* mother, int* offspring1, int* offs
 
 void mutation( int* genome )
 {
-   for( int i = 0; i < numeroBits; ++i )
-      if( random_number() < taxaMutacao ) genome[i] = !genome[i];
+   for( int i = 0; i < bits_number; ++i )
+      if( random_number() < mutation_rate ) genome[i] = !genome[i];
 }
 
 void clone( const Individual* original, Individual* copy )
 {
-   for( int i = 0; i < numeroBits; ++i ) copy->genome[i] = original->genome[i];
+   for( int i = 0; i < bits_number; ++i ) copy->genome[i] = original->genome[i];
 
    copy->fitness = original->fitness;
 }
 
 const Individual* tournament( const Individual* population )
 {
-   const Individual* vencedor = &population[(int)(random_number() * tamanhoPopulacao)];
+   const Individual* vencedor = &population[(int)(random_number() * population_size)];
 
-   for( int t = 1; t < tamanhoTorneio; ++t )
+   for( int t = 1; t < tournament_size; ++t )
    {
-      const Individual* competidor = &population[(int)(random_number() * tamanhoPopulacao)];
+      const Individual* competidor = &population[(int)(random_number() * population_size)];
 
       if( competidor->fitness < vencedor->fitness ) vencedor = competidor;
    }
@@ -585,16 +585,16 @@ const Individual* tournament( const Individual* population )
 
 Individual evolve( double **input, double **model, double *obs, int start, int end )
 {
-   Individual* populacao_a = new Individual[tamanhoPopulacao];
-   Individual* populacao_b = new Individual[tamanhoPopulacao];
+   Individual* populacao_a = new Individual[population_size];
+   Individual* populacao_b = new Individual[population_size];
 
-   melhorIndividuo.genome = new int[numeroBits];
+   melhorIndividuo.genome = new int[bits_number];
 
    // Alocação dos indivíduos
-   for( int i = 0; i < tamanhoPopulacao; ++i )
+   for( int i = 0; i < population_size; ++i )
    {
-      populacao_a[i].genome = new int[numeroBits];
-      populacao_b[i].genome = new int[numeroBits];
+      populacao_a[i].genome = new int[bits_number];
+      populacao_b[i].genome = new int[bits_number];
    }
 
    Individual* antecedentes = populacao_a;
@@ -604,16 +604,16 @@ Individual evolve( double **input, double **model, double *obs, int start, int e
    generate_population( antecedentes, input, model, obs, start, end );
     
    // Processo evolucionário
-   for( int geracao = 1; geracao <= numeroGeracoes && melhorIndividuo.fitness > 0.0005; ++geracao )
+   for( int geracao = 1; geracao <= generation_number && melhorIndividuo.fitness > 0.0005; ++geracao )
    {
-      for( int i = 0; i < tamanhoPopulacao; i += 2 )
+      for( int i = 0; i < population_size; i += 2 )
       {
          // Seleção de indivíduos adaptados para gerar descendentes
          const Individual* father = tournament( antecedentes );
          const Individual* mother = tournament( antecedentes );
 
          // Cruzamento
-         if( random_number() < probabilidadeCruzamento )
+         if( random_number() < crossover_rate )
          {
             crossover( father->genome, mother->genome, 
                         descendentes[i].genome, descendentes[i + 1].genome );
@@ -634,7 +634,7 @@ Individual evolve( double **input, double **model, double *obs, int start, int e
       }
 
       // Elitismo
-      if( elitismo ) clone( &melhorIndividuo, &descendentes[0] );
+      if( elitism ) clone( &melhorIndividuo, &descendentes[0] );
 
       // Faz população nova ser a atual, e vice-versa.
       swap( antecedentes, descendentes );
@@ -644,7 +644,7 @@ Individual evolve( double **input, double **model, double *obs, int start, int e
    // -----------------------
    // Liberação de memória
    // -----------------------
-   for( int i = 0; i < tamanhoPopulacao; ++i )
+   for( int i = 0; i < population_size; ++i )
    {
       delete[] populacao_a[i].genome, populacao_b[i].genome;
    }
