@@ -1,0 +1,9 @@
+int    tamanhoPopulacao        = 2000;
+int    numeroBits              = 2000;
+int    tamanhoTorneio          = 3;
+double taxaMutacao             = 0.0025; // 0.5/numeroBits
+int    numeroGeracoes          = 10;
+int    elitismo                = 1;      // 1 = habilita, 0 = desabilita
+double probabilidadeCruzamento = 0.95; 
+double intervalo[]             = { 0, 300 }; 
+
