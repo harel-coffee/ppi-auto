@@ -33,9 +33,9 @@ struct t_individual { int* genome; double fitness; };
 /** ************************ GLOBAL VARIABLES ************************ **/
 /** ****************************************************************** **/
 
-Symbol simboloInicial = NT_IF_THEN_ELSE_INICIAL;
+Symbol inicial_symbol = NT_IF_THEN_ELSE_INICIAL;
 
-Individual melhorIndividuo = { NULL, std::numeric_limits<float>::max()};
+Individual best_individual = { NULL, std::numeric_limits<float>::max()};
 
 const unsigned max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * bits_number/BITS_BY_GENE;
 
@@ -123,7 +123,7 @@ void evaluate( Individual* individual, double **input, double **model, double *o
    double  ephemeral[max_size_phenotype];
 
    int allele = 0;
-   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, simboloInicial );
+   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, inicial_symbol );
    if( !size ) { individual->fitness = std::numeric_limits<float>::max(); return; }
 
    double pilha[max_size_phenotype];
@@ -313,19 +313,19 @@ void evaluate( Individual* individual, double **input, double **model, double *o
 
    individual->fitness = erro/(end-start+1) + 0.00001*size; 
 
-   if( individual->fitness < melhorIndividuo.fitness )
+   if( individual->fitness < best_individual.fitness )
    {
-      clone( individual, &melhorIndividuo );
+      clone( individual, &best_individual );
    }
 }
 
 void individual_print( const Individual* individual, FILE* out )
 {
    Symbol phenotype[max_size_phenotype];
-   double  ephemeral[max_size_phenotype];
+   double ephemeral[max_size_phenotype];
 
    int allele = 0;
-   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, simboloInicial );
+   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, inicial_symbol );
    if( !size ) { return; }
 
    fprintf( out, "{%d} ", size );
@@ -585,26 +585,26 @@ const Individual* tournament( const Individual* population )
 
 Individual evolve( double **input, double **model, double *obs, int start, int end )
 {
-   Individual* populacao_a = new Individual[population_size];
-   Individual* populacao_b = new Individual[population_size];
+   Individual* population_a = new Individual[population_size];
+   Individual* population_b = new Individual[population_size];
 
-   melhorIndividuo.genome = new int[bits_number];
+   best_individual.genome = new int[bits_number];
 
    // Alocação dos indivíduos
    for( int i = 0; i < population_size; ++i )
    {
-      populacao_a[i].genome = new int[bits_number];
-      populacao_b[i].genome = new int[bits_number];
+      population_a[i].genome = new int[bits_number];
+      population_b[i].genome = new int[bits_number];
    }
 
-   Individual* antecedentes = populacao_a;
-   Individual* descendentes = populacao_b;
+   Individual* antecedentes = population_a;
+   Individual* descendentes = population_b;
 
    // Criação da população inicial (1ª geração)
    generate_population( antecedentes, input, model, obs, start, end );
     
    // Processo evolucionário
-   for( int geracao = 1; geracao <= generation_number && melhorIndividuo.fitness > 0.0005; ++geracao )
+   for( int geracao = 1; geracao <= generation_number && best_individual.fitness > 0.0005; ++geracao )
    {
       for( int i = 0; i < population_size; i += 2 )
       {
@@ -634,24 +634,21 @@ Individual evolve( double **input, double **model, double *obs, int start, int e
       }
 
       // Elitismo
-      if( elitism ) clone( &melhorIndividuo, &descendentes[0] );
+      if( elitism ) clone( &best_individual, &descendentes[0] );
 
       // Faz população nova ser a atual, e vice-versa.
       swap( antecedentes, descendentes );
 
    }
 
-   // -----------------------
-   // Liberação de memória
-   // -----------------------
    for( int i = 0; i < population_size; ++i )
    {
-      delete[] populacao_a[i].genome, populacao_b[i].genome;
+      delete[] population_a[i].genome, population_b[i].genome;
    }
-   delete[] populacao_a, populacao_b; 
+   delete[] population_a, population_b; 
 
-   return melhorIndividuo;
+   return best_individual;
 
-   delete[] melhorIndividuo.genome;
+   delete[] best_individual.genome;
 }
 
