@@ -66,6 +66,7 @@ int main(int argc, char **argv)
 
    srand( time(NULL) );
 
+   //init();
    Individual best_individual = evolve( input, model, obs, start, end );
 
    printf("Conjunto Treinamento:\n");

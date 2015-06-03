@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <cmath>    
 #include <limits>
-#include "evaluate.h"
+#include "interpret.h"
 #include "pee.h"
 #include "grammar"
 #include "parametros"
@@ -34,7 +34,7 @@ struct t_individual { int* genome; double fitness; };
 /** ************************ GLOBAL VARIABLES ************************ **/
 /** ****************************************************************** **/
 
-Symbol inicial_symbol = NT_IF_THEN_ELSE_INICIAL;
+Symbol initial_symbol = NT_IF_THEN_ELSE_INICIAL;
 
 Individual best_individual = { NULL, std::numeric_limits<float>::max()};
 
@@ -48,6 +48,12 @@ const unsigned max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * bits_number/B
 #define swap(i, j) {Individual* t = i; i = j; j = t;}
 
 double random_number() {return rand() / (RAND_MAX + 1.0);} // [0.0, 1.0)
+
+//void init()
+//{
+//   interpreter_init(max_size_phenotype, );
+//
+//}
 
 t_rule* decode_rule( const int* genome, int* const allele, Symbol cabeca )
 {
@@ -82,9 +88,9 @@ double decode_real( const int* genome, int* const allele )
           (pow( 2.0, BITS_BY_CONSTANT ) - 1);
 }
 
-int decode( const int* genome, int* const allele, Symbol* phenotype, double* ephemeral, int pos, Symbol simbolo_inicial )
+int decode( const int* genome, int* const allele, Symbol* phenotype, double* ephemeral, int pos, Symbol simbolo_initial )
 {
-   t_rule* r = decode_rule( genome, allele, simbolo_inicial ); 
+   t_rule* r = decode_rule( genome, allele, simbolo_initial ); 
    if( !r ) { return 0; }
 
    for( int i = 0; i < r->quantity; ++i )
@@ -118,13 +124,34 @@ int decode( const int* genome, int* const allele, Symbol* phenotype, double* eph
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
+void evaluate( Individual* individual, double **input, double **model, double *obs, int start, int end )
+{
+   Symbol phenotype[max_size_phenotype];
+   double  ephemeral[max_size_phenotype];
+
+   int allele = 0;
+   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, initial_symbol );
+   if( !size ) { individual->fitness = std::numeric_limits<float>::max(); return; }
+
+   double erro = interpret( max_size_phenotype, phenotype, ephemeral, size, input, model, obs, start, end );
+
+   if( isnan( erro ) || isinf( erro ) ) { individual->fitness = std::numeric_limits<float>::max(); return; } 
+
+   individual->fitness = erro/(end-start+1) + 0.00001*size; 
+
+   if( individual->fitness < best_individual.fitness )
+   {
+      clone( individual, &best_individual );
+   }
+}
+
 void individual_print( const Individual* individual, FILE* out )
 {
    Symbol phenotype[max_size_phenotype];
    double ephemeral[max_size_phenotype];
 
    int allele = 0;
-   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, inicial_symbol );
+   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, initial_symbol );
    if( !size ) { return; }
 
    fprintf( out, "{%d} ", size );

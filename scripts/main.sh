@@ -4,9 +4,10 @@ home="$(pwd)"
 
 i=1 # 0 a 9 conjuntos de treinamento e teste
 
+gcc -c $home/algoritmo/interpret.cc -o $home/algoritmo/interpret.o
 gcc -c $home/algoritmo/pee.cc -o $home/algoritmo/pee.o
 gcc -c $home/algoritmo/main.cc -o $home/algoritmo/main.o
-g++ -o $home/algoritmo/main $home/algoritmo/pee.o $home/algoritmo/main.o
+g++ -o $home/algoritmo/main $home/algoritmo/interpret.o $home/algoritmo/pee.o $home/algoritmo/main.o
 
 TMPTEST=$(mktemp);TMPTRAINING=$(mktemp)
 arquivo=$(mktemp)
