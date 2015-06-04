@@ -473,4 +473,3 @@ Individual evolve()
 
    delete[] data.best_individual.genome;
 }
-
