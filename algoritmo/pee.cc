@@ -29,7 +29,7 @@
 
 struct t_individual { int* genome; double fitness; };
 
-struct t_data { int max_size_phenotype; double** input; double** model; double* obs; int start; int end; };
+static struct t_data { int nlin; } data;
 
 
 /** ****************************************************************** **/
@@ -84,9 +84,9 @@ double decode_real( const int* genome, int* const allele )
           (pow( 2.0, BITS_BY_CONSTANT ) - 1);
 }
 
-int decode( const int* genome, int* const allele, Symbol* phenotype, double* ephemeral, int pos, Symbol simbolo_initial )
+int decode( const int* genome, int* const allele, Symbol* phenotype, double* ephemeral, int pos, Symbol initial_symbol )
 {
-   t_rule* r = decode_rule( genome, allele, simbolo_initial ); 
+   t_rule* r = decode_rule( genome, allele, initial_symbol ); 
    if( !r ) { return 0; }
 
    for( int i = 0; i < r->quantity; ++i )
@@ -120,9 +120,10 @@ int decode( const int* genome, int* const allele, Symbol* phenotype, double* eph
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void init( double** input, double** model, double* obs, int nlin, int ninput, int nmodel, int start, int end ) 
+void init( double** input, double** model, double* obs, int nlin, int ninput, int nmodel ) 
 {
-   interpret_init( max_size_phenotype, input, model, obs, nlin, ninput, nmodel, start, end );
+   data.nlin = nlin;
+   interpret_init( max_size_phenotype, input, model, obs, nlin, ninput, nmodel );
 }
 
 void evaluate( Individual* individual )
@@ -138,7 +139,7 @@ void evaluate( Individual* individual )
 
    if( isnan( erro ) || isinf( erro ) ) { individual->fitness = std::numeric_limits<float>::max(); return; } 
 
-   individual->fitness = erro/(data.end-data.start+1) + 0.00001*size; 
+   individual->fitness = erro/data.nlin + 0.00001*size; 
 
    if( individual->fitness < best_individual.fitness )
    {

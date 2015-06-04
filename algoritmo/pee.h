@@ -9,7 +9,7 @@ typedef struct t_individual Individual;
 /** ****************************************************************************************** **/
 /**                                                                                            **/
 /** ****************************************************************************************** **/
-void init( double** input, double** model, double* obs,int nlin, int ninput, int nmodel, int start, int end );
+void init( double** input, double** model, double* obs, int nlin, int ninput, int nmodel );
 
 /** ****************************************************************************************** **/
 /** *********************************** Function evaluate ************************************ **/

@@ -34,7 +34,6 @@ int main(int argc, char **argv)
    char linha[200];
    for( nlin = 0; fgets( linha,200,arqentra ) != NULL; nlin++ );
    fclose (arqentra);
-   int start = 0, end = nlin-1;
 
    double** input   = new double*[nlin];
    for( int i = 0; i < nlin; i++ )
@@ -66,7 +65,7 @@ int main(int argc, char **argv)
 
    srand( time(NULL) );
 
-   init( input, model, obs, nlin, ninput, nmodel, start, end );
+   init( input, model, obs, nlin, ninput, nmodel );
    Individual best_individual = evolve();
 
    printf("Conjunto Treinamento:\n");
@@ -93,7 +92,6 @@ int main(int argc, char **argv)
    }
    for( nlin = 0; fgets( linha,200,arqentra ) != NULL; nlin++ );
    fclose (arqentra);
-   start = 0, end = nlin-1;
 
    input  = new double*[nlin];
    for( int i = 0; i < nlin; i++ )
