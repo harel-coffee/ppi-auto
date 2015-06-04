@@ -1,3 +1,4 @@
+//TODO: Vai se transformar no interpretador baseado em OpenCL
 /**********************************************************************/
 /*     Nome:Amanda Sabatini Dufek (amandasd@lncc.br)                  */
 /*     Professor: Douglas A. Augusto (douglas@lncc.br)                */

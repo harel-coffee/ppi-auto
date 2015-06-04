@@ -14,10 +14,10 @@
 #include <stdlib.h>
 #include <cmath>    
 #include <limits>
-#include "interpret.h"
+#include "interpreter/cpu.h"
 #include "pee.h"
 #include "grammar"
-#include "parametros"
+#include "parameters"
 
 #define BITS_BY_GENE 8
 #define BITS_BY_CONSTANT 16
