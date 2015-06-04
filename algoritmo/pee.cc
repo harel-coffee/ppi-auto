@@ -29,18 +29,7 @@
 
 struct t_individual { int* genome; double fitness; };
 
-static struct t_data { int nlin; } data;
-
-
-/** ****************************************************************** **/
-/** ************************ GLOBAL VARIABLES ************************ **/
-/** ****************************************************************** **/
-
-Symbol initial_symbol = NT_IF_THEN_ELSE_INICIAL;
-
-Individual best_individual = { NULL, std::numeric_limits<float>::max()};
-
-const unsigned max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * bits_number/BITS_BY_GENE;
+static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; } data;
 
 
 /** ****************************************************************** **/
@@ -122,17 +111,22 @@ int decode( const int* genome, int* const allele, Symbol* phenotype, double* eph
 
 void init( double** input, double** model, double* obs, int nlin, int ninput, int nmodel ) 
 {
+   data.initial_symbol = NT_IF_THEN_ELSE_INICIAL;
+   data.best_individual.genome = NULL;
+   data.best_individual.fitness = std::numeric_limits<float>::max();
+   data.max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * bits_number/BITS_BY_GENE;
    data.nlin = nlin;
-   interpret_init( max_size_phenotype, input, model, obs, nlin, ninput, nmodel );
+
+   interpret_init( data.max_size_phenotype, input, model, obs, nlin, ninput, nmodel );
 }
 
 void evaluate( Individual* individual )
 {
-   Symbol phenotype[max_size_phenotype];
-   double  ephemeral[max_size_phenotype];
+   Symbol phenotype[data.max_size_phenotype];
+   double  ephemeral[data.max_size_phenotype];
 
    int allele = 0;
-   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, initial_symbol );
+   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, data.initial_symbol );
    if( !size ) { individual->fitness = std::numeric_limits<float>::max(); return; }
 
    double erro = interpret(phenotype, ephemeral, size );
@@ -141,19 +135,19 @@ void evaluate( Individual* individual )
 
    individual->fitness = erro/data.nlin + 0.00001*size; 
 
-   if( individual->fitness < best_individual.fitness )
+   if( individual->fitness < data.best_individual.fitness )
    {
-      clone( individual, &best_individual );
+      clone( individual, &data.best_individual );
    }
 }
 
 void individual_print( const Individual* individual, FILE* out )
 {
-   Symbol phenotype[max_size_phenotype];
-   double ephemeral[max_size_phenotype];
+   Symbol phenotype[data.max_size_phenotype];
+   double ephemeral[data.max_size_phenotype];
 
    int allele = 0;
-   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, initial_symbol );
+   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, data.initial_symbol );
    if( !size ) { return; }
 
    fprintf( out, "{%d} ", size );
@@ -416,7 +410,7 @@ Individual evolve()
    Individual* population_a = new Individual[population_size];
    Individual* population_b = new Individual[population_size];
 
-   best_individual.genome = new int[bits_number];
+   data.best_individual.genome = new int[bits_number];
 
    // Alocação dos indivíduos
    for( int i = 0; i < population_size; ++i )
@@ -432,7 +426,7 @@ Individual evolve()
    generate_population( antecedentes );
     
    // Processo evolucionário
-   for( int geracao = 1; geracao <= generation_number && best_individual.fitness > 0.0005; ++geracao )
+   for( int geracao = 1; geracao <= generation_number && data.best_individual.fitness > 0.0005; ++geracao )
    {
       for( int i = 0; i < population_size; i += 2 )
       {
@@ -462,7 +456,7 @@ Individual evolve()
       }
 
       // Elitismo
-      if( elitism ) clone( &best_individual, &descendentes[0] );
+      if( elitism ) clone( &data.best_individual, &descendentes[0] );
 
       // Faz população nova ser a atual, e vice-versa.
       swap( antecedentes, descendentes );
@@ -475,8 +469,8 @@ Individual evolve()
    }
    delete[] population_a, population_b; 
 
-   return best_individual;
+   return data.best_individual;
 
-   delete[] best_individual.genome;
+   delete[] data.best_individual.genome;
 }
 
