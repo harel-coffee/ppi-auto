@@ -29,6 +29,8 @@
 
 struct t_individual { int* genome; double fitness; };
 
+struct t_data { int max_size_phenotype; double** input; double** model; double* obs; int start; int end; };
+
 
 /** ****************************************************************** **/
 /** ************************ GLOBAL VARIABLES ************************ **/
@@ -48,12 +50,6 @@ const unsigned max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * bits_number/B
 #define swap(i, j) {Individual* t = i; i = j; j = t;}
 
 double random_number() {return rand() / (RAND_MAX + 1.0);} // [0.0, 1.0)
-
-//void init()
-//{
-//   interpreter_init(max_size_phenotype, );
-//
-//}
 
 t_rule* decode_rule( const int* genome, int* const allele, Symbol cabeca )
 {
@@ -124,7 +120,12 @@ int decode( const int* genome, int* const allele, Symbol* phenotype, double* eph
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void evaluate( Individual* individual, double **input, double **model, double *obs, int start, int end )
+void init( double** input, double** model, double* obs, int nlin, int ninput, int nmodel, int start, int end ) 
+{
+   interpret_init( max_size_phenotype, input, model, obs, nlin, ninput, nmodel, start, end );
+}
+
+void evaluate( Individual* individual )
 {
    Symbol phenotype[max_size_phenotype];
    double  ephemeral[max_size_phenotype];
@@ -133,11 +134,11 @@ void evaluate( Individual* individual, double **input, double **model, double *o
    int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, initial_symbol );
    if( !size ) { individual->fitness = std::numeric_limits<float>::max(); return; }
 
-   double erro = interpret( max_size_phenotype, phenotype, ephemeral, size, input, model, obs, start, end );
+   double erro = interpret(phenotype, ephemeral, size );
 
    if( isnan( erro ) || isinf( erro ) ) { individual->fitness = std::numeric_limits<float>::max(); return; } 
 
-   individual->fitness = erro/(end-start+1) + 0.00001*size; 
+   individual->fitness = erro/(data.end-data.start+1) + 0.00001*size; 
 
    if( individual->fitness < best_individual.fitness )
    {
@@ -324,7 +325,7 @@ void individual_print( const Individual* individual, FILE* out )
    fprintf( out, " [Aptidao: %.12f]\n", individual->fitness );
 }
 
-void generate_population( Individual* population, double **input, double **model, double *obs, int start, int end )
+void generate_population( Individual* population )
 {
    for( int i = 0; i < population_size; ++i)
    {
@@ -333,7 +334,7 @@ void generate_population( Individual* population, double **input, double **model
          population[i].genome[j] = (random_number() < 0.5) ? 1 : 0;
       }
       
-      evaluate( &population[i], input, model, obs, start, end );
+      evaluate( &population[i] );
    }
 }
 
@@ -409,7 +410,7 @@ const Individual* tournament( const Individual* population )
    return vencedor;
 }
 
-Individual evolve( double **input, double **model, double *obs, int start, int end )
+Individual evolve()
 {
    Individual* population_a = new Individual[population_size];
    Individual* population_b = new Individual[population_size];
@@ -427,7 +428,7 @@ Individual evolve( double **input, double **model, double *obs, int start, int e
    Individual* descendentes = population_b;
 
    // Criação da população inicial (1ª geração)
-   generate_population( antecedentes, input, model, obs, start, end );
+   generate_population( antecedentes );
     
    // Processo evolucionário
    for( int geracao = 1; geracao <= generation_number && best_individual.fitness > 0.0005; ++geracao )
@@ -455,8 +456,8 @@ Individual evolve( double **input, double **model, double *obs, int start, int e
          mutation( descendentes[i + 1].genome );
 
          // Avaliação dos novos indivíduos
-          evaluate( &descendentes[i], input, model, obs, start, end );
-          evaluate( &descendentes[i + 1], input, model, obs, start, end );
+          evaluate( &descendentes[i] );
+          evaluate( &descendentes[i + 1] );
       }
 
       // Elitismo

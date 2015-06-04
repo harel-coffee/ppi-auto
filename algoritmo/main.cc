@@ -66,8 +66,8 @@ int main(int argc, char **argv)
 
    srand( time(NULL) );
 
-   //init();
-   Individual best_individual = evolve( input, model, obs, start, end );
+   init( input, model, obs, nlin, ninput, nmodel, start, end );
+   Individual best_individual = evolve();
 
    printf("Conjunto Treinamento:\n");
    individual_print( &best_individual, stderr );
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
    }
    fclose (arqentra);
 
-   evaluate( &best_individual, input, model, obs, start, end );
+   evaluate( &best_individual );
    printf("Conjunto Teste:\n");
    individual_print( &best_individual, stderr );
 
