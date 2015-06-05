@@ -5,13 +5,6 @@
 #include "pee.h"
 
 
-/** ****************************************************************** **/
-/** ***************************** TYPES ****************************** **/
-/** ****************************************************************** **/
-
-struct t_individual { int* genome; double fitness; };
-
-
 int main(int argc, char **argv)
 {
    CmdLine::Parser Opts( argc, argv );
@@ -75,10 +68,10 @@ int main(int argc, char **argv)
    srand( time(NULL) );
 
    init( input, model, obs, nlin, argc, argv );
-   Individual best_individual = evolve();
+   evolve();
 
    printf("Conjunto Treinamento:\n");
-   individual_print( &best_individual, stderr );
+   //print_best( stderr );
 
    delete[] obs;
 
@@ -131,10 +124,9 @@ int main(int argc, char **argv)
    fclose (arqentra);
 
 
-   init( input, model, obs, nlin, argc, argv );
-   evaluate_best( &best_individual );
+   //evaluate_best();
    printf("Conjunto Teste:\n");
-   individual_print( &best_individual, stderr );
+   //print_best( stderr );
 
    delete[] obs;
 
@@ -146,5 +138,6 @@ int main(int argc, char **argv)
      delete [] model[i];
    delete [] model;
 
+   //destroy();
    return 0;
 }

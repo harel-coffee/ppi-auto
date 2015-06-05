@@ -24,7 +24,7 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-struct t_individual { int* genome; double fitness; };
+struct Individual { int* genome; double fitness; };
 
 static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; double mutation_rate; double crossover_rate; double interval[2]; } data;
 
@@ -110,6 +110,8 @@ void init( double** input, double** model, double* obs, int nlin, int argc, char
 {
    CmdLine::Parser Opts( argc, argv );
 
+//-v imprime o melhor individuo a cada geracao
+
    Opts.Bool.Add( "-e", "--help" );
    Opts.Int.Add( "-ni", "--number_of_inputs" );
    Opts.Int.Add( "-nm", "--number_of_models" );
@@ -180,6 +182,8 @@ void evaluate( Individual* individual )
       clone( individual, &data.best_individual );
    }
 }
+
+//void evaluate_best() {evaluate( &data.best_individual );}
 
 void individual_print( const Individual* individual, FILE* out )
 {
@@ -360,6 +364,8 @@ void individual_print( const Individual* individual, FILE* out )
    fprintf( out, " [Aptidao: %.12f]\n", individual->fitness );
 }
 
+//void print_best( FILE* out ) {individual_print( &data.best_individual, out );}
+
 void generate_population( Individual* population )
 {
    for( int i = 0; i < data.population_size; ++i)
@@ -445,7 +451,7 @@ const Individual* tournament( const Individual* population )
    return vencedor;
 }
 
-Individual evolve()
+void evolve()
 {
    Individual* population_a = new Individual[data.population_size];
    Individual* population_b = new Individual[data.population_size];
@@ -509,7 +515,5 @@ Individual evolve()
    }
    delete[] population_a, population_b; 
 
-   return data.best_individual;
-
-   delete[] data.best_individual.genome;
+   return;
 }
