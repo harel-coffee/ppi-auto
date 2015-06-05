@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h> 
 #include <ctime>
+#include "util/CmdLineParser.h"
 #include "pee.h"
 
 
@@ -13,19 +14,27 @@ struct t_individual { int* genome; double fitness; };
 
 int main(int argc, char **argv)
 {
+   CmdLine::Parser Opts( argc, argv );
 
-   char *treinamento, *teste;
-   treinamento = argv[1];
-   teste = argv[2];
-   int ninput = atoi(argv[3]);   
-   int nmodel = atoi(argv[4]);   
+   Opts.Int.Add( "-ni", "--number_of_inputs" );
+   Opts.Int.Add( "-nm", "--number_of_models" );
+   Opts.String.Add( "-tr", "--training_set" );
+   Opts.String.Add( "-te", "--test_set" );
+
+   Opts.Process();
+
+   int ninput = Opts.Int.Get("-ni");   
+   int nmodel = Opts.Int.Get("-nm");   
+   const char* training = Opts.String.Get("-tr").c_str();
+   const char* test = Opts.String.Get("-te").c_str();
+
 
 /** ****************************************************************** **/
 /** ************************** TRAINING DATA ************************* **/
 /** ****************************************************************** **/
 
    FILE *arqentra;
-   arqentra = fopen(treinamento,"r");
+   arqentra = fopen(training,"r");
    if(arqentra == NULL) {
      printf("Nao foi possivel abrir o arquivo de entrada.\n");
      exit(-1);
@@ -43,7 +52,7 @@ int main(int argc, char **argv)
      model[i] = new double[nmodel];
    double* obs   = new double[nlin];
 
-   arqentra = fopen(treinamento,"r");
+   arqentra = fopen(training,"r");
    if(arqentra == NULL) {
      printf("Nao foi possivel abrir o arquivo de entrada.\n");
      exit(-1);
@@ -65,7 +74,7 @@ int main(int argc, char **argv)
 
    srand( time(NULL) );
 
-   init( input, model, obs, nlin, ninput, nmodel );
+   init( input, model, obs, nlin, argc, argv );
    Individual best_individual = evolve();
 
    printf("Conjunto Treinamento:\n");
@@ -85,7 +94,7 @@ int main(int argc, char **argv)
 /** **************************** TEST DATA *************************** **/
 /** ****************************************************************** **/
 
-   arqentra = fopen(teste,"r");
+   arqentra = fopen(test,"r");
    if(arqentra == NULL) {
      printf("Nao foi possivel abrir o arquivo de entrada.\n");
      exit(-1);
@@ -101,7 +110,7 @@ int main(int argc, char **argv)
      model[i] = new double[nmodel];
    obs    = new double[nlin];
 
-   arqentra = fopen(teste,"r");
+   arqentra = fopen(test,"r");
    if(arqentra == NULL) {
      printf("Nao foi possivel abrir o arquivo de entrada.\n");
      exit(-1);
@@ -121,7 +130,9 @@ int main(int argc, char **argv)
    }
    fclose (arqentra);
 
-   evaluate( &best_individual );
+
+   init( input, model, obs, nlin, argc, argv );
+   evaluate_best( &best_individual );
    printf("Conjunto Teste:\n");
    individual_print( &best_individual, stderr );
 
