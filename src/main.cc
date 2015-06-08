@@ -61,6 +61,7 @@ int main(int argc, char **argv)
    }
    fclose (arqentra);
 
+   srand( time(NULL) );
 
    if( Opts.Bool.Get("-f") )
    {
@@ -70,7 +71,6 @@ int main(int argc, char **argv)
    }
    else
    {
-      srand( time(NULL) );
       pee_init( input, model, obs, nlin, argc, argv );
       pee_evolve();
       pee_print_best( stderr, 1 );

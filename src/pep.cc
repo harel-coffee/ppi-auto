@@ -23,7 +23,7 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int nlin; Symbol* phenotype; double* ephemeral; int size; double value; } data;
+static struct t_data { int nlin; Symbol* phenotype; double* ephemeral; unsigned size; double value; } data;
 
 
 /** ****************************************************************** **/
@@ -48,18 +48,22 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
    }
 
    fscanf(arqentra,"%d",&data.size);
+   //fprintf(stderr,"%d\n",data.size);
 
    data.phenotype = new Symbol[data.size];
    data.ephemeral = new double[data.size];
 
-   for( int i = 0, j = i; i < data.size; ++i, ++j )
+   for( int i = 0; i < data.size; ++i )
    {
-      fscanf(arqentra,"%d ",&data.phenotype[j]);
-      if( data.phenotype[j] == T_EFEMERO )
+      fscanf(arqentra,"%d ",&data.phenotype[i]);
+      //fprintf(stderr,"%d ",data.phenotype[i]);
+      if( data.phenotype[i] == T_EFEMERO )
       {
-         fscanf(arqentra,"%lf ",&data.ephemeral[j]); j++;
+         fscanf(arqentra,"%lf ",&data.ephemeral[i]);
+         //fprintf(stderr,"%.12f ",data.ephemeral[i]);
       }
    }
+   //fprintf(stderr,"\n");
    fclose (arqentra);
 
    data.nlin = nlin;

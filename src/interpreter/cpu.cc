@@ -7,16 +7,16 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { double** input; double** model; double* obs; unsigned max_size_phenotype; int nlin; } data;
+static struct t_data { double** input; double** model; double* obs; unsigned size; int nlin; } data;
 
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void interpret_init( const unsigned max_size_phenotype, double** input, double** model, double* obs, int nlin, int ninput, int nmodel ) 
+void interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel ) 
 {
-   data.max_size_phenotype = max_size_phenotype;
+   data.size = size;
    data.nlin = nlin;
 
    data.input = new double*[nlin];
@@ -43,7 +43,7 @@ void interpret_init( const unsigned max_size_phenotype, double** input, double**
 
 double interpret( Symbol* phenotype, double* ephemeral, int size )
 {
-   double pilha[data.max_size_phenotype];
+   double pilha[data.size];
    double erro = 0.0; double soma = 0.0;
    int topo;
    for( int ponto = 0; ponto < data.nlin; ++ponto )

@@ -28,8 +28,6 @@ struct Individual { int* genome; double fitness; };
 
 static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; double mutation_rate; double crossover_rate; double interval[2]; } data;
 
-void clone( const Individual* original, Individual* copy );
-
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
 /** ****************************************************************** **/
@@ -161,7 +159,14 @@ void pee_init( double** input, double** model, double* obs, int nlin, int argc, 
    interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
 }
 
-void evaluate( Individual* individual )
+void pee_clone( const Individual* original, Individual* copy )
+{
+   for( int i = 0; i < data.number_of_bits; ++i ) copy->genome[i] = original->genome[i];
+
+   copy->fitness = original->fitness;
+}
+
+void pee_evaluate( Individual* individual )
 {
    Symbol phenotype[data.max_size_phenotype];
    double  ephemeral[data.max_size_phenotype];
@@ -178,11 +183,11 @@ void evaluate( Individual* individual )
 
    if( individual->fitness < data.best_individual.fitness )
    {
-      clone( individual, &data.best_individual );
+      pee_clone( individual, &data.best_individual );
    }
 }
 
-void individual_print( const Individual* individual, FILE* out, int mode )
+void pee_individual_print( const Individual* individual, FILE* out, int mode )
 {
    Symbol phenotype[data.max_size_phenotype];
    double ephemeral[data.max_size_phenotype];
@@ -383,11 +388,11 @@ void pee_destroy() {delete[] data.best_individual.genome;}
 
 void pee_print_best( FILE* out, int mode ) 
 {
-   individual_print( &data.best_individual, out, mode );
+   pee_individual_print( &data.best_individual, out, mode );
    pee_destroy();
 }
 
-void generate_population( Individual* population )
+void pee_generate_population( Individual* population )
 {
    for( int i = 0; i < data.population_size; ++i)
    {
@@ -396,11 +401,11 @@ void generate_population( Individual* population )
          population[i].genome[j] = (random_number() < 0.5) ? 1 : 0;
       }
       
-      evaluate( &population[i] );
+      pee_evaluate( &population[i] );
    }
 }
 
-void crossover( const int* father, const int* mother, int* offspring1, int* offspring2 )
+void pee_crossover( const int* father, const int* mother, int* offspring1, int* offspring2 )
 {
 #ifdef TWO_POINT_CROSSOVER
    // Cruzamento de dois pontos
@@ -445,20 +450,13 @@ void crossover( const int* father, const int* mother, int* offspring1, int* offs
 #endif
 }
 
-void mutation( int* genome )
+void pee_mutation( int* genome )
 {
    for( int i = 0; i < data.number_of_bits; ++i )
       if( random_number() < data.mutation_rate ) genome[i] = !genome[i];
 }
 
-void clone( const Individual* original, Individual* copy )
-{
-   for( int i = 0; i < data.number_of_bits; ++i ) copy->genome[i] = original->genome[i];
-
-   copy->fitness = original->fitness;
-}
-
-const Individual* tournament( const Individual* population )
+const Individual* pee_tournament( const Individual* population )
 {
    const Individual* vencedor = &population[(int)(random_number() * data.population_size)];
 
@@ -490,7 +488,7 @@ void pee_evolve()
    Individual* descendentes = population_b;
 
    // Criação da população inicial (1ª geração)
-   generate_population( antecedentes );
+   pee_generate_population( antecedentes );
     
    // Processo evolucionário
    for( int geracao = 1; geracao <= data.generations && data.best_individual.fitness > 0.0005; ++geracao )
@@ -498,32 +496,32 @@ void pee_evolve()
       for( int i = 0; i < data.population_size; i += 2 )
       {
          // Seleção de indivíduos adaptados para gerar descendentes
-         const Individual* father = tournament( antecedentes );
-         const Individual* mother = tournament( antecedentes );
+         const Individual* father = pee_tournament( antecedentes );
+         const Individual* mother = pee_tournament( antecedentes );
 
          // Cruzamento
          if( random_number() < data.crossover_rate )
          {
-            crossover( father->genome, mother->genome, 
+            pee_crossover( father->genome, mother->genome, 
                         descendentes[i].genome, descendentes[i + 1].genome );
          }
          else // Apenas clonagem
          {
-            clone( father, &descendentes[i] );
-            clone( mother, &descendentes[i + 1] );
+            pee_clone( father, &descendentes[i] );
+            pee_clone( mother, &descendentes[i + 1] );
          }
 
          // Mutações
-         mutation( descendentes[i].genome );
-         mutation( descendentes[i + 1].genome );
+         pee_mutation( descendentes[i].genome );
+         pee_mutation( descendentes[i + 1].genome );
 
          // Avaliação dos novos indivíduos
-          evaluate( &descendentes[i] );
-          evaluate( &descendentes[i + 1] );
+          pee_evaluate( &descendentes[i] );
+          pee_evaluate( &descendentes[i + 1] );
       }
 
       // Elitismo
-      if( data.elitism ) clone( &data.best_individual, &descendentes[0] );
+      if( data.elitism ) pee_clone( &data.best_individual, &descendentes[0] );
 
       // Faz população nova ser a atual, e vice-versa.
       swap( antecedentes, descendentes );
