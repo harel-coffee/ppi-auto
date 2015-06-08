@@ -526,7 +526,7 @@ void pee_evolve()
       // Faz população nova ser a atual, e vice-versa.
       swap( antecedentes, descendentes );
 
-      if( data.verbose ) pee_print_best( stderr, 0 );
+      if( data.verbose ) pee_individual_print( &data.best_individual, stderr, 0 );
    }
 
    for( int i = 0; i < data.population_size; ++i )
