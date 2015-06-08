@@ -1,5 +1,8 @@
 /** TAD: INTERPRET **/
 
+#ifndef cpu_h
+#define cpu_h
+
 #include "../symbol"
 
 /** Funcoes exportadas **/
@@ -16,4 +19,5 @@ void interpret_init( const unsigned max_size_phenotype, double** input, double**
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
 double interpret( Symbol* phenotype, double* ephemeral, int size );
-//double interpret( const unsigned max_size_phenotype, Symbol* phenotype, double* ephemeral, int size, double** input, double** model, double* obs, int start, int end );
+
+#endif

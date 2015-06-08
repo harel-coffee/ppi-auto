@@ -4,16 +4,11 @@ home="$(pwd)"
 
 i=1 # 0 a 9 conjuntos de treinamento e teste
 
-gcc -c $home/algoritmo/interpret.cc -o $home/algoritmo/interpret.o
-gcc -c $home/algoritmo/pee.cc -o $home/algoritmo/pee.o
-gcc -c $home/algoritmo/main.cc -o $home/algoritmo/main.o
-g++ -o $home/algoritmo/main $home/algoritmo/interpret.o $home/algoritmo/pee.o $home/algoritmo/main.o
-
 TMPTEST=$(mktemp);TMPTRAINING=$(mktemp)
 arquivo=$(mktemp)
 
-file=$home/dados/A701.txt
-$home/scripts/funcoeszz zzshuffle $file > $arquivo
+file=$home/data/A701.txt
+$home/script/funcoeszz zzshuffle $file > $arquivo
 # NF-1 pq não considera a coluna do TRMM
 ncol=`awk -F',' '{print NF-1}' $arquivo | head -1`
 natr=22; nmod=$(echo "scale=0; $ncol - $natr" | bc) # 22 colunas iniciais fixas
@@ -36,7 +31,8 @@ if [ $fim -lt $nlin ]; then
   cat $arquivo | sed ''$fim','$nlin'!d' >> $TMPTRAINING
 fi
 
-$home/algoritmo/main $TMPTRAINING $TMPTEST $natr $nmod
+#$home/build/main -d $TMPTRAINING -ni $natr -nm $nmod -f $home/solution
+$home/build/main -d $TMPTRAINING -ni $natr -nm $nmod 
 
 rm $TMPTEST $TMPTRAINING 
 rm $arquivo

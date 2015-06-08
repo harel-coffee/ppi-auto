@@ -26,8 +26,9 @@
 
 struct Individual { int* genome; double fitness; };
 
-static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; double mutation_rate; double crossover_rate; double interval[2]; } data;
+static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; double mutation_rate; double crossover_rate; double interval[2]; } data;
 
+void clone( const Individual* original, Individual* copy );
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -106,13 +107,12 @@ int decode( const int* genome, int* const allele, Symbol* phenotype, double* eph
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void init( double** input, double** model, double* obs, int nlin, int argc, char **argv ) 
+void pee_init( double** input, double** model, double* obs, int nlin, int argc, char **argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
 
-//-v imprime o melhor individuo a cada geracao
-
-   Opts.Bool.Add( "-e", "--help" );
+   Opts.Bool.Add( "-v" );
+   Opts.Bool.Add( "-e" );
    Opts.Int.Add( "-ni", "--number_of_inputs" );
    Opts.Int.Add( "-nm", "--number_of_models" );
    Opts.Int.Add( "-p", "--population_size", 2000, 2 );
@@ -121,17 +121,16 @@ void init( double** input, double** model, double* obs, int nlin, int argc, char
    Opts.Int.Add( "-nb", "--number_of_bits", 2000, 16 );
    Opts.Int.Add( "-bg", "--bits_per_gene", 8, 8 );
    Opts.Int.Add( "-bc", "--bits_per_constant", 16, 4 );
-   Opts.Float.Add( "-m", "--mutation_rate", 0.0025, 0, 1);
-   Opts.Float.Add( "-c", "--crossover_rate", 0.95, 0, 1);
-   Opts.Float.Add( "-min", "--min_constant", 0);
-   Opts.Float.Add( "-max", "--max_constant", 300);
+   Opts.Float.Add( "-m", "--mutation_rate", 0.0025, 0, 1 );
+   Opts.Float.Add( "-c", "--crossover_rate", 0.95, 0, 1 );
+   Opts.Float.Add( "-min", "--min_constant", 0 );
+   Opts.Float.Add( "-max", "--max_constant", 300 );
 
    // processing the command-line
    Opts.Process();
 
    // getting the results!
-   int ninput = Opts.Int.Get("-ni");   
-   int nmodel = Opts.Int.Get("-nm");   
+   data.verbose = Opts.Bool.Get("-v");
    data.elitism = Opts.Bool.Get("-e");
    data.population_size = Opts.Int.Get("-p");
    data.generations = Opts.Int.Get("-g");
@@ -159,7 +158,7 @@ void init( double** input, double** model, double* obs, int nlin, int argc, char
    data.max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * data.number_of_bits/data.bits_per_gene;
    data.nlin = nlin;
 
-   interpret_init( data.max_size_phenotype, input, model, obs, nlin, ninput, nmodel );
+   interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
 }
 
 void evaluate( Individual* individual )
@@ -169,11 +168,11 @@ void evaluate( Individual* individual )
 
    int allele = 0;
    int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, data.initial_symbol );
-   if( !size ) { individual->fitness = std::numeric_limits<float>::max(); return; }
+   if( !size ) {individual->fitness = std::numeric_limits<float>::max(); return;}
 
-   double erro = interpret(phenotype, ephemeral, size );
+   double erro = interpret( phenotype, ephemeral, size );
 
-   if( isnan( erro ) || isinf( erro ) ) { individual->fitness = std::numeric_limits<float>::max(); return; } 
+   if( isnan( erro ) || isinf( erro ) ) {individual->fitness = std::numeric_limits<float>::max(); return;} 
 
    individual->fitness = erro/data.nlin + 0.00001*size; 
 
@@ -183,9 +182,7 @@ void evaluate( Individual* individual )
    }
 }
 
-//void evaluate_best() {evaluate( &data.best_individual );}
-
-void individual_print( const Individual* individual, FILE* out )
+void individual_print( const Individual* individual, FILE* out, int mode )
 {
    Symbol phenotype[data.max_size_phenotype];
    double ephemeral[data.max_size_phenotype];
@@ -193,8 +190,20 @@ void individual_print( const Individual* individual, FILE* out )
    int allele = 0;
    int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, data.initial_symbol );
    if( !size ) { return; }
+  
+   if( mode )
+   {
+   fprintf( out, "%d\n", size );
+   for( int i = 0; i < size; ++i )
+      if( phenotype[i] == T_EFEMERO )
+         fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
+      else
+         fprintf( out, "%d ", phenotype[i] );
+   fprintf( out, "\n" );
+   } 
+   else 
+      fprintf( out, "%d ", size );
 
-   fprintf( out, "{%d} ", size );
    for( int i = 0; i < size; ++i )
       switch( phenotype[i] )
       {
@@ -361,10 +370,22 @@ void individual_print( const Individual* individual, FILE* out )
                fprintf( out, "%.12f ",  ephemeral[i] );
                break;
       } 
-   fprintf( out, " [Aptidao: %.12f]\n", individual->fitness );
+   if( mode)
+   {
+      fprintf( out, "\n" );
+      fprintf( out, "%.12f\n", individual->fitness );
+   }
+   else
+      fprintf( out, " %.12f\n", individual->fitness );
 }
 
-//void print_best( FILE* out ) {individual_print( &data.best_individual, out );}
+void pee_destroy() {delete[] data.best_individual.genome;}
+
+void pee_print_best( FILE* out, int mode ) 
+{
+   individual_print( &data.best_individual, out, mode );
+   pee_destroy();
+}
 
 void generate_population( Individual* population )
 {
@@ -451,7 +472,7 @@ const Individual* tournament( const Individual* population )
    return vencedor;
 }
 
-void evolve()
+void pee_evolve()
 {
    Individual* population_a = new Individual[data.population_size];
    Individual* population_b = new Individual[data.population_size];
@@ -507,6 +528,7 @@ void evolve()
       // Faz população nova ser a atual, e vice-versa.
       swap( antecedentes, descendentes );
 
+      if( data.verbose ) pee_print_best( stderr, 0 );
    }
 
    for( int i = 0; i < data.population_size; ++i )
@@ -514,6 +536,4 @@ void evolve()
       delete[] population_a[i].genome, population_b[i].genome;
    }
    delete[] population_a, population_b; 
-
-   return;
 }
