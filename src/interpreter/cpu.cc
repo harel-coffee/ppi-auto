@@ -1,7 +1,9 @@
 #include <stdio.h> 
 #include <stdlib.h>
 #include <cmath>    
+#include <limits>
 #include "cpu.h"
+
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
@@ -41,10 +43,15 @@ void interpret_init( const unsigned size, double** input, double** model, double
    }
 }
 
-double interpret( Symbol* phenotype, double* ephemeral, int size )
+void interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, int mode )
 {
-   double pilha[data.size];
-   double erro = 0.0; double soma = 0.0;
+   double pilha[data.size]; 
+   double error[data.nlin];
+   double sum = 0.0; 
+   double sumdiff = 0.0; 
+   double max = std::numeric_limits<float>::min(); 
+   double min = std::numeric_limits<float>::max();
+
    int topo;
    for( int ponto = 0; ponto < data.nlin; ++ponto )
    {
@@ -223,8 +230,62 @@ double interpret( Symbol* phenotype, double* ephemeral, int size )
                break;
          }
       }
-      erro += fabs(pilha[topo] - data.obs[ponto]); 
+      if( mode ) {vector[ponto] = pilha[topo];}
+
+      sum += fabs(pilha[topo] - data.obs[ponto]);
+
+      error[ponto] = fabs(pilha[topo] - data.obs[ponto]);
+      if( error[ponto] < min ) {min = error[ponto];}
+      if( error[ponto] > max ) {max = error[ponto];}
    }
 
-   return erro;
+   if( mode )
+   {
+      if( isnan( sum ) || isinf( sum ) ) 
+      {
+         vector[data.nlin] = std::numeric_limits<float>::max();
+         vector[data.nlin+1] = 0.0/0.0;
+         vector[data.nlin+2] = 0.0/0.0;
+         vector[data.nlin+3] = 0.0/0.0;
+      } 
+      else 
+      {
+         for( int i = 0; i < data.nlin; i++ ) {sumdiff += pow((error[i]-sum/data.nlin),2);}
+         vector[data.nlin]   = sum/data.nlin;
+         vector[data.nlin+1] = sqrt(sumdiff/(data.nlin-1));
+         vector[data.nlin+2] = min;
+         vector[data.nlin+3] = max;
+      }
+   }
+   else
+   {
+      if( isnan( sum ) || isinf( sum ) ) 
+      {
+         vector[0] = std::numeric_limits<float>::max();
+         vector[1] = 0.0/0.0;
+         vector[2] = 0.0/0.0;
+         vector[3] = 0.0/0.0;
+      } 
+      else 
+      {
+         for( int i = 0; i < data.nlin; i++ ) {sumdiff += pow((error[i]-sum/data.nlin),2);}
+         vector[0] = sum/data.nlin;
+         vector[1] = sqrt(sumdiff/(data.nlin-1));
+         vector[2] = min;
+         vector[3] = max;
+      }
+   }
+}
+
+void interpret_destroy() 
+{
+   delete[] data.obs;
+
+   for( int i = 0; i < data.nlin; ++i )
+     delete [] data.input[i];
+   delete [] data.input;
+
+   for( int i = 0; i < data.nlin; ++i )
+     delete [] data.model[i];
+   delete [] data.model;
 }

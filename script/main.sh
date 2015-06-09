@@ -31,13 +31,13 @@ if [ $fim -lt $nlin ]; then
   cat $arquivo | sed ''$fim','$nlin'!d' >> $TMPTRAINING
 fi
 
-$home/build/main -v -d $TMPTRAINING -ni $natr -nm $nmod
-# 2> $home/solution
-#cat $home/solution
-#$home/build/main -d $TMPTRAINING -ni $natr -nm $nmod -f $home/solution
-#$home/build/main -d $file -ni $natr -nm $nmod 2> $home/solution
-#cat $home/solution
-#$home/build/main -d $file -ni $natr -nm $nmod -f $home/solution
+#$home/build/main -v -e -d $TMPTRAINING -ni $natr -nm $nmod
+#$home/build/main -d $TMPTRAINING -ni $natr -nm $nmod -run $home/solution
+
+#$home/build/main -d $file -ni $natr -nm $nmod -v -e  
+$home/build/main -d $file -ni $natr -nm $nmod 2> $home/solution
+$home/build/main -d $file -ni $natr -nm $nmod -run $home/solution
+$home/build/main -d $file -ni $natr -nm $nmod -run $home/solution -pred
 
 rm $TMPTEST $TMPTRAINING 
 rm $arquivo

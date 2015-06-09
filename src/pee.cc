@@ -114,7 +114,7 @@ void pee_init( double** input, double** model, double* obs, int nlin, int argc, 
    Opts.Int.Add( "-ni", "--number_of_inputs" );
    Opts.Int.Add( "-nm", "--number_of_models" );
    Opts.Int.Add( "-p", "--population_size", 2000, 2 );
-   Opts.Int.Add( "-g", "--generations", 10, 1 );
+   Opts.Int.Add( "-g", "--generations", 50, 1 );
    Opts.Int.Add( "-ts", "--tournament_size", 3, 1 );
    Opts.Int.Add( "-nb", "--number_of_bits", 2000, 16 );
    Opts.Int.Add( "-bg", "--bits_per_gene", 8, 8 );
@@ -175,11 +175,9 @@ void pee_evaluate( Individual* individual )
    int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, data.initial_symbol );
    if( !size ) {individual->fitness = std::numeric_limits<float>::max(); return;}
 
-   double erro = interpret( phenotype, ephemeral, size );
-
-   if( isnan( erro ) || isinf( erro ) ) {individual->fitness = std::numeric_limits<float>::max(); return;} 
-
-   individual->fitness = erro/data.nlin + 0.00001*size; 
+   double erro[4];
+   interpret( phenotype, ephemeral, size, erro, 0 );
+   individual->fitness = erro[0] + 0.00001*size; 
 
    if( individual->fitness < data.best_individual.fitness )
    {
@@ -384,12 +382,15 @@ void pee_individual_print( const Individual* individual, FILE* out, int mode )
       fprintf( out, " %.12f\n", individual->fitness );
 }
 
-void pee_destroy() {delete[] data.best_individual.genome;}
-
 void pee_print_best( FILE* out, int mode ) 
 {
    pee_individual_print( &data.best_individual, out, mode );
-   pee_destroy();
+}
+
+void pee_destroy()
+{
+   delete[] data.best_individual.genome;
+   interpret_destroy();
 }
 
 void pee_generate_population( Individual* population )

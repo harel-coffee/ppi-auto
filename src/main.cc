@@ -13,7 +13,7 @@ int main(int argc, char **argv)
    Opts.Int.Add( "-ni", "--number_of_inputs" );
    Opts.Int.Add( "-nm", "--number_of_models" );
    Opts.String.Add( "-d", "--dataset" );
-   Opts.Bool.Add( "-f", "--file" );
+   Opts.String.Add( "-run", "--program_file" );
 
    Opts.Process();
 
@@ -61,19 +61,21 @@ int main(int argc, char **argv)
    }
    fclose (arqentra);
 
-   srand( time(NULL) );
 
-   if( Opts.Bool.Get("-f") )
+   if( Opts.String.Found("-run") )
    {
       pep_init( input, model, obs, nlin, argc, argv );
       pep_interpret();
       pep_print( stderr );
+      pep_destroy();
    }
    else
    {
+      srand( time(NULL) );
       pee_init( input, model, obs, nlin, argc, argv );
       pee_evolve();
       pee_print_best( stderr, 1 );
+      pee_destroy();
    }
   
 

@@ -13,7 +13,6 @@
 #include <stdio.h> 
 #include <stdlib.h>
 #include <cmath>    
-#include <limits>
 #include "util/CmdLineParser.h"
 #include "interpreter/cpu.h"
 #include "pep.h"
@@ -23,7 +22,7 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int nlin; Symbol* phenotype; double* ephemeral; unsigned size; double value; } data;
+static struct t_data { int nlin; Symbol* phenotype; double* ephemeral; unsigned size; double* vector; int prediction; } data;
 
 
 /** ****************************************************************** **/
@@ -34,11 +33,12 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
 {
    CmdLine::Parser Opts( argc, argv );
 
-   Opts.String.Add( "-f", "--file" );
+   Opts.String.Add( "-run", "--program_file" );
+   Opts.Bool.Add( "-pred", "--prediction" );
    Opts.Int.Add( "-ni", "--number_of_inputs" );
    Opts.Int.Add( "-nm", "--number_of_models" );
    Opts.Process();
-   const char* file = Opts.String.Get("-f").c_str();
+   const char* file = Opts.String.Get("-run").c_str();
 
    FILE *arqentra;
    arqentra = fopen(file,"r");
@@ -46,6 +46,8 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
      printf("Nao foi possivel abrir o arquivo de entrada.\n");
      exit(-1);
    }
+   
+   data.prediction = Opts.Bool.Get("-pred");
 
    fscanf(arqentra,"%d",&data.size);
    //fprintf(stderr,"%d\n",data.size);
@@ -73,16 +75,36 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
 
 void pep_interpret()
 {
-   data.value = interpret( data.phenotype, data.ephemeral, data.size );
-
-   if( isnan( data.value ) || isinf( data.value ) ) {data.value = std::numeric_limits<float>::max();} 
-   data.value = data.value/data.nlin + 0.00001*data.size; 
+   if( data.prediction )
+   {
+      data.vector = new double[data.nlin+4];
+      interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
+   }
+   else
+   {
+      data.vector = new double[4];
+      interpret( data.phenotype, data.ephemeral, data.size, data.vector, 0 );
+   }
 }
 
-void pep_destroy() {delete[] data.phenotype, data.ephemeral;}
+void pep_destroy() 
+{
+   delete[] data.phenotype, data.ephemeral, data.vector;
+   interpret_destroy();
+}
 
 void pep_print( FILE* out )
 {
-   fprintf( out, "%.12f\n", data.value );
-   pep_destroy();
+   if( data.prediction )
+   {
+      for( int i = 0; i < data.nlin; ++i )
+      {
+         fprintf( out, "%.12f\n", data.vector[i] );
+      }
+      fprintf( out, "%.12f,%.12f,%.12f,%.12f\n", data.vector[data.nlin],data.vector[data.nlin+1],data.vector[data.nlin+2],data.vector[data.nlin+3] );
+   }
+   else
+   {
+      fprintf( out, "%.12f,%.12f,%.12f,%.12f\n", data.vector[0],data.vector[1],data.vector[2],data.vector[3] );
+   }
 }
