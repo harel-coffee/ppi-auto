@@ -35,9 +35,9 @@ fi
 #$home/build/main -d $TMPTRAINING -ni $natr -nm $nmod -run $home/solution
 
 #$home/build/main -d $file -ni $natr -nm $nmod -v -e  
-$home/build/main -d $file -ni $natr -nm $nmod 2> $home/solution
+#$home/build/main -d $file -ni $natr -nm $nmod 1> $home/solution
 $home/build/main -d $file -ni $natr -nm $nmod -run $home/solution
-$home/build/main -d $file -ni $natr -nm $nmod -run $home/solution -pred
+#$home/build/main -d $file -pred -ni $natr -nm $nmod -run $home/solution
 
 rm $TMPTEST $TMPTRAINING 
 rm $arquivo

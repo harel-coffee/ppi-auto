@@ -185,6 +185,84 @@ void pee_evaluate( Individual* individual )
    }
 }
 
+void pee_generate_population( Individual* population )
+{
+   for( int i = 0; i < data.population_size; ++i)
+   {
+      for( int j = 0; j < data.number_of_bits; j++ )
+      {
+         population[i].genome[j] = (random_number() < 0.5) ? 1 : 0;
+      }
+      
+      pee_evaluate( &population[i] );
+   }
+}
+
+void pee_crossover( const int* father, const int* mother, int* offspring1, int* offspring2 )
+{
+#ifdef TWO_POINT_CROSSOVER
+   // Cruzamento de dois pontos
+   int pontos[2];
+
+   // Cortar apenas nas bordas dos genes
+   pontos[0] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
+   pontos[1] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
+
+   int tmp;
+   if( pontos[0] > pontos[1] ) { tmp = pontos[0]; pontos[0] = pontos[1]; pontos[1] = tmp; }
+
+   for( int i = 0; i < pontos[0]; ++i )
+   {
+      offspring1[i] = father[i];
+      offspring2[i] = mother[i];
+   }
+   for( int i = pontos[0]; i < pontos[1]; ++i )
+   {
+      offspring1[i] = mother[i];
+      offspring2[i] = father[i];
+   }
+   for( int i = pontos[1]; i < data.number_of_bits; ++i )
+   {
+      offspring1[i] = father[i];
+      offspring2[i] = mother[i];
+   }
+#else
+   // Cruzamento de um ponto
+   int pontoDeCruzamento = (int)(random_number() * data.number_of_bits);
+
+   for( int i = 0; i < pontoDeCruzamento; ++i )
+   {
+      offspring1[i] = father[i];
+      offspring2[i] = mother[i];
+   }
+   for( int i = pontoDeCruzamento; i < data.number_of_bits; ++i )
+   {
+      offspring1[i] = mother[i];
+      offspring2[i] = father[i];
+   }
+#endif
+}
+
+void pee_mutation( int* genome )
+{
+   for( int i = 0; i < data.number_of_bits; ++i )
+      if( random_number() < data.mutation_rate ) genome[i] = !genome[i];
+}
+
+const Individual* pee_tournament( const Individual* population )
+{
+   const Individual* vencedor = &population[(int)(random_number() * data.population_size)];
+
+   for( int t = 1; t < data.tournament_size; ++t )
+   {
+      const Individual* competidor = &population[(int)(random_number() * data.population_size)];
+
+      if( competidor->fitness < vencedor->fitness ) vencedor = competidor;
+   }
+
+   return vencedor;
+}
+
 void pee_individual_print( const Individual* individual, FILE* out, int mode )
 {
    Symbol phenotype[data.max_size_phenotype];
@@ -196,13 +274,13 @@ void pee_individual_print( const Individual* individual, FILE* out, int mode )
   
    if( mode )
    {
-   fprintf( out, "%d\n", size );
-   for( int i = 0; i < size; ++i )
-      if( phenotype[i] == T_EFEMERO )
-         fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
-      else
-         fprintf( out, "%d ", phenotype[i] );
-   fprintf( out, "\n" );
+      fprintf( out, "%d\n", size );
+      for( int i = 0; i < size; ++i )
+         if( phenotype[i] == T_EFEMERO )
+            fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
+         else
+            fprintf( out, "%d ", phenotype[i] );
+      fprintf( out, "\n" );
    } 
    else 
       fprintf( out, "%d ", size );
@@ -387,89 +465,6 @@ void pee_print_best( FILE* out, int mode )
    pee_individual_print( &data.best_individual, out, mode );
 }
 
-void pee_destroy()
-{
-   delete[] data.best_individual.genome;
-   interpret_destroy();
-}
-
-void pee_generate_population( Individual* population )
-{
-   for( int i = 0; i < data.population_size; ++i)
-   {
-      for( int j = 0; j < data.number_of_bits; j++ )
-      {
-         population[i].genome[j] = (random_number() < 0.5) ? 1 : 0;
-      }
-      
-      pee_evaluate( &population[i] );
-   }
-}
-
-void pee_crossover( const int* father, const int* mother, int* offspring1, int* offspring2 )
-{
-#ifdef TWO_POINT_CROSSOVER
-   // Cruzamento de dois pontos
-   int pontos[2];
-
-   // Cortar apenas nas bordas dos genes
-   pontos[0] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
-   pontos[1] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
-
-   int tmp;
-   if( pontos[0] > pontos[1] ) { tmp = pontos[0]; pontos[0] = pontos[1]; pontos[1] = tmp; }
-
-   for( int i = 0; i < pontos[0]; ++i )
-   {
-      offspring1[i] = father[i];
-      offspring2[i] = mother[i];
-   }
-   for( int i = pontos[0]; i < pontos[1]; ++i )
-   {
-      offspring1[i] = mother[i];
-      offspring2[i] = father[i];
-   }
-   for( int i = pontos[1]; i < data.number_of_bits; ++i )
-   {
-      offspring1[i] = father[i];
-      offspring2[i] = mother[i];
-   }
-#else
-   // Cruzamento de um ponto
-   int pontoDeCruzamento = (int)(random_number() * data.number_of_bits);
-
-   for( int i = 0; i < pontoDeCruzamento; ++i )
-   {
-      offspring1[i] = father[i];
-      offspring2[i] = mother[i];
-   }
-   for( int i = pontoDeCruzamento; i < data.number_of_bits; ++i )
-   {
-      offspring1[i] = mother[i];
-      offspring2[i] = father[i];
-   }
-#endif
-}
-
-void pee_mutation( int* genome )
-{
-   for( int i = 0; i < data.number_of_bits; ++i )
-      if( random_number() < data.mutation_rate ) genome[i] = !genome[i];
-}
-
-const Individual* pee_tournament( const Individual* population )
-{
-   const Individual* vencedor = &population[(int)(random_number() * data.population_size)];
-
-   for( int t = 1; t < data.tournament_size; ++t )
-   {
-      const Individual* competidor = &population[(int)(random_number() * data.population_size)];
-
-      if( competidor->fitness < vencedor->fitness ) vencedor = competidor;
-   }
-
-   return vencedor;
-}
 
 void pee_evolve()
 {
@@ -527,7 +522,7 @@ void pee_evolve()
       // Faz população nova ser a atual, e vice-versa.
       swap( antecedentes, descendentes );
 
-      if( data.verbose ) pee_individual_print( &data.best_individual, stderr, 0 );
+      if( data.verbose ) pee_individual_print( &data.best_individual, stdout, 0 );
    }
 
    for( int i = 0; i < data.population_size; ++i )
@@ -535,4 +530,10 @@ void pee_evolve()
       delete[] population_a[i].genome, population_b[i].genome;
    }
    delete[] population_a, population_b; 
+}
+
+void pee_destroy()
+{
+   delete[] data.best_individual.genome;
+   interpret_destroy();
 }

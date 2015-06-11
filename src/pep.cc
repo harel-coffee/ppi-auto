@@ -42,7 +42,8 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
 
    FILE *arqentra;
    arqentra = fopen(file,"r");
-   if(arqentra == NULL) {
+   if(arqentra == NULL) 
+   {
      printf("Nao foi possivel abrir o arquivo de entrada.\n");
      exit(-1);
    }
@@ -50,22 +51,22 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
    data.prediction = Opts.Bool.Get("-pred");
 
    fscanf(arqentra,"%d",&data.size);
-   //fprintf(stderr,"%d\n",data.size);
+   //fprintf(stdout,"%d\n",data.size);
 
    data.phenotype = new Symbol[data.size];
    data.ephemeral = new double[data.size];
 
-   for( int i = 0; i < data.size; ++i )
+   for( int tmp, i = 0; i < data.size; ++i )
    {
-      fscanf(arqentra,"%d ",&data.phenotype[i]);
-      //fprintf(stderr,"%d ",data.phenotype[i]);
+      fscanf(arqentra,"%d ",&tmp); data.phenotype[i] = (Symbol)tmp;
+      //fprintf(stdout,"%d ",data.phenotype[i]);
       if( data.phenotype[i] == T_EFEMERO )
       {
          fscanf(arqentra,"%lf ",&data.ephemeral[i]);
-         //fprintf(stderr,"%.12f ",data.ephemeral[i]);
+         //fprintf(stdout,"%.12f ",data.ephemeral[i]);
       }
    }
-   //fprintf(stderr,"\n");
+   //fprintf(stdout,"\n");
    fclose (arqentra);
 
    data.nlin = nlin;
@@ -87,24 +88,20 @@ void pep_interpret()
    }
 }
 
-void pep_destroy() 
-{
-   delete[] data.phenotype, data.ephemeral, data.vector;
-   interpret_destroy();
-}
-
 void pep_print( FILE* out )
 {
    if( data.prediction )
    {
       for( int i = 0; i < data.nlin; ++i )
-      {
          fprintf( out, "%.12f\n", data.vector[i] );
-      }
-      fprintf( out, "%.12f,%.12f,%.12f,%.12f\n", data.vector[data.nlin],data.vector[data.nlin+1],data.vector[data.nlin+2],data.vector[data.nlin+3] );
+      fprintf( out, "%.12f,%.12f,%.12f,%.12f\n", data.vector[data.nlin], data.vector[data.nlin+1], data.vector[data.nlin+2], data.vector[data.nlin+3] );
    }
    else
-   {
-      fprintf( out, "%.12f,%.12f,%.12f,%.12f\n", data.vector[0],data.vector[1],data.vector[2],data.vector[3] );
-   }
+      fprintf( out, "%.12f,%.12f,%.12f,%.12f\n", data.vector[0], data.vector[1], data.vector[2], data.vector[3] );
+}
+
+void pep_destroy() 
+{
+   delete[] data.phenotype, data.ephemeral, data.vector;
+   interpret_destroy();
 }
