@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h> 
 #include <cmath>    
-#include <ctime>
 #include "util/CmdLineParser.h"
 #include "pee.h"
 #include "pep.h"
@@ -43,7 +42,7 @@ int read( const char* dataset, double**& input, double**& model, double*& obs, i
          //fprintf(stdout,"%lf\n",input[i][j]);
          if( fscanf(arqentra,"%lf,",&input[i][j]) != 1 || isnan(input[i][j]) || isinf(input[i][j]) )
          {
-            fprintf(stderr, "Invalid input.\n");
+            fprintf(stderr, "Invalid input at line %d and column %d.\n", i, j);
             return 2;
          }
       }
@@ -53,7 +52,7 @@ int read( const char* dataset, double**& input, double**& model, double*& obs, i
          {
             if( fscanf(arqentra,"%lf%*[^\n]",&model[i][j]) != 1 || isnan(model[i][j]) || isinf(model[i][j]) )
             {
-               fprintf(stderr, "Invalid model.\n");
+               fprintf(stderr, "Invalid model at line %d and column %d.\n", i, j);
                return 2;
             }
          }
@@ -61,7 +60,7 @@ int read( const char* dataset, double**& input, double**& model, double*& obs, i
          {
             if( fscanf(arqentra,"%lf,",&model[i][j]) != 1 || isnan(model[i][j]) || isinf(model[i][j]) )
             {
-               fprintf(stderr, "Invalid model.\n");
+               fprintf(stderr, "Invalid model at line %d and column %d.\n", i, j);
                return 2;
             }
          }
@@ -70,7 +69,7 @@ int read( const char* dataset, double**& input, double**& model, double*& obs, i
       {
          if( fscanf(arqentra,"%lf",&obs[i]) != 1 || isnan(obs[i]) || isinf(obs[i]) )
             {
-               fprintf(stderr, "Invalid observation.\n");
+               fprintf(stderr, "Invalid observation at line %d.\n", i);
                return 2;
             }
       }
@@ -115,7 +114,8 @@ int main(int argc, char **argv)
    double** model;
    double* obs;
 
-   if( read( dataset, input, model, obs, ninput, nmodel, nlin, Opts.Bool.Get("-pred") ) ) {return 0;}
+   int error = read( dataset, input, model, obs, ninput, nmodel, nlin, Opts.Bool.Get("-pred") );
+   if ( error ) {return error;}
 
    if( Opts.String.Found("-run") )
    {
@@ -126,7 +126,6 @@ int main(int argc, char **argv)
    }
    else
    {
-      srand( time(NULL) );
       pee_init( input, model, obs, nlin, argc, argv );
       pee_evolve();
       pee_print_best( stdout, 1 );

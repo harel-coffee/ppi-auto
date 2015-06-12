@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <cmath>    
 #include <limits>
+#include <ctime>
 #include "util/CmdLineParser.h"
 #include "interpreter/cpu.h"
 #include "pee.h"
@@ -468,6 +469,8 @@ void pee_print_best( FILE* out, int mode )
 
 void pee_evolve()
 {
+   srand( time(NULL) );
+
    Individual* population_a = new Individual[data.population_size];
    Individual* population_b = new Individual[data.population_size];
 
