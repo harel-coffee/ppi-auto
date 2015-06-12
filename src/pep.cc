@@ -78,12 +78,12 @@ void pep_interpret()
 {
    if( data.prediction )
    {
-      data.vector = new double[data.nlin+4];
+      data.vector = new double[data.nlin];
       interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
    }
    else
    {
-      data.vector = new double[4];
+      data.vector = new double[1];
       interpret( data.phenotype, data.ephemeral, data.size, data.vector, 0 );
    }
 }
@@ -94,10 +94,9 @@ void pep_print( FILE* out )
    {
       for( int i = 0; i < data.nlin; ++i )
          fprintf( out, "%.12f\n", data.vector[i] );
-      fprintf( out, "%.12f,%.12f,%.12f,%.12f\n", data.vector[data.nlin], data.vector[data.nlin+1], data.vector[data.nlin+2], data.vector[data.nlin+3] );
    }
    else
-      fprintf( out, "%.12f,%.12f,%.12f,%.12f\n", data.vector[0], data.vector[1], data.vector[2], data.vector[3] );
+      fprintf( out, "%.12f\n", data.vector[0] );
 }
 
 void pep_destroy() 

@@ -176,7 +176,7 @@ void pee_evaluate( Individual* individual )
    int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, data.initial_symbol );
    if( !size ) {individual->fitness = std::numeric_limits<float>::max(); return;}
 
-   double erro[4];
+   double erro[0];
    interpret( phenotype, ephemeral, size, erro, 0 );
    individual->fitness = erro[0] + 0.00001*size; 
 

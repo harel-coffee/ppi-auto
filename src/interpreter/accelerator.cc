@@ -3,7 +3,7 @@
 #define __CL_ENABLE_EXCEPTIONS
 
 // Cabeçalho OpenCL para C++
-#include <cl.hpp>
+#include "CL/cl.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>  // usar a função 'printf'
