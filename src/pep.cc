@@ -71,7 +71,7 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
 
    data.nlin = nlin;
 
-   interpret_init( data.size, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
+   interpret_init( data.size, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), Opts.Bool.Get("-pred") );
 }
 
 void pep_interpret()

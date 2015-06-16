@@ -16,7 +16,7 @@ static struct t_data { double** input; double** model; double* obs; unsigned siz
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel ) 
+void interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel, int mode ) 
 {
    data.size = size;
    data.nlin = nlin;

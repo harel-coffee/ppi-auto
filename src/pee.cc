@@ -157,7 +157,7 @@ void pee_init( double** input, double** model, double* obs, int nlin, int argc, 
    data.max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * data.number_of_bits/data.bits_per_gene;
    data.nlin = nlin;
 
-   interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
+   interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), 0 );
 }
 
 void pee_clone( const Individual* original, Individual* copy )
