@@ -3,7 +3,7 @@
 #define __CL_ENABLE_EXCEPTIONS
 
 // Cabeçalho OpenCL para C++
-#include "CL/cl.hpp"
+#include <CL/cl.hpp>
 
 #include <stdlib.h>
 #include <stdio.h>
