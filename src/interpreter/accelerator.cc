@@ -1,4 +1,3 @@
-//g++ -c accelerator.cc -lOpenCL -I.
 // ------------------------------------------------------------------------
 // Habilita disparar exceções C++
 #define __CL_ENABLE_EXCEPTIONS
@@ -15,14 +14,13 @@
 #include <iostream> 
 #include "accelerator.h"
 
-
 using namespace std;
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int nlin; int local_size; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_vector; } data;
+static struct t_data { int nlin; int local_size; cl::Context context; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
 
 
 /** ****************************************************************** **/
@@ -246,26 +244,11 @@ const char* kernel_str  =
 void interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel, int mode )
 {
    data.nlin = nlin;
-
    int ncol = ninput + nmodel + 1;
-   double* inputs   = new double[nlin * ncol];
-
-   for( int i = 0; i < nlin; i++ )
-   {
-      for( int j = 0; j < ninput; j++ )
-      {
-         inputs[j * ncol + i] = input[i][j];
-      }
-      for( int j = ninput; j < (nmodel + ninput); j++ )
-      {
-         inputs[j * ncol + i] = model[i][j];
-      }
-      inputs[(nmodel + ninput) * ncol + i] = obs[i];
-   }
-
-   int tipo = CL_DEVICE_TYPE_GPU;//cl::device
 
    data.local_size = 128;
+
+   int tipo = CL_DEVICE_TYPE_GPU;
 
    // Descobrir e escolher as plataformas
    vector<cl::Platform> plataformas;
@@ -286,14 +269,34 @@ void interpret_init( const unsigned size, double** input, double** model, double
    }
 
    // Criar o contexto
-   cl::Context contexto( dispositivo );
+   data.context = cl::Context( dispositivo );
 
    // Criar a fila de comandos para um dispositivo (aqui só o primeiro)
-   data.fila = cl::CommandQueue( contexto, dispositivo[0], CL_QUEUE_PROFILING_ENABLE );
+   data.fila = cl::CommandQueue( data.context, dispositivo[0], CL_QUEUE_PROFILING_ENABLE );
+
+   data.buffer_inputs = cl::Buffer( data.context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, nlin * ncol * sizeof( double ) );
+
+   double* inputs = (double*) data.fila.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_WRITE, 0, nlin * ncol * sizeof( double ) );
+
+   for( int i = 0; i < nlin; i++ )
+   {
+      for( int j = 0; j < ninput; j++ )
+      {
+         inputs[j * ncol + i] = input[i][j];
+      }
+      for( int j = ninput; j < (nmodel + ninput); j++ )
+      {
+         inputs[j * ncol + i] = model[i][j];
+      }
+      inputs[(nmodel + ninput) * ncol + i] = obs[i];
+   }
+
+   // Unmapping
+   data.fila.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
 
    // Carregar o programa, compilá-lo e gerar o kernel
    cl::Program::Sources fonte( 1, make_pair( kernel_str, strlen( kernel_str ) ) );
-   cl::Program programa( contexto, fonte );
+   cl::Program programa( data.context, fonte );
 
    // Compila para todos os dispositivos associados a 'programa' através do
    // 'contexto': vector<cl::Device>() é um vetor nulo
@@ -310,22 +313,19 @@ void interpret_init( const unsigned size, double** input, double** model, double
    data.kernel = cl::Kernel( programa, "evaluate" );
 
    // 2) Preparação da memória dos dispositivos (leitura e escrita}
-   data.buffer_phenotype = cl::Buffer( contexto, CL_MEM_READ_ONLY, size * sizeof( Symbol ) );
-   data.buffer_ephemeral = cl::Buffer( contexto, CL_MEM_READ_ONLY, size * sizeof( double ) );
-   cl::Buffer buffer_inputs( contexto, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, nlin * ncol * sizeof( double ), inputs, NULL );
-   if( mode ) {data.buffer_vector = cl::Buffer( contexto, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data.nlin * sizeof( double ) );}
-   else {data.buffer_vector = cl::Buffer( contexto, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data.nlin / data.local_size * sizeof( double ) );}
+   data.buffer_phenotype = cl::Buffer( data.context, CL_MEM_READ_ONLY, size * sizeof( Symbol ) );
+   data.buffer_ephemeral = cl::Buffer( data.context, CL_MEM_READ_ONLY, size * sizeof( double ) );
+   if( mode ) {data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data.nlin * sizeof( double ) );}
+   else {data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data.nlin / data.local_size * sizeof( double ) );} // TODO: check the division (potential rounding error there) and operator precedence
 
    // Execução do kernel: definição dos argumentos e trabalho/particionamento
    data.kernel.setArg( 0, data.buffer_phenotype );
    data.kernel.setArg( 1, data.buffer_ephemeral );
-   data.kernel.setArg( 2, buffer_inputs );
+   data.kernel.setArg( 2, data.buffer_inputs );
    data.kernel.setArg( 3, data.buffer_vector );
    data.kernel.setArg( 4, sizeof( double ) * data.local_size, NULL );
    data.kernel.setArg( 5, nlin );
    data.kernel.setArg( 6, mode );
-
-   delete[] inputs;
 }
 
 void interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, int mode )
@@ -347,6 +347,10 @@ void interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, 
       double* tmp = (double*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, data.nlin/data.local_size * sizeof( double ) );
       double sum = 0.0;
       for( int i = 0; i < (data.nlin/data.local_size); i++ ) {sum += tmp[i];}
+
+      // Unmapping
+      data.fila.enqueueUnmapMemObject( data.buffer_vector, tmp ); 
+
       if( isnan( sum ) || isinf( sum ) ) {vector[0] = std::numeric_limits<float>::max();}
       else {vector[0] = sum/(data.nlin/data.local_size);}
    }
