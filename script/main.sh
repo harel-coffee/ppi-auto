@@ -35,9 +35,10 @@ fi
 #$home/build/main -d $TMPTRAINING -ni $natr -nm $nmod -run $home/solution
 
 #$home/build/main -d $file -ni $natr -nm $nmod -v -e  
-$home/build/main -d $file -ni $natr -nm $nmod 1> $home/solution
-$home/build/main -d $file -ni $natr -nm $nmod -run $home/solution
-$home/build/main -d $file -pred -ni $natr -nm $nmod -run $home/solution
+$home/build/main -d $file -ni $natr -nm $nmod -type CPU
+# 1> $home/solution
+#$home/build/main -d $file -ni $natr -nm $nmod -run $home/solution -type SEQ
+#$home/build/main -d $file -pred -ni $natr -nm $nmod -run $home/solution -type SEQ
 
 rm $TMPTEST $TMPTRAINING 
 rm $arquivo

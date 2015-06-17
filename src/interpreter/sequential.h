@@ -1,7 +1,7 @@
 /** TAD: INTERPRET **/
 
-#ifndef cpu_h
-#define cpu_h
+#ifndef sequential_h
+#define sequential_h
 
 #include "../symbol"
 
@@ -11,20 +11,20 @@
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel, int mode );
+void seq_interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel );
 
 /** ************************************************************************************************** **/
 /** ************************************** Function interpret **************************************** **/
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, int mode );
+void seq_interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, int mode );
 
 /** ************************************************************************************************** **/
 /** ********************************** Function interpret_destroy ************************************ **/
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void interpret_destroy();
+void seq_interpret_destroy();
 
 #endif

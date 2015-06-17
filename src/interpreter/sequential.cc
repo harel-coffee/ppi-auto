@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <cmath>    
 #include <limits>
-#include "cpu.h"
+#include "sequential.h"
 
 
 /** ****************************************************************** **/
@@ -16,7 +16,7 @@ static struct t_data { double** input; double** model; double* obs; unsigned siz
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel, int mode ) 
+void seq_interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel ) 
 {
    data.size = size;
    data.nlin = nlin;
@@ -43,7 +43,7 @@ void interpret_init( const unsigned size, double** input, double** model, double
    }
 }
 
-void interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, int mode )
+void seq_interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, int mode )
 {
    double pilha[data.size]; 
    double sum = 0.0; 
@@ -237,7 +237,7 @@ void interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, 
    }
 }
 
-void interpret_destroy() 
+void seq_interpret_destroy() 
 {
    delete[] data.obs;
 

@@ -1,4 +1,4 @@
-#add_library(interpreter cpu.cc)
+#add_library(interpreter sequential.cc)
 
 # This CMakeLists was designed to work with the policies of cmake 2.8.1
 CMAKE_POLICY( VERSION 2.8.1 )
@@ -33,7 +33,7 @@ ENDIF( NOT OPENCL_HAS_CPP_BINDINGS )
 
 # Link the executable to the GP and OpenCL library.
 #TARGET_LINK_LIBRARIES( gpocl Util ${OPENCL_LIBRARIES} )
-add_library(interpreter cpu.cc accelerator.cc)
+add_library(interpreter sequential.cc accelerator.cc)
 
 # Copy to the binary directory all the individual OpenCL kernels (they are compiled on-the-fly)
 #configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/kernels/common.cl ${CMAKE_BINARY_DIR}/kernels/common.cl COPYONLY)

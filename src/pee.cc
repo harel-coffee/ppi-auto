@@ -15,8 +15,9 @@
 #include <cmath>    
 #include <limits>
 #include <ctime>
+#include <string>   
 #include "util/CmdLineParser.h"
-#include "interpreter/cpu.h"
+#include "interpreter/interpreter.h"
 #include "pee.h"
 #include "grammar"
 
@@ -27,7 +28,7 @@
 
 struct Individual { int* genome; double fitness; };
 
-static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; double mutation_rate; double crossover_rate; double interval[2]; } data;
+static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; double mutation_rate; double crossover_rate; double interval[2]; const char* type; } data;
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -124,6 +125,7 @@ void pee_init( double** input, double** model, double* obs, int nlin, int argc, 
    Opts.Float.Add( "-c", "--crossover_rate", 0.95, 0, 1 );
    Opts.Float.Add( "-min", "--min_constant", 0 );
    Opts.Float.Add( "-max", "--max_constant", 300 );
+   Opts.String.Add( "-type" );
 
    // processing the command-line
    Opts.Process();
@@ -156,8 +158,16 @@ void pee_init( double** input, double** model, double* obs, int nlin, int argc, 
    data.best_individual.fitness = std::numeric_limits<float>::max();
    data.max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * data.number_of_bits/data.bits_per_gene;
    data.nlin = nlin;
+   data.type = Opts.String.Get("-type").c_str();
 
-   interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), 0 );
+   if( !strcmp(data.type,"SEQ") )
+   {
+      seq_interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
+   }
+   else
+   {
+      acc_interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), 0, data.type );
+   }
 }
 
 void pee_clone( const Individual* original, Individual* copy )
@@ -177,7 +187,14 @@ void pee_evaluate( Individual* individual )
    if( !size ) {individual->fitness = std::numeric_limits<float>::max(); return;}
 
    double erro[0];
-   interpret( phenotype, ephemeral, size, erro, 0 );
+   if( !strcmp(data.type,"SEQ") )
+   {
+      seq_interpret( phenotype, ephemeral, size, erro, 0 );
+   }
+   else
+   {
+      acc_interpret( phenotype, ephemeral, size, erro, 0 );
+   }
    individual->fitness = erro[0] + 0.00001*size; 
 
    if( individual->fitness < data.best_individual.fitness )
@@ -538,5 +555,5 @@ void pee_evolve()
 void pee_destroy()
 {
    delete[] data.best_individual.genome;
-   interpret_destroy();
+   if( !strcmp(data.type,"SEQ") ) {seq_interpret_destroy();}
 }

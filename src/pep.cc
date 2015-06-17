@@ -13,8 +13,9 @@
 #include <stdio.h> 
 #include <stdlib.h>
 #include <cmath>    
+#include <string>   
 #include "util/CmdLineParser.h"
-#include "interpreter/cpu.h"
+#include "interpreter/interpreter.h"
 #include "pep.h"
 
 
@@ -22,7 +23,7 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int nlin; Symbol* phenotype; double* ephemeral; unsigned size; double* vector; int prediction; } data;
+static struct t_data { int nlin; Symbol* phenotype; double* ephemeral; unsigned size; double* vector; int prediction; const char* type; } data;
 
 
 /** ****************************************************************** **/
@@ -34,6 +35,7 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
    CmdLine::Parser Opts( argc, argv );
 
    Opts.String.Add( "-run", "--program_file" );
+   Opts.String.Add( "-type" );
    Opts.Bool.Add( "-pred", "--prediction" );
    Opts.Int.Add( "-ni", "--number_of_inputs" );
    Opts.Int.Add( "-nm", "--number_of_models" );
@@ -49,6 +51,7 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
    }
    
    data.prediction = Opts.Bool.Get("-pred");
+   data.type = Opts.String.Get("-type").c_str();
 
    fscanf(arqentra,"%d",&data.size);
    //fprintf(stdout,"%d\n",data.size);
@@ -71,7 +74,14 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
 
    data.nlin = nlin;
 
-   interpret_init( data.size, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), Opts.Bool.Get("-pred") );
+   if( !strcmp(data.type,"SEQ") )
+   {
+      seq_interpret_init( data.size, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
+   }
+   else
+   {
+      acc_interpret_init( data.size, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), data.prediction, data.type );
+   }
 }
 
 void pep_interpret()
@@ -79,12 +89,26 @@ void pep_interpret()
    if( data.prediction )
    {
       data.vector = new double[data.nlin];
-      interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
+      if( !strcmp(data.type,"SEQ") )
+      {
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
+      }
+      else
+      {
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
+      }
    }
    else
    {
       data.vector = new double[1];
-      interpret( data.phenotype, data.ephemeral, data.size, data.vector, 0 );
+      if( !strcmp(data.type,"SEQ") )
+      {
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 0 );
+      }
+      else
+      {
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 0 );
+      }
    }
 }
 
@@ -102,5 +126,5 @@ void pep_print( FILE* out )
 void pep_destroy() 
 {
    delete[] data.phenotype, data.ephemeral, data.vector;
-   interpret_destroy();
+   if( !strcmp(data.type,"SEQ") ) {seq_interpret_destroy();}
 }
