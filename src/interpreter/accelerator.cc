@@ -29,7 +29,7 @@ static struct t_data { int nlin; int local_size; cl::Context context; cl::Kernel
 /** ****************************************************************** **/
 
 const char* kernel_str  = 
-   "enum Symbol { NT_IF_THEN_ELSE_INICIAL, NT_LOGICO, NT_LOG_OP, NT_RELACIONAL, NT_REL_OP, NT_ENSEMBLE, NT_BIN_OP, NT_UN_OP, NT_ATRIBUTO, NT_INDICE, NT_PAD, NT_CONST_NUMERICO, NT_MODELO, T_IF_THEN_ELSE = TERMINAL_MIN, T_AND, T_OR, T_NOT, T_MAIOR, T_MENOR, T_IGUAL, T_ADD, T_SUB, T_MULT, T_DIV, T_MEAN, T_MAX, T_MIN, T_ABS, T_SQRT, T_POW2, T_POW3, T_NEG, T_EFEMERO, T_PAD, T_1, T_2, T_3, T_4, T_BMA, T_CHUVA_ONTEM, T_CHUVA_ANTEONTEM, T_MEAN_MODELO, T_MAX_MODELO, T_MIN_MODELO, T_STD_MODELO, T_CHUVA_LAG1P, T_CHUVA_LAG1N, T_CHUVA_LAG2P, T_CHUVA_LAG2N, T_CHUVA_LAG3P, T_CHUVA_LAG3N, T_CHUVA_PADRAO, T_CHUVA_HISTORICA, T_K, T_TT, T_SWEAT, T_CHOVE, T_PADRAO_MUDA, T_PERTINENCIA, T_MOD1, T_MOD2, T_MOD3, T_MOD4, T_MOD5, T_MOD6, T_MOD7, T_MOD8 }; "
+   "typedef enum { NT_IF_THEN_ELSE_INICIAL, NT_LOGICO, NT_LOG_OP, NT_RELACIONAL, NT_REL_OP, NT_ENSEMBLE, NT_BIN_OP, NT_UN_OP, NT_ATRIBUTO, NT_INDICE, NT_PAD, NT_CONST_NUMERICO, NT_MODELO, T_IF_THEN_ELSE = TERMINAL_MIN, T_AND, T_OR, T_NOT, T_MAIOR, T_MENOR, T_IGUAL, T_ADD, T_SUB, T_MULT, T_DIV, T_MEAN, T_MAX, T_MIN, T_ABS, T_SQRT, T_POW2, T_POW3, T_NEG, T_EFEMERO, T_PAD, T_1, T_2, T_3, T_4, T_BMA, T_CHUVA_ONTEM, T_CHUVA_ANTEONTEM, T_MEAN_MODELO, T_MAX_MODELO, T_MIN_MODELO, T_STD_MODELO, T_CHUVA_LAG1P, T_CHUVA_LAG1N, T_CHUVA_LAG2P, T_CHUVA_LAG2N, T_CHUVA_LAG3P, T_CHUVA_LAG3N, T_CHUVA_PADRAO, T_CHUVA_HISTORICA, T_K, T_TT, T_SWEAT, T_CHOVE, T_PADRAO_MUDA, T_PERTINENCIA, T_MOD1, T_MOD2, T_MOD3, T_MOD4, T_MOD5, T_MOD6, T_MOD7, T_MOD8 } Symbol; "
    "__kernel void "
    "evaluate( __global const Symbol* phenotype, __global const double* ephemeral, __global const double* inputs, __global double* vector, __local double* EP, int nlin, int ncol, int mode, int size ) "
    "{ "
@@ -106,10 +106,10 @@ const char* kernel_str  =
    "            pilha[topo] = sqrt(pilha[topo]); "
    "            break; "
    "         case T_POW2: "
-   "            pilha[topo] = pow(pilha[topo], 2); "
+   "            pilha[topo] = pilha[topo] * pilha[topo]; "
    "            break; "
    "         case T_POW3: "
-   "            pilha[topo] = pow(pilha[topo], 3); "
+   "            pilha[topo] = pilha[topo] * pilha[topo] * pilha[topo]; "
    "            break; "
    "         case T_NEG: "
    "            pilha[topo] = -pilha[topo]; "
@@ -247,9 +247,8 @@ void acc_interpret_init( const unsigned size, double** input, double** model, do
 {
    data.nlin = nlin;
    int ncol = ninput + nmodel + 1;
-   fprintf(stdout,"%d\n",TERMINAL_MIN);
 
-   data.local_size = 128;
+   data.local_size = 243;
 
    int acc;
    if( !strcmp(type,"CPU") ) {acc = CL_DEVICE_TYPE_CPU;}
@@ -318,25 +317,12 @@ void acc_interpret_init( const unsigned size, double** input, double** model, do
    try {
       programa.build( vector<cl::Device>(), buildOptions );
    } 
-    catch (cl::Error err)
-    {
-        std::cerr
-            << "ERROR: "
-            << err.what()
-            << "("
-            << err.err()
-            << ")"
-            << std::endl;
-    }
+   catch( cl::Error )
+   {
+     //cout << "Build Log:\t " << programa.getBuildInfo<CL_PROGRAM_BUILD_LOG>(dispositivo[0]) << std::endl;
+     cout << "Build Log:\t " << programa.getBuildInfo<CL_PROGRAM_BUILD_LOG>(dispositivos[0]) << std::endl;
+   }
 
-
-//   catch( cl::Error )
-//   {
-//     //cout << "Build Log:\t " << programa.getBuildInfo<CL_PROGRAM_BUILD_LOG>(dispositivo[0]) << std::endl;
-//     cout << "Build Log:\t " << programa.getBuildInfo<CL_PROGRAM_BUILD_LOG>(dispositivos[0]) << std::endl;
-//   }
-
-   fprintf(stdout,"Chegou!\n");
    // Cria a variável kernel que vai representar o kernel "avalia"
    data.kernel = cl::Kernel( programa, "evaluate" );
 
@@ -344,7 +330,7 @@ void acc_interpret_init( const unsigned size, double** input, double** model, do
    data.buffer_phenotype = cl::Buffer( data.context, CL_MEM_READ_ONLY, size * sizeof( Symbol ) );
    data.buffer_ephemeral = cl::Buffer( data.context, CL_MEM_READ_ONLY, size * sizeof( double ) );
    if( mode ) {data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data.nlin * sizeof( double ) );}
-   else {data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.nlin/data.local_size) * sizeof( double ) );} // TODO: check the division (potential rounding error there) and operator precedence
+   else {data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.nlin/data.local_size) * sizeof( double ) );} 
 
    // Execução do kernel: definição dos argumentos e trabalho/particionamento
    data.kernel.setArg( 0, data.buffer_phenotype );
@@ -360,12 +346,12 @@ void acc_interpret_init( const unsigned size, double** input, double** model, do
 void acc_interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, int mode )
 {
    // Transferência de dados para o dispositivo
-   data.fila.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, size * sizeof( Symbol ), phenotype, NULL );
-   data.fila.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, size * sizeof( double ), ephemeral, NULL ); 
+   data.fila.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, size * sizeof( Symbol ), phenotype );
+   data.fila.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, size * sizeof( double ), ephemeral ); 
 
    data.kernel.setArg( 8, size );
 
-   data.fila.enqueueNDRangeKernel( data.kernel, cl::NDRange(), cl::NDRange( data.nlin ), cl::NDRange( data.local_size ), NULL );
+   data.fila.enqueueNDRangeKernel( data.kernel, cl::NDRange(), cl::NDRange( data.nlin ), cl::NDRange( data.local_size ) );
   
    // Espera pela finalização da execução do kernel (forçar sincronia)
    data.fila.finish();
