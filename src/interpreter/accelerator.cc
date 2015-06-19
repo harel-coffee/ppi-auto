@@ -226,6 +226,8 @@ const char* kernel_str  =
    "            case T_EFEMERO: "
    "               pilha[++topo] = ephemeralLocal; "
    "               break; "
+   "            default: "
+   "               break; "
    "         } "
    "      } "
    "      if( !mode ) "
