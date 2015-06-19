@@ -177,29 +177,52 @@ void pee_clone( const Individual* original, Individual* copy )
    copy->fitness = original->fitness;
 }
 
-void pee_evaluate( Individual* individual )
+void pee_evaluate( Individual* individual, int nInd )
 {
-   Symbol phenotype[data.max_size_phenotype];
-   float  ephemeral[data.max_size_phenotype];
+//   Symbol phenotype[nInd][data.max_size_phenotype];
+//   float ephemeral[nInd][data.max_size_phenotype];
+   Symbol** phenotype = new Symbol*[nInd];
+   float**  ephemeral = new float*[nInd];
+   for( int i = 0; i < nInd; i++ )
+   {
+      phenotype[i] = new Symbol[data.max_size_phenotype];
+      ephemeral[i] = new float[data.max_size_phenotype];
+   }
+   int allele, size[nInd];
 
-   int allele = 0;
-   int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, data.initial_symbol );
-   if( !size ) {individual->fitness = std::numeric_limits<float>::max(); return;}
+   for( int i = 0; i < nInd; i++ )
+   {
+      allele = 0;
+      size[i] = decode( individual[i].genome, &allele, phenotype[i], ephemeral[i], 0, data.initial_symbol );
+      //if( !size ) {individual->fitness = std::numeric_limits<float>::max(); return;}
+   }
 
-   float erro[0];
+   
+   float** erro = new float*[0]; erro[0] = new float[nInd];
    if( !strcmp(data.type,"SEQ") )
    {
-      seq_interpret( phenotype, ephemeral, size, erro, 0 );
+      seq_interpret( phenotype, ephemeral, size, erro, nInd, 0 );
    }
-   else
-   {
-      acc_interpret( phenotype, ephemeral, size, erro, 0 );
-   }
-   individual->fitness = erro[0] + 0.00001*size; 
+//   else
+//   {
+//      acc_interpret( phenotype, ephemeral, size, erro, 0 );
+//   }
 
-   if( individual->fitness < data.best_individual.fitness )
+//   if ( nInd < 2 )
+//   for( int i = 0; i < nInd; i++ )
+//   {
+//      for( int j = 0; j < size[i]; j++ )
+//         fprintf(stdout,"%d ",phenotype[i][j]);
+//      fprintf(stdout,"\n");
+//   }
+
+   for( int i = 0; i < nInd; i++ )
    {
-      pee_clone( individual, &data.best_individual );
+      individual[i].fitness = erro[0][i] + 0.00001*size[i]; 
+      if( individual[i].fitness < data.best_individual.fitness )
+      {
+         pee_clone( &individual[i], &data.best_individual );
+      }
    }
 }
 
@@ -211,9 +234,8 @@ void pee_generate_population( Individual* population )
       {
          population[i].genome[j] = (random_number() < 0.5) ? 1 : 0;
       }
-      
-      pee_evaluate( &population[i] );
    }
+   pee_evaluate( population, data.population_size );
 }
 
 void pee_crossover( const int* father, const int* mother, int* offspring1, int* offspring2 )
@@ -532,8 +554,8 @@ void pee_evolve()
          pee_mutation( descendentes[i + 1].genome );
 
          // Avaliação dos novos indivíduos
-          pee_evaluate( &descendentes[i] );
-          pee_evaluate( &descendentes[i + 1] );
+          pee_evaluate( &descendentes[i], 1 );
+          pee_evaluate( &descendentes[i + 1], 1 );
       }
 
       // Elitismo

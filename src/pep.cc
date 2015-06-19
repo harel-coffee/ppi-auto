@@ -23,7 +23,7 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int nlin; Symbol* phenotype; float* ephemeral; unsigned size; float* vector; int prediction; const char* type; } data;
+static struct t_data { int nlin; Symbol** phenotype; float** ephemeral; int* size; float** vector; int prediction; const char* type; } data;
 
 
 /** ****************************************************************** **/
@@ -53,19 +53,19 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
    data.prediction = Opts.Bool.Get("-pred");
    data.type = Opts.String.Get("-type").c_str();
 
-   fscanf(arqentra,"%d",&data.size);
+   fscanf(arqentra,"%d",&data.size[0]);
    //fprintf(stdout,"%d\n",data.size);
 
-   data.phenotype = new Symbol[data.size];
-   data.ephemeral = new float[data.size];
+   data.phenotype = new Symbol*[1]; data.phenotype[0] = new Symbol[data.size[0]];
+   data.ephemeral = new float*[0]; data.ephemeral[0] = new float[data.size[0]];
 
-   for( int tmp, i = 0; i < data.size; ++i )
+   for( int tmp, i = 0; i < data.size[0]; ++i )
    {
-      fscanf(arqentra,"%d ",&tmp); data.phenotype[i] = (Symbol)tmp;
+      fscanf(arqentra,"%d ",&tmp); data.phenotype[0][i] = (Symbol)tmp;
       //fprintf(stdout,"%d ",data.phenotype[i]);
-      if( data.phenotype[i] == T_EFEMERO )
+      if( data.phenotype[0][i] == T_EFEMERO )
       {
-         fscanf(arqentra,"%f ",&data.ephemeral[i]);
+         fscanf(arqentra,"%f ",&data.ephemeral[0][i]);
          //fprintf(stdout,"%.12f ",data.ephemeral[i]);
       }
    }
@@ -76,51 +76,51 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
 
    if( !strcmp(data.type,"SEQ") )
    {
-      seq_interpret_init( data.size, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
+      seq_interpret_init( data.size[0], input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
    }
    else
    {
-      acc_interpret_init( data.size, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), data.prediction, data.type );
+      acc_interpret_init( data.size[0], input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), data.prediction, data.type );
    }
 }
 
 void pep_interpret()
 {
-   if( data.prediction )
-   {
-      data.vector = new float[data.nlin];
+//   if( data.prediction )
+//   {
+//      data.vector = new float[data.nlin];
+//      if( !strcmp(data.type,"SEQ") )
+//      {
+//         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
+//      }
+//      else
+//      {
+//         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
+//      }
+//   }
+//   else
+//   {
+      data.vector = new float*[1]; data.vector[0] = new float[1];
       if( !strcmp(data.type,"SEQ") )
       {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 0 );
       }
-      else
-      {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
-      }
-   }
-   else
-   {
-      data.vector = new float[1];
-      if( !strcmp(data.type,"SEQ") )
-      {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 0 );
-      }
-      else
-      {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 0 );
-      }
-   }
+//      else
+//      {
+//         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 0 );
+//      }
+//   }
 }
 
 void pep_print( FILE* out )
 {
-   if( data.prediction )
-   {
-      for( int i = 0; i < data.nlin; ++i )
-         fprintf( out, "%.12f\n", data.vector[i] );
-   }
-   else
-      fprintf( out, "%.12f\n", data.vector[0] );
+//   if( data.prediction )
+//   {
+//      for( int i = 0; i < data.nlin; ++i )
+//         fprintf( out, "%.12f\n", data.vector[i] );
+//   }
+//   else
+      fprintf( out, "%.12f\n", data.vector[0][0] );
 }
 
 void pep_destroy() 
