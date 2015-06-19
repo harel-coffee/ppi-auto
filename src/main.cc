@@ -10,7 +10,7 @@
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
 /** ****************************************************************** **/
 
-int read( const char* dataset, double**& input, double**& model, double*& obs, int ninput, int nmodel, int& nlin, int prediction )
+int read( const char* dataset, float**& input, float**& model, float*& obs, int ninput, int nmodel, int& nlin, int prediction )
 {
    char c;
    FILE *arqentra;
@@ -25,22 +25,22 @@ int read( const char* dataset, double**& input, double**& model, double*& obs, i
    while( (c = fgetc(arqentra)) != EOF )
        if ( c == '\n' ) {nlin++;}
 
-   input   = new double*[nlin];
+   input   = new float*[nlin];
    for( int i = 0; i < nlin; i++ )
-     input[i] = new double[ninput];
-   model   = new double*[nlin];
+     input[i] = new float[ninput];
+   model   = new float*[nlin];
    for( int i = 0; i < nlin; i++ )
-     model[i] = new double[nmodel];
-   obs   = new double[nlin]();
+     model[i] = new float[nmodel];
+   obs   = new float[nlin]();
 
    rewind(arqentra);
    for( int i = 0; i < nlin; i++ )
    {
       for( int j = 0; j < ninput; j++ )
       {
-         //fprintf(stdout,"%d ",fscanf(arqentra,"%lf,",&input[i][j]));
-         //fprintf(stdout,"%lf\n",input[i][j]);
-         if( fscanf(arqentra,"%lf,",&input[i][j]) != 1 || isnan(input[i][j]) || isinf(input[i][j]) )
+         //fprintf(stdout,"%d ",fscanf(arqentra,"%f,",&input[i][j]));
+         //fprintf(stdout,"%f\n",input[i][j]);
+         if( fscanf(arqentra,"%f,",&input[i][j]) != 1 || isnan(input[i][j]) || isinf(input[i][j]) )
          {
             fprintf(stderr, "Invalid input at line %d and column %d.\n", i, j);
             return 2;
@@ -50,7 +50,7 @@ int read( const char* dataset, double**& input, double**& model, double*& obs, i
       {
          if( prediction && j == (nmodel-1) )
          {
-            if( fscanf(arqentra,"%lf%*[^\n]",&model[i][j]) != 1 || isnan(model[i][j]) || isinf(model[i][j]) )
+            if( fscanf(arqentra,"%f%*[^\n]",&model[i][j]) != 1 || isnan(model[i][j]) || isinf(model[i][j]) )
             {
                fprintf(stderr, "Invalid model at line %d and column %d.\n", i, j);
                return 2;
@@ -58,7 +58,7 @@ int read( const char* dataset, double**& input, double**& model, double*& obs, i
          }
          else
          {
-            if( fscanf(arqentra,"%lf,",&model[i][j]) != 1 || isnan(model[i][j]) || isinf(model[i][j]) )
+            if( fscanf(arqentra,"%f,",&model[i][j]) != 1 || isnan(model[i][j]) || isinf(model[i][j]) )
             {
                fprintf(stderr, "Invalid model at line %d and column %d.\n", i, j);
                return 2;
@@ -67,7 +67,7 @@ int read( const char* dataset, double**& input, double**& model, double*& obs, i
       }
       if( !prediction )
       {
-         if( fscanf(arqentra,"%lf",&obs[i]) != 1 || isnan(obs[i]) || isinf(obs[i]) )
+         if( fscanf(arqentra,"%f",&obs[i]) != 1 || isnan(obs[i]) || isinf(obs[i]) )
             {
                fprintf(stderr, "Invalid observation at line %d.\n", i);
                return 2;
@@ -78,7 +78,7 @@ int read( const char* dataset, double**& input, double**& model, double*& obs, i
    return 0;
 }
 
-void destroy( double** input, double** model, double* obs, int nlin )
+void destroy( float** input, float** model, float* obs, int nlin )
 {
    delete[] obs;
 
@@ -110,9 +110,9 @@ int main(int argc, char **argv)
 
    
    int nlin;
-   double** input;
-   double** model;
-   double* obs;
+   float** input;
+   float** model;
+   float* obs;
 
    int error = read( dataset, input, model, obs, ninput, nmodel, nlin, Opts.Bool.Get("-pred") );
    if ( error ) {return error;}

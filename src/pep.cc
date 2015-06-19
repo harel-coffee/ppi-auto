@@ -23,14 +23,14 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int nlin; Symbol* phenotype; double* ephemeral; unsigned size; double* vector; int prediction; const char* type; } data;
+static struct t_data { int nlin; Symbol* phenotype; float* ephemeral; unsigned size; float* vector; int prediction; const char* type; } data;
 
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void pep_init( double** input, double** model, double* obs, int nlin, int argc, char **argv ) 
+void pep_init( float** input, float** model, float* obs, int nlin, int argc, char **argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
 
@@ -57,7 +57,7 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
    //fprintf(stdout,"%d\n",data.size);
 
    data.phenotype = new Symbol[data.size];
-   data.ephemeral = new double[data.size];
+   data.ephemeral = new float[data.size];
 
    for( int tmp, i = 0; i < data.size; ++i )
    {
@@ -65,7 +65,7 @@ void pep_init( double** input, double** model, double* obs, int nlin, int argc, 
       //fprintf(stdout,"%d ",data.phenotype[i]);
       if( data.phenotype[i] == T_EFEMERO )
       {
-         fscanf(arqentra,"%lf ",&data.ephemeral[i]);
+         fscanf(arqentra,"%f ",&data.ephemeral[i]);
          //fprintf(stdout,"%.12f ",data.ephemeral[i]);
       }
    }
@@ -88,7 +88,7 @@ void pep_interpret()
 {
    if( data.prediction )
    {
-      data.vector = new double[data.nlin];
+      data.vector = new float[data.nlin];
       if( !strcmp(data.type,"SEQ") )
       {
          seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
@@ -100,7 +100,7 @@ void pep_interpret()
    }
    else
    {
-      data.vector = new double[1];
+      data.vector = new float[1];
       if( !strcmp(data.type,"SEQ") )
       {
          seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 0 );

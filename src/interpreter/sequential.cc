@@ -9,25 +9,25 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { double** input; double** model; double* obs; unsigned size; int nlin; } data;
+static struct t_data { float** input; float** model; float* obs; unsigned size; int nlin; } data;
 
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void seq_interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel ) 
+void seq_interpret_init( const unsigned size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel ) 
 {
    data.size = size;
    data.nlin = nlin;
 
-   data.input = new double*[nlin];
+   data.input = new float*[nlin];
    for( int i = 0; i < nlin; i++ )
-     data.input[i] = new double[ninput];
-   data.model = new double*[nlin];
+     data.input[i] = new float[ninput];
+   data.model = new float*[nlin];
    for( int i = 0; i < nlin; i++ )
-     data.model[i] = new double[nmodel];
-   data.obs = new double[nlin];
+     data.model[i] = new float[nmodel];
+   data.obs = new float[nlin];
 
    for( int i = 0; i < nlin; i++ )
    {
@@ -43,10 +43,10 @@ void seq_interpret_init( const unsigned size, double** input, double** model, do
    }
 }
 
-void seq_interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, int mode )
+void seq_interpret( Symbol* phenotype, float* ephemeral, int size, float* vector, int mode )
 {
-   double pilha[data.size]; 
-   double sum = 0.0; 
+   float pilha[data.size]; 
+   float sum = 0.0; 
    int topo;
 
    for( int ponto = 0; ponto < data.nlin; ++ponto )

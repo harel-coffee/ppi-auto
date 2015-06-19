@@ -26,9 +26,9 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-struct Individual { int* genome; double fitness; };
+struct Individual { int* genome; float fitness; };
 
-static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; double mutation_rate; double crossover_rate; double interval[2]; const char* type; } data;
+static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; const char* type; } data;
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -36,7 +36,7 @@ static struct t_data { Symbol initial_symbol; Individual best_individual; unsign
 
 #define swap(i, j) {Individual* t = i; i = j; j = t;}
 
-double random_number() {return rand() / (RAND_MAX + 1.0);} // [0.0, 1.0)
+float random_number() {return rand() / (RAND_MAX + 1.0);} // [0.0, 1.0)
 
 t_rule* decode_rule( const int* genome, int* const allele, Symbol cabeca )
 {
@@ -56,13 +56,13 @@ t_rule* decode_rule( const int* genome, int* const allele, Symbol cabeca )
    return gramatica[cabeca][valor_bruto % num_regras];
 }
 
-double decode_real( const int* genome, int* const allele )
+float decode_real( const int* genome, int* const allele )
 {
    // Retorna a constante zero se não há número suficiente de bits
    if( *allele + data.bits_per_constant > data.number_of_bits ) { return 0.; }
 
    // Converte data.bits_per_constant bits em um valor real
-   double valor_bruto = 0.;
+   float valor_bruto = 0.;
    for( int i = 0; i < data.bits_per_constant; ++i ) 
       if( genome[(*allele)++] ) valor_bruto += pow( 2.0, i );
 
@@ -71,7 +71,7 @@ double decode_real( const int* genome, int* const allele )
           (pow( 2.0, data.bits_per_constant ) - 1);
 }
 
-int decode( const int* genome, int* const allele, Symbol* phenotype, double* ephemeral, int pos, Symbol initial_symbol )
+int decode( const int* genome, int* const allele, Symbol* phenotype, float* ephemeral, int pos, Symbol initial_symbol )
 {
    t_rule* r = decode_rule( genome, allele, initial_symbol ); 
    if( !r ) { return 0; }
@@ -107,7 +107,7 @@ int decode( const int* genome, int* const allele, Symbol* phenotype, double* eph
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void pee_init( double** input, double** model, double* obs, int nlin, int argc, char **argv ) 
+void pee_init( float** input, float** model, float* obs, int nlin, int argc, char **argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
 
@@ -180,13 +180,13 @@ void pee_clone( const Individual* original, Individual* copy )
 void pee_evaluate( Individual* individual )
 {
    Symbol phenotype[data.max_size_phenotype];
-   double  ephemeral[data.max_size_phenotype];
+   float  ephemeral[data.max_size_phenotype];
 
    int allele = 0;
    int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, data.initial_symbol );
    if( !size ) {individual->fitness = std::numeric_limits<float>::max(); return;}
 
-   double erro[0];
+   float erro[0];
    if( !strcmp(data.type,"SEQ") )
    {
       seq_interpret( phenotype, ephemeral, size, erro, 0 );
@@ -284,7 +284,7 @@ const Individual* pee_tournament( const Individual* population )
 void pee_individual_print( const Individual* individual, FILE* out, int mode )
 {
    Symbol phenotype[data.max_size_phenotype];
-   double ephemeral[data.max_size_phenotype];
+   float ephemeral[data.max_size_phenotype];
 
    int allele = 0;
    int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, data.initial_symbol );

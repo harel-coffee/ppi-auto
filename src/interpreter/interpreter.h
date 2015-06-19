@@ -11,14 +11,14 @@
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void seq_interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel );
+void seq_interpret_init( const unsigned size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel );
 
 /** ************************************************************************************************** **/
 /** ************************************ Function seq_interpret ************************************** **/
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void seq_interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, int mode );
+void seq_interpret( Symbol* phenotype, float* ephemeral, int size, float* vector, int mode );
 
 /** ************************************************************************************************** **/
 /** ************************************* Function seq_destroy *************************************** **/
@@ -32,14 +32,14 @@ void seq_interpret_destroy();
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void acc_interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel, int mode, const char* type );
+void acc_interpret_init( const unsigned size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel, int mode, const char* type );
 
 /** ************************************************************************************************** **/
 /** ************************************ Function acc_interpret ************************************** **/
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void acc_interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, int mode );
+void acc_interpret( Symbol* phenotype, float* ephemeral, int size, float* vector, int mode );
 
 
 #endif

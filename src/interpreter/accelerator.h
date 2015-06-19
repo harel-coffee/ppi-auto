@@ -11,13 +11,13 @@
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void acc_interpret_init( const unsigned size, double** input, double** model, double* obs, int nlin, int ninput, int nmodel, int mode, const char* type );
+void acc_interpret_init( const unsigned size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel, int mode, const char* type );
 
 /** ************************************************************************************************** **/
 /** ************************************** Function interpret **************************************** **/
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void acc_interpret( Symbol* phenotype, double* ephemeral, int size, double* vector, int mode );
+void acc_interpret( Symbol* phenotype, float* ephemeral, int size, float* vector, int mode );
 
 #endif
