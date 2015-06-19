@@ -310,17 +310,28 @@ void acc_interpret_init( const unsigned size, float** input, float** model, floa
    {
       for( int j = 0; j < ninput; j++ )
       {
-         inputs[j * ncol + i] = input[i][j];
+         inputs[i * ncol + j] = input[i][j];
       }
       for( int j = ninput; j < (nmodel + ninput); j++ )
       {
-         inputs[j * ncol + i] = model[i][j];
+         inputs[i * ncol + j] = model[i][j];
       }
-      inputs[(nmodel + ninput) * ncol + i] = obs[i];
+      inputs[i * ncol + (nmodel + ninput)] = obs[i];
    }
 
    // Unmapping
    data.fila.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
+
+//   ////////
+//   inputs = (float*) data.fila.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_READ, 0, nlin * ncol * sizeof( float ) );
+//   for( int i = 0; i < nlin*ncol; i++ )
+//   {
+//      if( i % nlin == 0 ) fprintf(stdout,"\n");
+//      fprintf(stdout,"%f,", inputs[i]);
+//   }
+//   // Unmapping
+//   data.fila.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
+   ////////
 
    // Carregar o programa, compilá-lo e gerar o kernel
    cl::Program::Sources fonte( 1, make_pair( kernel_str, strlen( kernel_str ) ) );
@@ -383,7 +394,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int size, float* vector
       data.fila.enqueueUnmapMemObject( data.buffer_vector, tmp ); 
 
       if( isnan( sum ) || isinf( sum ) ) {vector[0] = std::numeric_limits<float>::max();}
-      else {vector[0] = sum/(data.global_size/data.local_size);}
+      else {vector[0] = sum/data.nlin;}
    }
    else
    {
