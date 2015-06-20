@@ -35,7 +35,7 @@ fi
 #$home/build/main -d $TMPTRAINING -ni $natr -nm $nmod -run $home/solution
 
 #$home/build/main -d $file -ni $natr -nm $nmod -v -e  
-$home/build/main -v -d $file -ni $natr -nm $nmod -type SEQ
+cd $home/build; ./main -v -d $file -ni $natr -nm $nmod -type CPU; cd -
 # 1> $home/solution
 #$home/build/main -d $file -ni $natr -nm $nmod -run $home/solution -type SEQ
 #$home/build/main -d $file -pred -ni $natr -nm $nmod -run $home/solution -type GPU

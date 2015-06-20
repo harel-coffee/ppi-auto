@@ -219,4 +219,4 @@ evaluate( __global const Symbol* phenotype, __global const float* ephemeral, __g
       }
       if( lo_id == 0) { vector[gr_id] = EP[0]; }
    }
-};
+}
