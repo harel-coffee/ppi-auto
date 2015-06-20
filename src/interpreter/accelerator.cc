@@ -367,8 +367,9 @@ void acc_interpret_init( const unsigned size, float** input, float** model, floa
    try {
       programa.build( dispositivo, buildOptions );
    }
-   catch( cl::Error )
+   catch( cl::Error e )
    {
+     cerr << "ERROR: " << e.what() << " ( " << e.err() << " )\n";
      cout << "Build Log:\t " << programa.getBuildInfo<CL_PROGRAM_BUILD_LOG>(dispositivo[0]) << std::endl;
    }
 
