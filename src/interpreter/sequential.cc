@@ -43,7 +43,7 @@ void seq_interpret_init( const unsigned size, float** input, float** model, floa
    }
 }
 
-void seq_interpret( Symbol** phenotype, float** ephemeral, int* size, float** vector, int nInd, int mode )
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int mode )
 {
    float pilha[data.size]; 
    float sum; 
@@ -55,9 +55,9 @@ void seq_interpret( Symbol** phenotype, float** ephemeral, int* size, float** ve
       for( int ponto = 0; ponto < data.nlin; ++ponto )
       {
          topo = -1;
-         for( int i = size[i] - 1; i >= 0; --i )
+         for( int i = size[ind] - 1; i >= 0; --i )
          {
-            switch( phenotype[ind][i] )
+            switch( phenotype[ind * data.size + i] )
             {
                case T_IF_THEN_ELSE:
                   if( pilha[topo] == 1.0 ) { --topo; }
@@ -225,17 +225,17 @@ void seq_interpret( Symbol** phenotype, float** ephemeral, int* size, float** ve
                   pilha[++topo] = 4;
                   break;
                case T_EFEMERO:
-                  pilha[++topo] = ephemeral[ind][i];
+                  pilha[++topo] = ephemeral[ind * data.size + i];
                   break;
             }
          }
-         if( mode ) {vector[0][ponto] = pilha[topo];}
+         if( mode ) {vector[ponto] = pilha[topo];}
          else {sum += fabs(pilha[topo] - data.obs[ponto]);}
       }
       if ( !mode )
       {
-         if( isnan( sum ) || isinf( sum ) ) {vector[0][ind] = std::numeric_limits<float>::max();}
-         else {vector[0][ind] = sum/data.nlin;}
+         if( isnan( sum ) || isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
+         else {vector[ind] = sum/data.nlin;}
       }
    }
 }

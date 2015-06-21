@@ -28,7 +28,7 @@
 
 struct Individual { int* genome; float fitness; };
 
-static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; const char* type; } data;
+static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; const char* type; } data;
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -158,16 +158,20 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    data.best_individual.fitness = std::numeric_limits<float>::max();
    data.max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * data.number_of_bits/data.bits_per_gene;
    data.nlin = nlin;
+   data.phenotype = new Symbol[data.population_size * data.max_size_phenotype];
+   data.ephemeral = new float[data.population_size * data.max_size_phenotype];
+   data.size = new int[data.population_size];
+   data.error = new float[data.population_size];
    data.type = Opts.String.Get("-type").c_str();
 
    if( !strcmp(data.type,"SEQ") )
    {
       seq_interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
    }
-   else
-   {
-      acc_interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), 0, data.type );
-   }
+//   else
+//   {
+//      acc_interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), 0, data.type );
+//   }
 }
 
 void pee_clone( const Individual* original, Individual* copy )
@@ -179,33 +183,21 @@ void pee_clone( const Individual* original, Individual* copy )
 
 void pee_evaluate( Individual* individual, int nInd )
 {
-//   Symbol phenotype[nInd][data.max_size_phenotype];
-//   float ephemeral[nInd][data.max_size_phenotype];
-   Symbol** phenotype = new Symbol*[nInd];
-   float**  ephemeral = new float*[nInd];
-   for( int i = 0; i < nInd; i++ )
-   {
-      phenotype[i] = new Symbol[data.max_size_phenotype];
-      ephemeral[i] = new float[data.max_size_phenotype];
-   }
-   int allele, size[nInd];
-
+   int allele;
    for( int i = 0; i < nInd; i++ )
    {
       allele = 0;
-      size[i] = decode( individual[i].genome, &allele, phenotype[i], ephemeral[i], 0, data.initial_symbol );
+      data.size[i] = decode( individual[i].genome, &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
       //if( !size ) {individual->fitness = std::numeric_limits<float>::max(); return;}
    }
-
    
-   float** erro = new float*[0]; erro[0] = new float[nInd];
    if( !strcmp(data.type,"SEQ") )
    {
-      seq_interpret( phenotype, ephemeral, size, erro, nInd, 0 );
+      seq_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
    }
 //   else
 //   {
-//      acc_interpret( phenotype, ephemeral, size, erro, 0 );
+//      acc_interpret( phenotype, ephemeral, size, error, 0 );
 //   }
 
 //   if ( nInd < 2 )
@@ -215,10 +207,17 @@ void pee_evaluate( Individual* individual, int nInd )
 //         fprintf(stdout,"%d ",phenotype[i][j]);
 //      fprintf(stdout,"\n");
 //   }
+//
+//   if ( nInd < 2 )
+//   for( int i = 0; i < nInd; i++ )
+//   {
+//      fprintf(stdout,"%f ",error[i]);
+//   }
+//   fprintf(stdout,"\n");
 
    for( int i = 0; i < nInd; i++ )
    {
-      individual[i].fitness = erro[0][i] + 0.00001*size[i]; 
+      individual[i].fitness = data.error[i] + 0.00001*data.size[i]; 
       if( individual[i].fitness < data.best_individual.fitness )
       {
          pee_clone( &individual[i], &data.best_individual );
@@ -576,6 +575,6 @@ void pee_evolve()
 
 void pee_destroy()
 {
-   delete[] data.best_individual.genome;
+   delete[] data.best_individual.genome, data.phenotype, data.ephemeral, data.size, data.error;
    if( !strcmp(data.type,"SEQ") ) {seq_interpret_destroy();}
 }

@@ -23,7 +23,7 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int nlin; Symbol** phenotype; float** ephemeral; int* size; float** vector; int prediction; const char* type; } data;
+static struct t_data { int nlin; Symbol* phenotype; float* ephemeral; int* size; float* vector; int prediction; const char* type; } data;
 
 
 /** ****************************************************************** **/
@@ -53,19 +53,20 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
    data.prediction = Opts.Bool.Get("-pred");
    data.type = Opts.String.Get("-type").c_str();
 
+   data.size = new int[1];
    fscanf(arqentra,"%d",&data.size[0]);
-   //fprintf(stdout,"%d\n",data.size);
+   //fprintf(stdout,"%d\n",data.size[0]);
 
-   data.phenotype = new Symbol*[1]; data.phenotype[0] = new Symbol[data.size[0]];
-   data.ephemeral = new float*[0]; data.ephemeral[0] = new float[data.size[0]];
+   data.phenotype = new Symbol[data.size[0]];
+   data.ephemeral = new float[data.size[0]];
 
    for( int tmp, i = 0; i < data.size[0]; ++i )
    {
-      fscanf(arqentra,"%d ",&tmp); data.phenotype[0][i] = (Symbol)tmp;
+      fscanf(arqentra,"%d ",&tmp); data.phenotype[i] = (Symbol)tmp;
       //fprintf(stdout,"%d ",data.phenotype[i]);
-      if( data.phenotype[0][i] == T_EFEMERO )
+      if( data.phenotype[i] == T_EFEMERO )
       {
-         fscanf(arqentra,"%f ",&data.ephemeral[0][i]);
+         fscanf(arqentra,"%f ",&data.ephemeral[i]);
          //fprintf(stdout,"%.12f ",data.ephemeral[i]);
       }
    }
@@ -78,10 +79,10 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
    {
       seq_interpret_init( data.size[0], input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
    }
-   else
-   {
-      acc_interpret_init( data.size[0], input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), data.prediction, data.type );
-   }
+//   else
+//   {
+//      acc_interpret_init( data.size[0], input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), data.prediction, data.type );
+//   }
 }
 
 void pep_interpret()
@@ -100,7 +101,7 @@ void pep_interpret()
 //   }
 //   else
 //   {
-      data.vector = new float*[1]; data.vector[0] = new float[1];
+      data.vector = new float[1];
       if( !strcmp(data.type,"SEQ") )
       {
          seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 0 );
@@ -120,11 +121,11 @@ void pep_print( FILE* out )
 //         fprintf( out, "%.12f\n", data.vector[i] );
 //   }
 //   else
-      fprintf( out, "%.12f\n", data.vector[0][0] );
+      fprintf( out, "%.12f\n", data.vector[0] );
 }
 
 void pep_destroy() 
 {
-   delete[] data.phenotype, data.ephemeral, data.vector;
+   delete[] data.phenotype, data.ephemeral, data.size, data.vector;
    if( !strcmp(data.type,"SEQ") ) {seq_interpret_destroy();}
 }

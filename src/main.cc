@@ -117,20 +117,20 @@ int main(int argc, char **argv)
    int error = read( dataset, input, model, obs, ninput, nmodel, nlin, Opts.Bool.Get("-pred") );
    if ( error ) {return error;}
 
-   if( Opts.String.Found("-run") )
-   {
-      pep_init( input, model, obs, nlin, argc, argv );
-      pep_interpret();
-      pep_print( stdout );
-      pep_destroy();
-   }
-   else
-   {
+//   if( Opts.String.Found("-run") )
+//   {
+//      pep_init( input, model, obs, nlin, argc, argv );
+//      pep_interpret();
+//      pep_print( stdout );
+//      pep_destroy();
+//   }
+//   else
+//   {
       pee_init( input, model, obs, nlin, argc, argv );
       pee_evolve();
       pee_print_best( stdout, 1 );
       pee_destroy();
-   }
+//   }
   
    destroy(input, model, obs, nlin);
 
