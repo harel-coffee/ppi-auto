@@ -79,48 +79,48 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
    {
       seq_interpret_init( data.size[0], input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
    }
-//   else
-//   {
-//      acc_interpret_init( data.size[0], input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), data.prediction, data.type );
-//   }
+   else
+   {
+      acc_interpret_init( data.size[0], 1, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), data.prediction, data.type );
+   }
 }
 
 void pep_interpret()
 {
-//   if( data.prediction )
-//   {
-//      data.vector = new float[data.nlin];
-//      if( !strcmp(data.type,"SEQ") )
-//      {
-//         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
-//      }
-//      else
-//      {
-//         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1 );
-//      }
-//   }
-//   else
-//   {
+   if( data.prediction )
+   {
+      data.vector = new float[data.nlin];
+      if( !strcmp(data.type,"SEQ") )
+      {
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 1 );
+      }
+      else
+      {
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 1 );
+      }
+   }
+   else
+   {
       data.vector = new float[1];
       if( !strcmp(data.type,"SEQ") )
       {
          seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 0 );
       }
-//      else
-//      {
-//         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 0 );
-//      }
-//   }
+      else
+      {
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 0 );
+      }
+   }
 }
 
 void pep_print( FILE* out )
 {
-//   if( data.prediction )
-//   {
-//      for( int i = 0; i < data.nlin; ++i )
-//         fprintf( out, "%.12f\n", data.vector[i] );
-//   }
-//   else
+   if( data.prediction )
+   {
+      for( int i = 0; i < data.nlin; ++i )
+         fprintf( out, "%.12f\n", data.vector[i] );
+   }
+   else
       fprintf( out, "%.12f\n", data.vector[0] );
 }
 

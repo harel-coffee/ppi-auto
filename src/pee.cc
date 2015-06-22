@@ -168,10 +168,10 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    {
       seq_interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
    }
-//   else
-//   {
-//      acc_interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), 0, data.type );
-//   }
+   else
+   {
+      acc_interpret_init( data.max_size_phenotype, data.population_size, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), 0, data.type );
+   }
 }
 
 void pee_clone( const Individual* original, Individual* copy )
@@ -188,32 +188,16 @@ void pee_evaluate( Individual* individual, int nInd )
    {
       allele = 0;
       data.size[i] = decode( individual[i].genome, &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
-      //if( !size ) {individual->fitness = std::numeric_limits<float>::max(); return;}
    }
    
    if( !strcmp(data.type,"SEQ") )
    {
       seq_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
    }
-//   else
-//   {
-//      acc_interpret( phenotype, ephemeral, size, error, 0 );
-//   }
-
-//   if ( nInd < 2 )
-//   for( int i = 0; i < nInd; i++ )
-//   {
-//      for( int j = 0; j < size[i]; j++ )
-//         fprintf(stdout,"%d ",phenotype[i][j]);
-//      fprintf(stdout,"\n");
-//   }
-//
-//   if ( nInd < 2 )
-//   for( int i = 0; i < nInd; i++ )
-//   {
-//      fprintf(stdout,"%f ",error[i]);
-//   }
-//   fprintf(stdout,"\n");
+   else
+   {
+      acc_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
+   }
 
    for( int i = 0; i < nInd; i++ )
    {

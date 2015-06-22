@@ -22,16 +22,17 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int nlin; int local_size; int global_size; cl::Context context; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
+static struct t_data { int max_size; int nlin; int local_size; int global_size; cl::Context context; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void acc_interpret_init( const unsigned size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel, int mode, const char* type )
+void acc_interpret_init( const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel, int mode, const char* type )
 {
    try
    {
+      data.max_size = size;
       data.nlin = nlin;
       int ncol = ninput + nmodel + 1;
       data.local_size = 64;
@@ -142,7 +143,7 @@ void acc_interpret_init( const unsigned size, float** input, float** model, floa
       // Compila para todos os dispositivos associados a 'programa' através do
       // 'contexto': vector<cl::Device>() é um vetor nulo
       char buildOptions[60];
-      sprintf( buildOptions, "-DTAM_MAX=%u -DTERMINAL_MIN=%u", size, TERMINAL_MIN );  
+      sprintf( buildOptions, "-DTAM_MAX=%u", data.max_size );  
       try {
          programa.build( dispositivo, buildOptions );
       }
@@ -157,26 +158,28 @@ void acc_interpret_init( const unsigned size, float** input, float** model, floa
       data.kernel = cl::Kernel( programa, "evaluate" );
 
       // 2) Preparação da memória dos dispositivos (leitura e escrita)
-      data.buffer_phenotype = cl::Buffer( data.context, CL_MEM_READ_ONLY, size * sizeof( Symbol ) );
-      data.buffer_ephemeral = cl::Buffer( data.context, CL_MEM_READ_ONLY, size * sizeof( float ) );
+      data.buffer_phenotype = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.max_size * population_size * sizeof( Symbol ) );
+      data.buffer_ephemeral = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.max_size * population_size * sizeof( float ) );
+      data.buffer_size      = cl::Buffer( data.context, CL_MEM_READ_ONLY, population_size * sizeof( int ) );
       if( mode ) 
       { 
          data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data.nlin * sizeof( float ) );
       }
       else 
       {
-         data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.global_size/data.local_size) * sizeof( float ) );
+         data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.global_size/data.local_size) * population_size * sizeof( float ) );
       } 
 
       // Execução do kernel: definição dos argumentos e trabalho/particionamento
       data.kernel.setArg( 0, data.buffer_phenotype );
       data.kernel.setArg( 1, data.buffer_ephemeral );
-      data.kernel.setArg( 2, data.buffer_inputs );
-      data.kernel.setArg( 3, data.buffer_vector );
-      data.kernel.setArg( 4, sizeof( float ) * data.local_size, NULL );
-      data.kernel.setArg( 5, nlin );
-      data.kernel.setArg( 6, ncol );
-      data.kernel.setArg( 7, mode );
+      data.kernel.setArg( 2, data.buffer_size );
+      data.kernel.setArg( 3, data.buffer_inputs );
+      data.kernel.setArg( 4, data.buffer_vector );
+      data.kernel.setArg( 5, sizeof( float ) * data.local_size, NULL );
+      data.kernel.setArg( 6, nlin );
+      data.kernel.setArg( 7, ncol );
+      data.kernel.setArg( 8, mode );
    }
    catch( cl::Error& e )
    {
@@ -184,13 +187,14 @@ void acc_interpret_init( const unsigned size, float** input, float** model, floa
    }
 }
 
-void acc_interpret( Symbol* phenotype, float* ephemeral, int size, float* vector, int mode )
+void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int mode )
 {
    // Transferência de dados para o dispositivo
-   data.fila.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, size * sizeof( Symbol ), phenotype );
-   data.fila.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, size * sizeof( float ), ephemeral ); 
+   data.fila.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, data.max_size * nInd * sizeof( Symbol ), phenotype );
+   data.fila.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, data.max_size * nInd * sizeof( float ), ephemeral ); 
+   data.fila.enqueueWriteBuffer( data.buffer_size, CL_TRUE, 0, nInd * sizeof( int ), size ); 
 
-   data.kernel.setArg( 8, size );
+   data.kernel.setArg( 9, nInd );
 
    data.fila.enqueueNDRangeKernel( data.kernel, cl::NDRange(), cl::NDRange( data.global_size ), cl::NDRange( data.local_size ) );
   
@@ -205,14 +209,17 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int size, float* vector
    }
    else
    {
-      float* tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, (data.global_size/data.local_size) * sizeof( float ) );
-      float sum = 0.0;
-      for( int i = 0; i < (data.global_size/data.local_size); i++ ) {sum += tmp[i];}
+      float* tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, (data.global_size/data.local_size) * nInd * sizeof( float ) );
+      float sum;
+      for( int ind = 0; ind < nInd; ind++)
+      {
+         sum = 0.0;
+         for( int i = 0; i < (data.global_size/data.local_size); i++ ) {sum += tmp[ind * (data.global_size/data.local_size) + i];}
 
+         if( isnan( sum ) || isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
+         else {vector[ind] = sum/data.nlin;}
+      }
       // Unmapping
       data.fila.enqueueUnmapMemObject( data.buffer_vector, tmp ); 
-
-      if( isnan( sum ) || isinf( sum ) ) {vector[0] = std::numeric_limits<float>::max();}
-      else {vector[0] = sum/data.nlin;}
    }
 }

@@ -51,6 +51,12 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 
    for( int ind = 0; ind < nInd; ++ind )
    {
+      if( !size[ind] && !mode )
+      {
+         vector[ind] = std::numeric_limits<float>::max();
+         break;
+      }
+
       sum = 0.0;
       for( int ponto = 0; ponto < data.nlin; ++ponto )
       {
