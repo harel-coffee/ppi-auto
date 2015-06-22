@@ -535,11 +535,11 @@ void pee_evolve()
          // Mutações
          pee_mutation( descendentes[i].genome );
          pee_mutation( descendentes[i + 1].genome );
-
-         // Avaliação dos novos indivíduos
-          pee_evaluate( &descendentes[i], 1 );
-          pee_evaluate( &descendentes[i + 1], 1 );
       }
+
+      // Avaliação dos novos indivíduos
+      pee_evaluate( descendentes, data.population_size );
+      pee_evaluate( descendentes, data.population_size );
 
       // Elitismo
       if( data.elitism ) pee_clone( &data.best_individual, &descendentes[0] );

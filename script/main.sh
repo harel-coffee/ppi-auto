@@ -35,8 +35,8 @@ fi
 #$home/build/main -d $TMPTRAINING -ni $natr -nm $nmod -run $home/solution
 
 #cd $home/build; ./main -d $file -ni $natr -nm $nmod -type CPU 1> $home/solution; cd -
-cd $home/build; ./main -v -d $file -ni $natr -nm $nmod -type CPU; cd -
-#cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution -type CPU; cd -
+#cd $home/build; ./main -v -d $file -ni $natr -nm $nmod -type SEQ; cd -
+cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution -type SEQ; cd -
 #cd $home/build; ./main -d $file -pred -ni $natr -nm $nmod -run $home/solution -type CPU; cd -
 
 rm $TMPTEST $TMPTRAINING 

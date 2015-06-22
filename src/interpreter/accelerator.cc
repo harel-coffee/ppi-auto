@@ -87,37 +87,36 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
 
       float* inputs = (float*) data.fila.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_WRITE, 0, nlin * ncol * sizeof( float ) );
 
-
-      //   if ( device_type == CL_DEVICE_TYPE_CPU ) 
-      //   {
-      //      for( int i = 0; i < nlin; i++ )
-      //      {
-      //         for( int j = 0; j < ninput; j++ )
-      //         {
-      //            inputs[i * ncol + j] = input[i][j];
-      //         }
-      //         for( int j = ninput; j < (nmodel + ninput); j++ )
-      //         {
-      //            inputs[i * ncol + j] = model[i][j];
-      //         }
-      //         inputs[i * ncol + (nmodel + ninput)] = obs[i];
-      //      }
-      //   }
-      //   else
-      //   {
-      for( int i = 0; i < nlin; i++ )
+      if ( device_type == CL_DEVICE_TYPE_CPU ) 
       {
-         for( int j = 0; j < ninput; j++ )
+         for( int i = 0; i < nlin; i++ )
          {
-            inputs[j * nlin + i] = input[i][j];
+            for( int j = 0; j < ninput; j++ )
+            {
+               inputs[i * ncol + j] = input[i][j];
+            }
+            for( int j = ninput; j < (nmodel + ninput); j++ )
+            {
+               inputs[i * ncol + j] = model[i][j];
+            }
+            inputs[i * ncol + (nmodel + ninput)] = obs[i];
          }
-         for( int j = ninput; j < (nmodel + ninput); j++ )
-         {
-            inputs[j * nlin + i] = model[i][j];
-         }
-         inputs[(nmodel + ninput) * nlin + i] = obs[i];
       }
-      //   }
+      else
+      {
+         for( int i = 0; i < nlin; i++ )
+         {
+            for( int j = 0; j < ninput; j++ )
+            {
+               inputs[j * nlin + i] = input[i][j];
+            }
+            for( int j = ninput; j < (nmodel + ninput); j++ )
+            {
+               inputs[j * nlin + i] = model[i][j];
+            }
+            inputs[(nmodel + ninput) * nlin + i] = obs[i];
+         }
+      }
 
       // Unmapping
       data.fila.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
@@ -155,7 +154,14 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
       }
 
       // Cria a variável kernel que vai representar o kernel "avalia"
-      data.kernel = cl::Kernel( programa, "evaluate" );
+      if ( device_type == CL_DEVICE_TYPE_CPU ) 
+      {
+         data.kernel = cl::Kernel( programa, "evaluate_cpu" );
+      }
+      else
+      {
+         data.kernel = cl::Kernel( programa, "evaluate_gpu" );
+      }
 
       // 2) Preparação da memória dos dispositivos (leitura e escrita)
       data.buffer_phenotype = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.max_size * population_size * sizeof( Symbol ) );
