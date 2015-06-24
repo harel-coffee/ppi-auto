@@ -42,6 +42,7 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
       {
          data.global_size += data.local_size - (data.global_size % data.local_size); 
       }
+      fprintf(stdout,"global_size=%d; local_size=%d\n",data.global_size,data.local_size);
 
       int acc;
       if( !strcmp(type,"CPU") ) {acc = CL_DEVICE_TYPE_CPU;}
@@ -92,15 +93,16 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
 
       if ( device_type == CL_DEVICE_TYPE_CPU ) 
       {
+         fprintf(stdout,"Lendo CPU...\n");
          for( int i = 0; i < nlin; i++ )
          {
             for( int j = 0; j < ninput; j++ )
             {
                inputs[i * ncol + j] = input[i][j];
             }
-            for( int j = ninput; j < (nmodel + ninput); j++ )
+            for( int j = 0; j < nmodel; j++ )
             {
-               inputs[i * ncol + j] = model[i][j];
+               inputs[i * ncol + (j + ninput)] = model[i][j];
             }
             inputs[i * ncol + (nmodel + ninput)] = obs[i];
          }
@@ -116,18 +118,26 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
       {
          if ( device_type == CL_DEVICE_TYPE_GPU ) 
          {
+            fprintf(stdout,"Lendo GPU...\n");
             for( int i = 0; i < nlin; i++ )
             {
                for( int j = 0; j < ninput; j++ )
                {
                   inputs[j * nlin + i] = input[i][j];
                }
-               for( int j = ninput; j < (nmodel + ninput); j++ )
+               for( int j = 0; j < nmodel; j++ )
                {
-                  inputs[j * nlin + i] = model[i][j];
+                  inputs[(j + ninput) * nlin + i] = model[i][j];
                }
                inputs[(nmodel + ninput) * nlin + i] = obs[i];
             }
+
+//            for( int j = 0; j < (ninput+nmodel+1); j++ )
+//            {
+//               fprintf(stdout,"%f ",inputs[j*nlin+500]);
+//            }
+//            fprintf(stdout,"\n");
+
          }
          else
          {
@@ -138,14 +148,14 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
       // Unmapping
       data.fila.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
 
-      //   inputs = (float*) data.fila.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_READ, 0, nlin * ncol * sizeof( float ) );
-      //   for( int i = 0; i < nlin*ncol; i++ )
-      //   {
-      //      if( i % nlin == 0 ) fprintf(stdout,"\n");
-      //      fprintf(stdout,"%f,", inputs[i]);
-      //   }
-      //   // Unmapping
-      //   data.fila.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
+//      inputs = (float*) data.fila.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_READ, 0, nlin * ncol * sizeof( float ) );
+//      for( int i = 0; i < nlin*ncol; i++ )
+//      {
+//         if( i % nlin == 0 ) fprintf(stdout,"\n");
+//         fprintf(stdout,"%f ", inputs[i]);
+//      }
+//      // Unmapping
+//      data.fila.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
 
       // Carregar o programa, compilá-lo e gerar o kernel
       ifstream file("accelerator.cl");
@@ -173,10 +183,12 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
       // Cria a variável kernel que vai representar o kernel "avalia"
       if ( device_type == CL_DEVICE_TYPE_CPU ) 
       {
+         fprintf(stdout,"Rodando CPU...\n");
          data.kernel = cl::Kernel( programa, "evaluate_cpu" );
       }
       else
       {
+         fprintf(stdout,"Rodando GPU...\n");
          data.kernel = cl::Kernel( programa, "evaluate_gpu" );
       }
 
@@ -192,6 +204,7 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
       {
          data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.global_size/data.local_size) * population_size * sizeof( float ) );
       } 
+
 
       // Execução do kernel: definição dos argumentos e trabalho/particionamento
       data.kernel.setArg( 0, data.buffer_phenotype );
@@ -216,6 +229,9 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    data.fila.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, data.max_size * nInd * sizeof( Symbol ), phenotype );
    data.fila.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, data.max_size * nInd * sizeof( float ), ephemeral ); 
    data.fila.enqueueWriteBuffer( data.buffer_size, CL_TRUE, 0, nInd * sizeof( int ), size ); 
+
+   fprintf(stdout,"nInd=%d\n",nInd);
+   fprintf(stdout,"grupos=%d\n",data.global_size/data.local_size);
 
    data.kernel.setArg( 9, nInd );
 
