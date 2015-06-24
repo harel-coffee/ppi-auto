@@ -18,6 +18,8 @@ evaluate_cpu( __global const Symbol* phenotype, __global const float* ephemeral,
 //         break;
 //      }
 
+// TODO: Barreira aqui!
+
       EP[lo_id] = 0.0f;
    
       if( gl_id < nlin )
@@ -100,6 +102,10 @@ evaluate_cpu( __global const Symbol* phenotype, __global const float* ephemeral,
                case T_NEG:
                   pilha[topo] = -pilha[topo];
                   break;
+// TODO: Criar um "T_ATTR" e usar o ephemeralLocal para guardar o índice do atributo
+//               case T_ATTR
+//                  pilha[++topo] = inputs[(gr_id * local_size + lo_id) * ncol + (int) ephemeralLocal];
+//                  break;
                case T_BMA:
                   pilha[++topo] = inputs[(gr_id * local_size + lo_id)];
                   break;
@@ -259,11 +265,12 @@ evaluate_gpu( __global const Symbol* phenotype, __global const float* ephemeral,
          for( int i = size[ind] - 1; i >= 0; --i )
          {
             phenotypeLocal = phenotype[ind * TAM_MAX + i];
+            // TODO: Não precisa ephemeralLocal, ou seja, não precisa ler da memória global toda hora (colocar no case)
             ephemeralLocal = ephemeral[ind * TAM_MAX + i];
             switch( phenotypeLocal )
             {
                case T_IF_THEN_ELSE:
-                  topo = ( (pilha[topo] == 1.0) ? topo - 1 : topo - 2 );
+                  topo = ( (pilha[topo] == 1.0f) ? topo - 1 : topo - 2 );
                   break;
                case T_AND:
                   pilha[topo - 1] = ( (pilha[topo] == 1.0f && pilha[topo - 1] == 1.0f) ? 1.0f : 0.0f );
@@ -451,6 +458,7 @@ evaluate_gpu( __global const Symbol* phenotype, __global const float* ephemeral,
       }
       if( !mode )
       {
+// TODO: Colocar só uma vez lá em cima (já pode fazer ele dividido por dois também)
          int next_power_of_2 = pown(2.0f, (int) ceil(log2((float)local_size)));
          for( int s = next_power_of_2/2; s > 0; s/=2 )
          {
