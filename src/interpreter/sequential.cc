@@ -41,6 +41,22 @@ void seq_interpret_init( const unsigned size, float** input, float** model, floa
      }
      data.obs[i] = obs[i];
    }
+
+   for( int i = 0; i < nlin; i++ )
+   {
+      if( i == 289 )
+      {
+         for( int j = 0; j < ninput; j++ )
+         {
+            fprintf(stdout,"%f ",data.input[i][j]);
+         }
+         for( int j = 0; j < nmodel; j++ )
+         {
+            fprintf(stdout,"%f ",data.model[i][j]);
+         }
+         fprintf(stdout,"%f\n",data.obs[i]);
+      }
+   }
 }
 
 void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int mode )

@@ -46,6 +46,7 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
       int acc;
       if( !strcmp(type,"CPU") ) {acc = CL_DEVICE_TYPE_CPU;}
       else {acc = CL_DEVICE_TYPE_GPU;}
+      fprintf(stdout,"acc=%d\n",acc);
 
       // Descobre as plataformas instaladas no hospedeiro
       vector<cl::Platform> plataformas;
@@ -63,6 +64,7 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
 
          dispositivo[0] = dispositivos[0];
          device_type = dispositivo[0].getInfo<CL_DEVICE_TYPE>();
+         fprintf(stdout,"device_type=%d\n",device_type);
          for ( int n = 0; n < dispositivos.size(); n++ )
          {
             if ( dispositivos[n].getInfo<CL_DEVICE_TYPE>() == acc ) 
@@ -70,6 +72,7 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
                leave = true;
                dispositivo[0] = dispositivos[n];
                device_type = dispositivo[0].getInfo<CL_DEVICE_TYPE>();
+               fprintf(stdout,"break;device_type=%d\n",device_type);
                break;
             }
          }
@@ -101,20 +104,34 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
             }
             inputs[i * ncol + (nmodel + ninput)] = obs[i];
          }
+
+//         for( int j = 0; j < (ninput+nmodel+1); j++ )
+//         {
+//            fprintf(stdout,"%f ",inputs[289*ncol+j]);
+//         }
+//         fprintf(stdout,"\n");
+
       }
       else
       {
-         for( int i = 0; i < nlin; i++ )
+         if ( device_type == CL_DEVICE_TYPE_GPU ) 
          {
-            for( int j = 0; j < ninput; j++ )
+            for( int i = 0; i < nlin; i++ )
             {
-               inputs[j * nlin + i] = input[i][j];
+               for( int j = 0; j < ninput; j++ )
+               {
+                  inputs[j * nlin + i] = input[i][j];
+               }
+               for( int j = ninput; j < (nmodel + ninput); j++ )
+               {
+                  inputs[j * nlin + i] = model[i][j];
+               }
+               inputs[(nmodel + ninput) * nlin + i] = obs[i];
             }
-            for( int j = ninput; j < (nmodel + ninput); j++ )
-            {
-               inputs[j * nlin + i] = model[i][j];
-            }
-            inputs[(nmodel + ninput) * nlin + i] = obs[i];
+         }
+         else
+         {
+            fprintf(stderr,"Problem to get device type (%d).\n", device_type);
          }
       }
 
