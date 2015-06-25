@@ -566,7 +566,11 @@ void pee_evolve()
       // Faz população nova ser a atual, e vice-versa.
       swap( antecedentes, descendentes );
 
-      if( data.verbose ) pee_individual_print( &data.best_individual, stdout, 0 );
+      if( data.verbose ) 
+      {
+         printf("[%d] ", geracao);
+         pee_individual_print( &data.best_individual, stdout, 0 );
+      }
    }
 
    for( int i = 0; i < data.population_size; ++i )
