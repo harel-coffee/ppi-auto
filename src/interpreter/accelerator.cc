@@ -169,7 +169,7 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
       // Compila para todos os dispositivos associados a 'programa' através do
       // 'contexto': vector<cl::Device>() é um vetor nulo
       char buildOptions[60];
-      sprintf( buildOptions, "-DTAM_MAX=%u", data.max_size );  
+      sprintf( buildOptions, "-DTAM_MAX=%u -I.", data.max_size );  
       try {
          programa.build( dispositivo, buildOptions );
       }
