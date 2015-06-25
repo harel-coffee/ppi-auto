@@ -15,6 +15,7 @@
 #include <iostream> 
 #include <fstream> 
 #include "accelerator.h"
+#include "../util/CmdLineParser.h"
 
 using namespace std;
 
@@ -22,14 +23,26 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int max_size; int nlin; int local_size; int global_size; cl::Context context; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
+static struct t_data { int max_size; int nlin; int local_size; int global_size; cl::Context context; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; int platform_id; int device_id; } data;
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void acc_interpret_init( const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel, int mode, const char* type )
+void acc_interpret_init( char ** argv, int argc, const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel, int mode, const char* type )
 {
+   CmdLine::Parser Opts( argc, argv );
+
+  // Opts.String.Add( "-type" );
+   Opts.Int.Add( "-platform-id", "", -1, 0 );
+   Opts.Int.Add( "-device-id", "", -1, 0 );
+   // processing the command-line
+   Opts.Process();
+   // getting the results!
+   //data.type = Opts.String.Get("-type").c_str();
+   data.device_id = Opts.Int.Get("-device-id");
+   data.platform_id = Opts.Int.Get("-platform-id");
+
    try
    {
       data.max_size = size;
@@ -57,7 +70,11 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
       int device_type;
 
       bool leave = false;
-      for( int m = 0; m < plataformas.size(); m++ )
+
+      int first_platform = data.platform_id >= 0 ? data.platform_id : 0;
+      int last_platform  = data.platform_id >= 0 ? data.platform_id + 1 : plataformas.size();
+
+      for( int m = first_platform; m < last_platform; m++ )
       {
          vector<cl::Device> dispositivos;
          // Descobre os dispositivos da plataforma m
@@ -66,7 +83,10 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
          dispositivo[0] = dispositivos[0];
          device_type = dispositivo[0].getInfo<CL_DEVICE_TYPE>();
          fprintf(stdout,"device_type=%d\n",device_type);
-         for ( int n = 0; n < dispositivos.size(); n++ )
+
+         int first_device = data.device_id >= 0 ? data.device_id : 0;
+         int last_device  = data.device_id >= 0 ? data.device_id + 1 : dispositivos.size();
+         for ( int n = first_device; n < last_device; n++ )
          {
             if ( dispositivos[n].getInfo<CL_DEVICE_TYPE>() == acc ) 
             {

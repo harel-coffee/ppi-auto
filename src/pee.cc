@@ -17,7 +17,8 @@
 #include <ctime>
 #include <string>   
 #include "util/CmdLineParser.h"
-#include "interpreter/interpreter.h"
+#include "interpreter/accelerator.h"
+#include "interpreter/sequential.h"
 #include "pee.h"
 #include "grammar"
 
@@ -170,7 +171,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    }
    else
    {
-      acc_interpret_init( data.max_size_phenotype, data.population_size, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), 0, data.type );
+      acc_interpret_init( argv, argc, data.max_size_phenotype, data.population_size, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), 0, data.type );
    }
 }
 

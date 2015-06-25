@@ -15,7 +15,8 @@
 #include <cmath>    
 #include <string>   
 #include "util/CmdLineParser.h"
-#include "interpreter/interpreter.h"
+#include "interpreter/accelerator.h"
+#include "interpreter/sequential.h"
 #include "pep.h"
 
 
@@ -81,7 +82,7 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
    }
    else
    {
-      acc_interpret_init( data.size[0], 1, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), data.prediction, data.type );
+      acc_interpret_init( argv, argc, data.size[0], 1, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), data.prediction, data.type );
    }
 }
 
