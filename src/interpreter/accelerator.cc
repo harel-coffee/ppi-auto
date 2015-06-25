@@ -91,34 +91,34 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
 
       float* inputs = (float*) data.fila.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_WRITE, 0, nlin * ncol * sizeof( float ) );
 
-      if ( device_type == CL_DEVICE_TYPE_CPU ) 
-      {
-         fprintf(stdout,"Lendo CPU...\n");
-         for( int i = 0; i < nlin; i++ )
-         {
-            for( int j = 0; j < ninput; j++ )
-            {
-               inputs[i * ncol + j] = input[i][j];
-            }
-            for( int j = 0; j < nmodel; j++ )
-            {
-               inputs[i * ncol + (j + ninput)] = model[i][j];
-            }
-            inputs[i * ncol + (nmodel + ninput)] = obs[i];
-         }
-
+//      if ( device_type == CL_DEVICE_TYPE_CPU ) 
+//      {
+//         fprintf(stdout,"Lendo CPU...\n");
+//         for( int i = 0; i < nlin; i++ )
+//         {
+//            for( int j = 0; j < ninput; j++ )
+//            {
+//               inputs[i * ncol + j] = input[i][j];
+//            }
+//            for( int j = 0; j < nmodel; j++ )
+//            {
+//               inputs[i * ncol + (j + ninput)] = model[i][j];
+//            }
+//            inputs[i * ncol + (nmodel + ninput)] = obs[i];
+//         }
+//
 //         for( int j = 0; j < (ninput+nmodel+1); j++ )
 //         {
 //            fprintf(stdout,"%f ",inputs[289*ncol+j]);
 //         }
 //         fprintf(stdout,"\n");
 
-      }
-      else
-      {
-         if ( device_type == CL_DEVICE_TYPE_GPU ) 
-         {
-            fprintf(stdout,"Lendo GPU...\n");
+//      }
+//      else
+//      {
+//         if ( device_type == CL_DEVICE_TYPE_GPU ) 
+//         {
+//            fprintf(stdout,"Lendo GPU...\n");
             for( int i = 0; i < nlin; i++ )
             {
                for( int j = 0; j < ninput; j++ )
@@ -138,12 +138,12 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
 //            }
 //            fprintf(stdout,"\n");
 
-         }
-         else
-         {
-            fprintf(stderr,"Problem to get device type (%d).\n", device_type);
-         }
-      }
+//         }
+//         else
+//         {
+//            fprintf(stderr,"Problem to get device type (%d).\n", device_type);
+//         }
+//      }
 
       // Unmapping
       data.fila.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
@@ -181,16 +181,16 @@ void acc_interpret_init( const unsigned size, const unsigned population_size, fl
       }
 
       // Cria a variável kernel que vai representar o kernel "avalia"
-      if ( device_type == CL_DEVICE_TYPE_CPU ) 
-      {
-         fprintf(stdout,"Rodando CPU...\n");
-         data.kernel = cl::Kernel( programa, "evaluate_cpu" );
-      }
-      else
-      {
-         fprintf(stdout,"Rodando GPU...\n");
+//      if ( device_type == CL_DEVICE_TYPE_CPU ) 
+//      {
+//         fprintf(stdout,"Rodando CPU...\n");
+//         data.kernel = cl::Kernel( programa, "evaluate_cpu" );
+//      }
+//      else
+//      {
+//         fprintf(stdout,"Rodando GPU...\n");
          data.kernel = cl::Kernel( programa, "evaluate_gpu" );
-      }
+//      }
 
       // 2) Preparação da memória dos dispositivos (leitura e escrita)
       data.buffer_phenotype = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.max_size * population_size * sizeof( Symbol ) );
@@ -229,9 +229,6 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    data.fila.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, data.max_size * nInd * sizeof( Symbol ), phenotype );
    data.fila.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, data.max_size * nInd * sizeof( float ), ephemeral ); 
    data.fila.enqueueWriteBuffer( data.buffer_size, CL_TRUE, 0, nInd * sizeof( int ), size ); 
-
-   fprintf(stdout,"nInd=%d\n",nInd);
-   fprintf(stdout,"grupos=%d\n",data.global_size/data.local_size);
 
    data.kernel.setArg( 9, nInd );
 

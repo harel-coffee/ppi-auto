@@ -116,7 +116,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    Opts.Int.Add( "-ni", "--number_of_inputs" );
    Opts.Int.Add( "-nm", "--number_of_models" );
    Opts.Int.Add( "-p", "--population_size", 2000, 2 );
-   Opts.Int.Add( "-g", "--generations", 50, 1 );
+   Opts.Int.Add( "-g", "--generations", 50, 0 );
    Opts.Int.Add( "-ts", "--tournament_size", 3, 1 );
    Opts.Int.Add( "-nb", "--number_of_bits", 2000, 16 );
    Opts.Int.Add( "-bg", "--bits_per_gene", 8, 8 );
@@ -190,6 +190,22 @@ void pee_evaluate( Individual* individual, int nInd )
       data.size[i] = decode( individual[i].genome, &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
    }
    
+//   for( int j = 0; j < nInd; j++ )
+//   {
+//      fprintf(stdout,"Ind[%d]=%d\n",j,data.size[j]);
+//      for( int i = 0; i < data.size[j]; i++ )
+//      {
+//         fprintf(stdout,"%d ",data.phenotype[j * data.max_size_phenotype + i]);
+//      }
+//      fprintf(stdout,"\n");
+//      for( int i = 0; i < data.size[j]; i++ )
+//      {
+//         fprintf(stdout,"%f ",data.ephemeral[j * data.max_size_phenotype + i]);
+//      }
+//      fprintf(stdout,"\n");
+//   }
+
+
    if( !strcmp(data.type,"SEQ") )
    {
       seq_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
@@ -199,8 +215,10 @@ void pee_evaluate( Individual* individual, int nInd )
       acc_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
    }
 
+
    for( int i = 0; i < nInd; i++ )
    {
+//      fprintf(stdout,"fitness[Ind=%d]=%f\n",i,data.error[i]);
       individual[i].fitness = data.error[i] + 0.00001*data.size[i]; 
       if( individual[i].fitness < data.best_individual.fitness )
       {
