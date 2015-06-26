@@ -23,25 +23,49 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int max_size; int nlin; int local_size; int global_size; cl::Context context; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; int platform_id; int device_id; } data;
+static struct t_data { int max_size; int nlin; int local_size; int global_size; cl::Context context; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void acc_interpret_init( char ** argv, int argc, const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel, int prediction_mode, const char* type )
+void acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int prediction_mode )
 {
    CmdLine::Parser Opts( argc, argv );
 
-  // Opts.String.Add( "-type" );
+   Opts.Int.Add( "-ni", "--number_of_inputs" );
+   Opts.Int.Add( "-nm", "--number_of_models" );
+   Opts.String.Add( "-type" );
    Opts.Int.Add( "-platform-id", "", -1, 0 );
    Opts.Int.Add( "-device-id", "", -1, 0 );
    // processing the command-line
    Opts.Process();
    // getting the results!
-   //data.type = Opts.String.Get("-type").c_str();
-   data.device_id = Opts.Int.Get("-device-id");
-   data.platform_id = Opts.Int.Get("-platform-id");
+   int platform_id = Opts.Int.Get("-platform-id");
+   int device_id = Opts.Int.Get("-device-id");
+   int ninput = Opts.Int.Get("-ni");
+   int nmodel = Opts.Int.Get("-nm");
+
+   if( Opts.Int.Found("-platform-id") && !Opts.Int.Found("-device-id") )
+   {
+      fprintf(stdout,"platform_id\n");
+      platform_id = Opts.Int.Get("-platform-id");
+      device_id = 0;
+   }
+   if( !Opts.Int.Found("-platform-id") && Opts.Int.Found("-device-id") )
+   {
+      fprintf(stdout,"device_id\n");
+      device_id = Opts.Int.Get("-device-id");
+      platform_id = 0;
+   }
+
+   int type = -1;
+   if( Opts.String.Found("-type") )
+   {
+      if( !strcmp(Opts.String.Get("-type").c_str(),"CPU") ) { type = CL_DEVICE_TYPE_CPU; }
+      else { type = CL_DEVICE_TYPE_GPU; }
+   }
+   fprintf(stdout,"type=%d\n",type);
 
    try
    {
@@ -57,11 +81,6 @@ void acc_interpret_init( char ** argv, int argc, const unsigned size, const unsi
       }
       fprintf(stdout,"global_size=%d; local_size=%d\n",data.global_size,data.local_size);
 
-      int acc;
-      if( !strcmp(type,"CPU") ) {acc = CL_DEVICE_TYPE_CPU;}
-      else {acc = CL_DEVICE_TYPE_GPU;}
-      fprintf(stdout,"acc=%d\n",acc);
-
       // Descobre as plataformas instaladas no hospedeiro
       vector<cl::Platform> plataformas;
       cl::Platform::get( &plataformas );
@@ -70,12 +89,17 @@ void acc_interpret_init( char ** argv, int argc, const unsigned size, const unsi
       int device_type;
 
       bool leave = false;
+      //TODO checar se device e plataformas dados existem
 
-      int first_platform = data.platform_id >= 0 ? data.platform_id : 0;
-      int last_platform  = data.platform_id >= 0 ? data.platform_id + 1 : plataformas.size();
-
+      fprintf(stdout,"platform_id=%d\n",platform_id);
+      fprintf(stdout,"device_id=%d\n",device_id);
+      int first_platform = platform_id >= 0 ? platform_id : 0;
+      int last_platform  = platform_id >= 0 ? platform_id + 1 : plataformas.size();
+      fprintf(stdout,"last_platform=%d\n",last_platform);
+      fprintf(stdout,"first_platform=%d\n",first_platform);
       for( int m = first_platform; m < last_platform; m++ )
       {
+         fprintf(stdout,"m=%d\n",m);
          vector<cl::Device> dispositivos;
          // Descobre os dispositivos da plataforma m
          plataformas[m].getDevices( CL_DEVICE_TYPE_ALL, &dispositivos );
@@ -84,11 +108,14 @@ void acc_interpret_init( char ** argv, int argc, const unsigned size, const unsi
          device_type = dispositivo[0].getInfo<CL_DEVICE_TYPE>();
          fprintf(stdout,"device_type=%d\n",device_type);
 
-         int first_device = data.device_id >= 0 ? data.device_id : 0;
-         int last_device  = data.device_id >= 0 ? data.device_id + 1 : dispositivos.size();
+         int first_device = device_id >= 0 ? device_id : 0;
+         int last_device  = device_id >= 0 ? device_id + 1 : dispositivos.size();
+         fprintf(stdout,"last_device=%d\n",last_device);
+         fprintf(stdout,"first_device=%d\n",first_device);
          for ( int n = first_device; n < last_device; n++ )
          {
-            if ( dispositivos[n].getInfo<CL_DEVICE_TYPE>() == acc ) 
+            fprintf(stdout,"n=%d\n",n);
+            if ( dispositivos[n].getInfo<CL_DEVICE_TYPE>() == type ) 
             {
                leave = true;
                dispositivo[0] = dispositivos[n];

@@ -19,13 +19,12 @@
 #include "interpreter/sequential.h"
 #include "pep.h"
 
-//TODO mudar o nome do mode
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int nlin; Symbol* phenotype; float* ephemeral; int* size; float* vector; int prediction; const char* type; } data;
+static struct t_data { int nlin; Symbol* phenotype; float* ephemeral; int* size; float* vector; int prediction; int version; } data;
 
 
 /** ****************************************************************** **/
@@ -37,7 +36,7 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
    CmdLine::Parser Opts( argc, argv );
 
    Opts.String.Add( "-run", "--program_file" );
-   Opts.String.Add( "-type" );
+   Opts.Bool.Add( "-acc" );
    Opts.Bool.Add( "-pred", "--prediction" );
    Opts.Int.Add( "-ni", "--number_of_inputs" );
    Opts.Int.Add( "-nm", "--number_of_models" );
@@ -53,7 +52,7 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
    }
    
    data.prediction = Opts.Bool.Get("-pred");
-   data.type = Opts.String.Get("-type").c_str();
+   data.version = Opts.Bool.Get("-acc");
 
    data.size = new int[1];
    fscanf(arqentra,"%d",&data.size[0]);
@@ -77,13 +76,13 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
 
    data.nlin = nlin;
 
-   if( !strcmp(data.type,"SEQ") )
+   if( data.version )
    {
-      seq_interpret_init( data.size[0], input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
+      acc_interpret_init( argc, argv, data.size[0], 1, input, model, obs, nlin, data.prediction );
    }
    else
    {
-      acc_interpret_init( argv, argc, data.size[0], 1, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), data.prediction, data.type );
+      seq_interpret_init( data.size[0], input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
    }
 }
 
@@ -92,25 +91,25 @@ void pep_interpret()
    if( data.prediction )
    {
       data.vector = new float[data.nlin];
-      if( !strcmp(data.type,"SEQ") )
+      if( data.version )
       {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 1 );
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 1 );
       }
       else
       {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 1 );
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 1 );
       }
    }
    else
    {
       data.vector = new float[1];
-      if( !strcmp(data.type,"SEQ") )
+      if( data.version )
       {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 0 );
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 0 );
       }
       else
       {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 0 );
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 0 );
       }
    }
 }
@@ -129,5 +128,5 @@ void pep_print( FILE* out )
 void pep_destroy() 
 {
    delete[] data.phenotype, data.ephemeral, data.size, data.vector;
-   if( !strcmp(data.type,"SEQ") ) {seq_interpret_destroy();}
+   if( !data.version ) {seq_interpret_destroy();}
 }

@@ -22,7 +22,7 @@
 #include "pee.h"
 #include "grammar"
 
-//TODO escolher a semente; acrescentar -acc/-seq; type; device; plataform
+//TODO escolher a semente; acrescentar -acc/-seq; type; device; plataform; checar new/delete
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
@@ -30,7 +30,7 @@
 
 struct Individual { int* genome; float fitness; };
 
-static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; const char* type; } data;
+static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; } data;
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -109,10 +109,11 @@ int decode( const int* genome, int* const allele, Symbol* phenotype, float* ephe
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void pee_init( float** input, float** model, float* obs, int nlin, int argc, char **argv ) 
+void pee_init( float** input, float** model, float* obs, int nlin, int argc, char** argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
 
+   Opts.Bool.Add( "-acc" );
    Opts.Bool.Add( "-v" );
    Opts.Bool.Add( "-e" );
    Opts.Int.Add( "-ni", "--number_of_inputs" );
@@ -127,7 +128,6 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    Opts.Float.Add( "-c", "--crossover_rate", 0.95, 0, 1 );
    Opts.Float.Add( "-min", "--min_constant", 0 );
    Opts.Float.Add( "-max", "--max_constant", 300 );
-   Opts.String.Add( "-type" );
 
    // processing the command-line
    Opts.Process();
@@ -164,15 +164,15 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    data.ephemeral = new float[data.population_size * data.max_size_phenotype];
    data.size = new int[data.population_size];
    data.error = new float[data.population_size];
-   data.type = Opts.String.Get("-type").c_str();
+   data.version = Opts.Bool.Get("-acc");
 
-   if( !strcmp(data.type,"SEQ") )
+   if( data.version )
    {
-      seq_interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
+      acc_interpret_init( argc, argv, data.max_size_phenotype, data.population_size, input, model, obs, nlin, 0 );
    }
    else
    {
-      acc_interpret_init( argv, argc, data.max_size_phenotype, data.population_size, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), 0, data.type );
+      seq_interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
    }
 }
 
@@ -208,13 +208,13 @@ void pee_evaluate( Individual* individual, int nInd )
 //   }
 
 
-   if( !strcmp(data.type,"SEQ") )
+   if( data.version )
    {
-      seq_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
+      acc_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
    }
    else
    {
-      acc_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
+      seq_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
    }
 
 
@@ -584,5 +584,5 @@ void pee_evolve()
 void pee_destroy()
 {
    delete[] data.best_individual.genome, data.phenotype, data.ephemeral, data.size, data.error;
-   if( !strcmp(data.type,"SEQ") ) {seq_interpret_destroy();}
+   if( !data.version ) {seq_interpret_destroy();}
 }

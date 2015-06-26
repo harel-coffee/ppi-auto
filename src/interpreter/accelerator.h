@@ -11,7 +11,7 @@
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void acc_interpret_init( char ** argv, int argc, const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel, int prediction_mode, const char* type );
+void acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int prediction_mode );
 
 /** ************************************************************************************************** **/
 /** ************************************** Function interpret **************************************** **/
