@@ -59,7 +59,7 @@ void seq_interpret_init( const unsigned size, float** input, float** model, floa
 //   }
 }
 
-void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int mode )
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int prediction_mode )
 {
    float pilha[data.size]; 
    float sum; 
@@ -251,10 +251,10 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
                   break;
             }
          }
-         if( mode ) {vector[ponto] = pilha[topo];}
+         if( prediction_mode ) {vector[ponto] = pilha[topo];}
          else {sum += fabs(pilha[topo] - data.obs[ponto]);}
       }
-      if ( !mode )
+      if ( !prediction_mode )
       {
          if( isnan( sum ) || isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
          else {vector[ind] = sum/data.nlin;}

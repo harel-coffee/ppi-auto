@@ -29,7 +29,7 @@ static struct t_data { int max_size; int nlin; int local_size; int global_size; 
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void acc_interpret_init( char ** argv, int argc, const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel, int mode, const char* type )
+void acc_interpret_init( char ** argv, int argc, const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel, int prediction_mode, const char* type )
 {
    CmdLine::Parser Opts( argc, argv );
 
@@ -216,7 +216,7 @@ void acc_interpret_init( char ** argv, int argc, const unsigned size, const unsi
       data.buffer_phenotype = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.max_size * population_size * sizeof( Symbol ) );
       data.buffer_ephemeral = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.max_size * population_size * sizeof( float ) );
       data.buffer_size      = cl::Buffer( data.context, CL_MEM_READ_ONLY, population_size * sizeof( int ) );
-      if( mode ) 
+      if( prediction_mode ) 
       { 
          data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data.nlin * sizeof( float ) );
       }
@@ -235,7 +235,7 @@ void acc_interpret_init( char ** argv, int argc, const unsigned size, const unsi
       data.kernel.setArg( 5, sizeof( float ) * data.local_size, NULL );
       data.kernel.setArg( 6, nlin );
       data.kernel.setArg( 7, ncol );
-      data.kernel.setArg( 8, mode );
+      data.kernel.setArg( 8, prediction_mode );
    }
    catch( cl::Error& e )
    {
@@ -243,7 +243,7 @@ void acc_interpret_init( char ** argv, int argc, const unsigned size, const unsi
    }
 }
 
-void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int mode )
+void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int prediction_mode )
 {
    // Transferência de dados para o dispositivo
    data.fila.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, data.max_size * nInd * sizeof( Symbol ), phenotype );
@@ -258,7 +258,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    data.fila.finish();
 
    // Transferência dos resultados para o hospedeiro 
-   if ( mode )
+   if ( prediction_mode )
    {
       float* tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, data.nlin * sizeof( float ) );
       for( int i = 0; i < data.nlin; i++ ) {vector[i] = tmp[i];}

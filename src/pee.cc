@@ -22,6 +22,7 @@
 #include "pee.h"
 #include "grammar"
 
+//TODO escolher a semente; acrescentar -acc/-seq; type; device; plataform
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
@@ -305,7 +306,7 @@ const Individual* pee_tournament( const Individual* population )
    return vencedor;
 }
 
-void pee_individual_print( const Individual* individual, FILE* out, int mode )
+void pee_individual_print( const Individual* individual, FILE* out, int print_mode )
 {
    Symbol phenotype[data.max_size_phenotype];
    float ephemeral[data.max_size_phenotype];
@@ -314,7 +315,7 @@ void pee_individual_print( const Individual* individual, FILE* out, int mode )
    int size = decode( individual->genome, &allele, phenotype, ephemeral, 0, data.initial_symbol );
    if( !size ) { return; }
   
-   if( mode )
+   if( print_mode )
    {
       fprintf( out, "%d\n", size );
       for( int i = 0; i < size; ++i )
@@ -493,7 +494,7 @@ void pee_individual_print( const Individual* individual, FILE* out, int mode )
                fprintf( out, "%.12f ",  ephemeral[i] );
                break;
       } 
-   if( mode)
+   if( print_mode )
    {
       fprintf( out, "\n" );
       fprintf( out, "%.12f\n", individual->fitness );
@@ -502,9 +503,9 @@ void pee_individual_print( const Individual* individual, FILE* out, int mode )
       fprintf( out, " %.12f\n", individual->fitness );
 }
 
-void pee_print_best( FILE* out, int mode ) 
+void pee_print_best( FILE* out, int print_mode ) 
 {
-   pee_individual_print( &data.best_individual, out, mode );
+   pee_individual_print( &data.best_individual, out, print_mode );
 }
 
 
