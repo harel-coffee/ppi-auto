@@ -46,12 +46,6 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
    int ninput = Opts.Int.Get("-ni");
    int nmodel = Opts.Int.Get("-nm");
 
-   if( Opts.Int.Found("-platform-id") && !Opts.Int.Found("-device-id") )
-   {
-      fprintf(stdout,"platform_id\n");
-      platform_id = Opts.Int.Get("-platform-id");
-      device_id = 0;
-   }
    if( !Opts.Int.Found("-platform-id") && Opts.Int.Found("-device-id") )
    {
       fprintf(stdout,"device_id\n");
@@ -65,7 +59,6 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
       if( !strcmp(Opts.String.Get("-type").c_str(),"CPU") ) { type = CL_DEVICE_TYPE_CPU; }
       else { type = CL_DEVICE_TYPE_GPU; }
    }
-   fprintf(stdout,"type=%d\n",type);
 
    try
    {
@@ -91,41 +84,39 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
       bool leave = false;
       //TODO checar se device e plataformas dados existem
 
-      fprintf(stdout,"platform_id=%d\n",platform_id);
-      fprintf(stdout,"device_id=%d\n",device_id);
       int first_platform = platform_id >= 0 ? platform_id : 0;
       int last_platform  = platform_id >= 0 ? platform_id + 1 : plataformas.size();
-      fprintf(stdout,"last_platform=%d\n",last_platform);
-      fprintf(stdout,"first_platform=%d\n",first_platform);
       for( int m = first_platform; m < last_platform; m++ )
       {
-         fprintf(stdout,"m=%d\n",m);
          vector<cl::Device> dispositivos;
          // Descobre os dispositivos da plataforma m
          plataformas[m].getDevices( CL_DEVICE_TYPE_ALL, &dispositivos );
 
-         dispositivo[0] = dispositivos[0];
-         device_type = dispositivo[0].getInfo<CL_DEVICE_TYPE>();
-         fprintf(stdout,"device_type=%d\n",device_type);
-
          int first_device = device_id >= 0 ? device_id : 0;
-         int last_device  = device_id >= 0 ? device_id + 1 : dispositivos.size();
-         fprintf(stdout,"last_device=%d\n",last_device);
-         fprintf(stdout,"first_device=%d\n",first_device);
-         for ( int n = first_device; n < last_device; n++ )
+
+         dispositivo[0] = dispositivos[first_device];
+         device_type = dispositivo[0].getInfo<CL_DEVICE_TYPE>();
+
+         if( type >= 0 && device_id < 0 )
          {
-            fprintf(stdout,"n=%d\n",n);
-            if ( dispositivos[n].getInfo<CL_DEVICE_TYPE>() == type ) 
+            for ( int n = 0; n < dispositivos.size(); n++ )
             {
-               leave = true;
-               dispositivo[0] = dispositivos[n];
-               device_type = dispositivo[0].getInfo<CL_DEVICE_TYPE>();
-               fprintf(stdout,"break;device_type=%d\n",device_type);
-               break;
+               if ( dispositivos[n].getInfo<CL_DEVICE_TYPE>() == type ) 
+               {
+                  leave = true;
+                  dispositivo[0] = dispositivos[n];
+                  device_type = dispositivo[0].getInfo<CL_DEVICE_TYPE>();
+                  break;
+               }
             }
+            if( leave ) break;
          }
-         if( leave ) break;
       }
+
+      fprintf(stdout,"platform_name[%d]=%s\n",platform_id,plataformas[platform_id].getInfo<CL_PLATFORM_NAME>().c_str());
+      fprintf(stdout,"device_name[%d]=%s\n",device_id,dispositivo[0].getInfo<CL_DEVICE_NAME>().c_str());
+//      fprintf(stdout,"type=%d\n",type);
+//      fprintf(stdout,"device_type=%d\n",device_type);
 
       // Criar o contexto
       data.context = cl::Context( dispositivo );
