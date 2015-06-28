@@ -9,7 +9,7 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { float** input; float** model; float* obs; unsigned size; int nlin; } data;
+static struct t_data { float** inputs; float* obs; unsigned size; int nlin; } data;
 
 
 /** ****************************************************************** **/
@@ -21,23 +21,20 @@ void seq_interpret_init( const unsigned size, float** input, float** model, floa
    data.size = size;
    data.nlin = nlin;
 
-   data.input = new float*[nlin];
+   data.inputs = new float*[nlin];
    for( int i = 0; i < nlin; i++ )
-     data.input[i] = new float[ninput];
-   data.model = new float*[nlin];
-   for( int i = 0; i < nlin; i++ )
-     data.model[i] = new float[nmodel];
+     data.inputs[i] = new float[ninput + nmodel];
    data.obs = new float[nlin];
 
    for( int i = 0; i < nlin; i++ )
    {
      for( int j = 0; j < ninput; j++ )
      {
-       data.input[i][j] = input[i][j];
+       data.inputs[i][j] = input[i][j];
      }
      for( int j = 0; j < nmodel; j++ )
      {
-       data.model[i][j] = model[i][j];
+       data.inputs[i][j + ninput] = model[i][j];
      }
      data.obs[i] = obs[i];
    }
@@ -48,11 +45,11 @@ void seq_interpret_init( const unsigned size, float** input, float** model, floa
 //      {
 //         for( int j = 0; j < ninput; j++ )
 //         {
-//            fprintf(stdout,"%f ",data.input[i][j]);
+//            fprintf(stdout,"%f ",data.inputs[i][j]);
 //         }
 //         for( int j = 0; j < nmodel; j++ )
 //         {
-//            fprintf(stdout,"%f ",data.model[i][j]);
+//            fprintf(stdout,"%f ",data.inputs[i][j + ninput]);
 //         }
 //         fprintf(stdout,"%f\n",data.obs[i]);
 //      }
@@ -144,95 +141,8 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
                case T_NEG:
                   pilha[topo] = -pilha[topo];
                   break;
-               case T_BMA:
-                  pilha[++topo] = data.input[ponto][0];
-                  break;
-               case T_CHUVA_ONTEM:
-                  pilha[++topo] = data.input[ponto][1];
-                  break;
-               case T_CHUVA_ANTEONTEM:
-                  pilha[++topo] = data.input[ponto][2];
-                  break;
-               case T_MEAN_MODELO:
-                  pilha[++topo] = data.input[ponto][3];
-                  break;
-               case T_MAX_MODELO:
-                  pilha[++topo] = data.input[ponto][4];
-                  break;
-               case T_MIN_MODELO:
-                  pilha[++topo] = data.input[ponto][5];
-                  break;
-               case T_STD_MODELO:
-                  pilha[++topo] = data.input[ponto][6];
-                  break;
-               case T_CHOVE:
-                  pilha[++topo] = data.input[ponto][7];
-                  break;
-               case T_CHUVA_LAG1P:
-                  pilha[++topo] = data.input[ponto][8];
-                  break;
-               case T_CHUVA_LAG1N:
-                  pilha[++topo] = data.input[ponto][9];
-                  break;
-               case T_CHUVA_LAG2P:
-                  pilha[++topo] = data.input[ponto][10];
-                  break;
-               case T_CHUVA_LAG2N:
-                  pilha[++topo] = data.input[ponto][11];
-                  break;
-               case T_CHUVA_LAG3P:
-                  pilha[++topo] = data.input[ponto][12];
-                  break;
-               case T_CHUVA_LAG3N:
-                  pilha[++topo] = data.input[ponto][13];
-                  break;
-               case T_PADRAO_MUDA:
-                  pilha[++topo] = data.input[ponto][14];
-                  break;
-               case T_PERTINENCIA:
-                  pilha[++topo] = data.input[ponto][15];
-                  break;
-               case T_CHUVA_PADRAO:
-                  pilha[++topo] = data.input[ponto][16];
-                  break;
-               case T_CHUVA_HISTORICA:
-                  pilha[++topo] = data.input[ponto][17];
-                  break;
-               case T_K:
-                  pilha[++topo] = data.input[ponto][18];
-                  break;
-               case T_TT:
-                  pilha[++topo] = data.input[ponto][19];
-                  break;
-               case T_SWEAT:
-                  pilha[++topo] = data.input[ponto][20];
-                  break;
-               case T_PAD:
-                  pilha[++topo] = data.input[ponto][21];
-                  break;
-               case T_MOD1:
-                  pilha[++topo] = data.model[ponto][0];
-                  break;
-               case T_MOD2:
-                  pilha[++topo] = data.model[ponto][1];
-                  break;
-               case T_MOD3:
-                  pilha[++topo] = data.model[ponto][2];
-                  break;
-               case T_MOD4:
-                  pilha[++topo] = data.model[ponto][3];
-                  break;
-               case T_MOD5:
-                  pilha[++topo] = data.model[ponto][4];
-                  break;
-               case T_MOD6:
-                  pilha[++topo] = data.model[ponto][5];
-                  break;
-               case T_MOD7:
-                  pilha[++topo] = data.model[ponto][6];
-                  break;
-               case T_MOD8:
-                  pilha[++topo] = data.model[ponto][7];
+               case T_ATTRIBUTE:
+                  pilha[++topo] = data.inputs[ponto][(int)ephemeral[ind * data.size + i]];
                   break;
                case T_1:
                   pilha[++topo] = 1;
@@ -267,10 +177,6 @@ void seq_interpret_destroy()
    delete[] data.obs;
 
    for( int i = 0; i < data.nlin; ++i )
-     delete [] data.input[i];
-   delete [] data.input;
-
-   for( int i = 0; i < data.nlin; ++i )
-     delete [] data.model[i];
-   delete [] data.model;
+     delete [] data.inputs[i];
+   delete [] data.inputs;
 }

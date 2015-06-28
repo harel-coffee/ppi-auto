@@ -34,10 +34,11 @@ fi
 #$home/build/main -v -e -d $TMPTRAINING -ni $natr -nm $nmod
 #$home/build/main -d $TMPTRAINING -ni $natr -nm $nmod -run $home/solution
 
-#cd $home/build; ./main -d $file -ni $natr -nm $nmod -type SEQ 1> $home/solution; cd -
-cd $home/build; ./main -v -d $file -ni $natr -nm $nmod -acc -device-id 2 -platform-id 1 -p 1000 -g 500; cd -
-#cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution -type GPU; cd -
-#cd $home/build; ./main -d $file -pred -ni $natr -nm $nmod -run $home/solution -type CPU; cd -
+#cd $home/build; ./main -d $file -ni $natr -nm $nmod 1> $home/solution; cd -
+cd $home/build; ./main -v -acc -d $file -ni $natr -nm $nmod p 1000 -g 10; cd -
+#cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution; cd -
+#cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution -acc; cd -
+#cd $home/build; ./main -d $file -pred -ni $natr -nm $nmod -run $home/solution -acc -platform-id 1 -device_id 1; cd -
 
 rm $TMPTEST $TMPTRAINING 
 rm $arquivo

@@ -67,6 +67,7 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
       int ncol = ninput + nmodel + 1;
       data.local_size = 64;
 
+      //TODO acertar os valores de local e global_size
       data.global_size = nlin;
       if( data.global_size % data.local_size != 0 )
       {
@@ -82,7 +83,7 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
       int device_type;
 
       bool leave = false;
-      //TODO checar se device e plataformas dados existem
+      //TODO checar se device e plataformas existem
 
       int first_platform = platform_id >= 0 ? platform_id : 0;
       int last_platform  = platform_id >= 0 ? platform_id + 1 : plataformas.size();
@@ -113,10 +114,8 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
          }
       }
 
-      fprintf(stdout,"platform_name[%d]=%s\n",platform_id,plataformas[platform_id].getInfo<CL_PLATFORM_NAME>().c_str());
+      //fprintf(stdout,"platform_name[%d]=%s\n",platform_id,plataformas[last_platform-1].getInfo<CL_PLATFORM_NAME>().c_str());
       fprintf(stdout,"device_name[%d]=%s\n",device_id,dispositivo[0].getInfo<CL_DEVICE_NAME>().c_str());
-//      fprintf(stdout,"type=%d\n",type);
-//      fprintf(stdout,"device_type=%d\n",device_type);
 
       // Criar o contexto
       data.context = cl::Context( dispositivo );

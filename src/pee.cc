@@ -22,7 +22,7 @@
 #include "pee.h"
 #include "grammar"
 
-//TODO escolher a semente; acrescentar -acc/-seq; type; device; plataform; checar new/delete
+//TODO escolher a semente; checar new/delete
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
@@ -92,6 +92,14 @@ int decode( const int* genome, int* const allele, Symbol* phenotype, float* ephe
               partir da posição atual e os decodifica como um valor real.
             */
             ephemeral[pos] = decode_real( genome, allele );
+         }
+         else
+         {
+            if( r->symbols[i] >= ATTRIBUTE_MIN )
+            {
+               phenotype[pos] = T_ATTRIBUTE;
+               ephemeral[pos] = r->symbols[i] - ATTRIBUTE_MIN;
+            } 
          }
          ++pos;
       }
@@ -319,7 +327,7 @@ void pee_individual_print( const Individual* individual, FILE* out, int print_mo
    {
       fprintf( out, "%d\n", size );
       for( int i = 0; i < size; ++i )
-         if( phenotype[i] == T_EFEMERO )
+         if( phenotype[i] == T_EFEMERO || phenotype[i] == T_ATTRIBUTE )
             fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
          else
             fprintf( out, "%d ", phenotype[i] );
@@ -388,95 +396,8 @@ void pee_individual_print( const Individual* individual, FILE* out, int print_mo
             case T_NEG:
                fprintf( out, "NEG " );
                break;
-            case T_BMA:
-               fprintf( out, "BMA " );
-               break;
-            case T_CHUVA_ONTEM:
-               fprintf( out, "CHUVA_ONTEM " );
-               break;
-            case T_CHUVA_ANTEONTEM:
-               fprintf( out, "CHUVA_ANTEONTEM " );
-               break;
-            case T_MEAN_MODELO:
-               fprintf( out, "MEAN_MODELO " );
-               break;
-            case T_MAX_MODELO:
-               fprintf( out, "MAX_MODELO " );
-               break;
-            case T_MIN_MODELO:
-               fprintf( out, "MIN_MODELO " );
-               break;
-            case T_STD_MODELO:
-               fprintf( out, "STD_MODELO " );
-               break;
-            case T_CHOVE:
-               fprintf( out, "CHOVE " );
-               break;
-            case T_CHUVA_LAG1P:
-               fprintf( out, "CHUVA_LAG1P " );
-               break;
-            case T_CHUVA_LAG1N:
-               fprintf( out, "CHUVA_LAG1N " );
-               break;
-            case T_CHUVA_LAG2P:
-               fprintf( out, "CHUVA_LAG2P " );
-               break;
-            case T_CHUVA_LAG2N:
-               fprintf( out, "CHUVA_LAG2N " );
-               break;
-            case T_CHUVA_LAG3P:
-               fprintf( out, "CHUVA_LAG3P " );
-               break;
-            case T_CHUVA_LAG3N:
-               fprintf( out, "CHUVA_LAG3N " );
-               break;
-            case T_PADRAO_MUDA:
-               fprintf( out, "PADRAO_MUDA " );
-               break;
-            case T_PERTINENCIA:
-               fprintf( out, "PERTINENCIA " );
-               break;
-            case T_CHUVA_PADRAO:
-               fprintf( out, "CHUVA_PADRAO " );
-               break;
-            case T_CHUVA_HISTORICA:
-               fprintf( out, "CHUVA_HISTORICA " );
-               break;
-            case T_K:
-               fprintf( out, "K " );
-               break;
-            case T_TT:
-               fprintf( out, "TT " );
-               break;
-            case T_SWEAT:
-               fprintf( out, "SWEAT " );
-               break;
-            case T_PAD:
-               fprintf( out, "PAD " );
-               break;
-            case T_MOD1:
-               fprintf( out, "MOD " );
-               break;
-            case T_MOD2:
-               fprintf( out, "MOD2 " );
-               break;
-            case T_MOD3:
-               fprintf( out, "MOD3 " );
-               break;
-            case T_MOD4:
-               fprintf( out, "MOD4 " );
-               break;
-            case T_MOD5:
-               fprintf( out, "MOD5 " );
-               break;
-            case T_MOD6:
-               fprintf( out, "MOD6 " );
-               break;
-            case T_MOD7:
-               fprintf( out, "MOD7 " );
-               break;
-            case T_MOD8:
-               fprintf( out, "MOD8 " );
+            case T_ATTRIBUTE:
+               fprintf( out, "ATTR-%d ", (int)ephemeral[i] );
                break;
             case T_1:
                fprintf( out, "1 " );
