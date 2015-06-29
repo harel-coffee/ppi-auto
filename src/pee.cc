@@ -22,7 +22,6 @@
 #include "pee.h"
 #include "grammar"
 
-//TODO escolher a semente; checar new/delete
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
@@ -30,7 +29,7 @@
 
 struct Individual { int* genome; float fitness; };
 
-static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; } data;
+static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; } data;
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -132,6 +131,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    Opts.Int.Add( "-nb", "--number_of_bits", 2000, 16 );
    Opts.Int.Add( "-bg", "--bits_per_gene", 8, 8 );
    Opts.Int.Add( "-bc", "--bits_per_constant", 16, 4 );
+   Opts.Int.Add( "-seed", "", time(NULL) );
    Opts.Float.Add( "-m", "--mutation_rate", 0.0025, 0, 1 );
    Opts.Float.Add( "-c", "--crossover_rate", 0.95, 0, 1 );
    Opts.Float.Add( "-min", "--min_constant", 0 );
@@ -149,6 +149,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    data.number_of_bits = Opts.Int.Get("-nb");
    data.bits_per_gene = Opts.Int.Get("-bg");
    data.bits_per_constant = Opts.Int.Get("-bc");
+   data.seed = Opts.Int.Get("-seed");
    data.mutation_rate = Opts.Float.Get("-m");
    data.crossover_rate = Opts.Float.Get("-c");
 
@@ -432,7 +433,7 @@ void pee_print_best( FILE* out, int print_mode )
 
 void pee_evolve()
 {
-   srand( time(NULL) );
+   srand( data.seed );
 
    Individual* population_a = new Individual[data.population_size];
    Individual* population_b = new Individual[data.population_size];

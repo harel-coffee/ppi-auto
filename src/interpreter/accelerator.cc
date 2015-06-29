@@ -83,7 +83,7 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
       int device_type;
 
       bool leave = false;
-      //TODO checar se device e plataformas existem
+      //TODO checar se device e plataformas existem; colocar uma mensagem de erro qdo não achar o que o usurário especificou e parar a rodada; falar a plataforma que está rodando; colocar try, catch, throw no main.
 
       int first_platform = platform_id >= 0 ? platform_id : 0;
       int last_platform  = platform_id >= 0 ? platform_id + 1 : plataformas.size();
