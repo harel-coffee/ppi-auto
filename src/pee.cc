@@ -177,7 +177,10 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
 
    if( data.version )
    {
-      acc_interpret_init( argc, argv, data.max_size_phenotype, data.population_size, input, model, obs, nlin, 0 );
+      if( acc_interpret_init( argc, argv, data.max_size_phenotype, data.population_size, input, model, obs, nlin, 0 ) )
+      {
+         fprintf(stderr,"Error in initialization phase.\n");
+      }
    }
    else
    {

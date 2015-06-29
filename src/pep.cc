@@ -78,7 +78,10 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
 
    if( data.version )
    {
-      acc_interpret_init( argc, argv, data.size[0], 1, input, model, obs, nlin, data.prediction );
+      if( acc_interpret_init( argc, argv, data.size[0], 1, input, model, obs, nlin, data.prediction ) )
+      {
+         fprintf(stderr,"Error in initialization phase.\n");
+      }
    }
    else
    {

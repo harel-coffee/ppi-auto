@@ -23,13 +23,13 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int max_size; int nlin; int local_size; int global_size; cl::Context context; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
+static struct t_data { int max_size; int nlin; unsigned local_size; unsigned global_size; cl::Context context; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int prediction_mode )
+int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int prediction_mode )
 {
    CmdLine::Parser Opts( argc, argv );
 
@@ -38,9 +38,7 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
    Opts.String.Add( "-type" );
    Opts.Int.Add( "-platform-id", "", -1, 0 );
    Opts.Int.Add( "-device-id", "", -1, 0 );
-   // processing the command-line
    Opts.Process();
-   // getting the results!
    int platform_id = Opts.Int.Get("-platform-id");
    int device_id = Opts.Int.Get("-device-id");
    int ninput = Opts.Int.Get("-ni");
@@ -56,24 +54,27 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
    int type = -1;
    if( Opts.String.Found("-type") )
    {
-      if( !strcmp(Opts.String.Get("-type").c_str(),"CPU") ) { type = CL_DEVICE_TYPE_CPU; }
-      else { type = CL_DEVICE_TYPE_GPU; }
+      if( !strcmp(Opts.String.Get("-type").c_str(),"CPU") ) 
+      { 
+         type = CL_DEVICE_TYPE_CPU; 
+      }
+      else 
+      {
+         if( !strcmp(Opts.String.Get("-type").c_str(),"GPU") ) 
+         {
+            type = CL_DEVICE_TYPE_GPU; 
+         }
+         else
+         {
+            fprintf(stderr, "Not a single compatible device found.\n");
+            return 1;
+         }
+      }
    }
 
-   try
-   {
-      data.max_size = size;
-      data.nlin = nlin;
-      int ncol = ninput + nmodel + 1;
-      data.local_size = 64;
+//   try
+//   {
 
-      //TODO acertar os valores de local e global_size
-      data.global_size = nlin;
-      if( data.global_size % data.local_size != 0 )
-      {
-         data.global_size += data.local_size - (data.global_size % data.local_size); 
-      }
-      fprintf(stdout,"global_size=%d; local_size=%d\n",data.global_size,data.local_size);
 
       // Descobre as plataformas instaladas no hospedeiro
       vector<cl::Platform> plataformas;
@@ -82,19 +83,29 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
       vector<cl::Device> dispositivo(1); 
       int device_type;
 
-      bool leave = false;
-      //TODO checar se device e plataformas existem; colocar uma mensagem de erro qdo não achar o que o usurário especificou e parar a rodada; falar a plataforma que está rodando; colocar try, catch, throw no main.
 
+      //TODO falar a plataforma que está rodando
+
+      bool leave = false;
+      if( platform_id >= plataformas.size() )
+      {
+         fprintf(stderr, "Valid platform range: [0, %d].\n", (int)(plataformas.size()-1));
+         return 1;
+      }
       int first_platform = platform_id >= 0 ? platform_id : 0;
       int last_platform  = platform_id >= 0 ? platform_id + 1 : plataformas.size();
       for( int m = first_platform; m < last_platform; m++ )
       {
          vector<cl::Device> dispositivos;
-         // Descobre os dispositivos da plataforma m
+
          plataformas[m].getDevices( CL_DEVICE_TYPE_ALL, &dispositivos );
 
+         if( device_id >= dispositivos.size() )
+         {
+            fprintf(stderr, "Valid device range: [0, %d].\n", (int)(dispositivos.size()-1));
+            return 1;
+         }
          int first_device = device_id >= 0 ? device_id : 0;
-
          dispositivo[0] = dispositivos[first_device];
          device_type = dispositivo[0].getInfo<CL_DEVICE_TYPE>();
 
@@ -113,15 +124,41 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
             if( leave ) break;
          }
       }
+      if( type >= 0 && !leave )
+      {
+         fprintf(stderr, "Not a single compatible device found.\n");
+         return 1;
+      }
 
-      //fprintf(stdout,"platform_name[%d]=%s\n",platform_id,plataformas[last_platform-1].getInfo<CL_PLATFORM_NAME>().c_str());
-      fprintf(stdout,"device_name[%d]=%s\n",device_id,dispositivo[0].getInfo<CL_DEVICE_NAME>().c_str());
+
+      data.max_size = size;
+      data.nlin = nlin;
+      int ncol = ninput + nmodel + 1;
+
+      unsigned max_cu = dispositivo[0].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+      unsigned max_local_size = fmin( dispositivo[0].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), dispositivo[0].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
+
+      if( device_type == CL_DEVICE_TYPE_CPU ) 
+      {
+         data.local_size = 1;
+         data.global_size = nlin;
+      }
+      else
+      {
+         if( device_type == CL_DEVICE_TYPE_GPU ) 
+         {
+            data.local_size = fmin( max_local_size, (unsigned) ceil( nlin/(float) max_cu ) );
+            data.global_size = (unsigned) ( ceil( nlin/(float) data.local_size ) * data.local_size );
+         }
+      }
+
+      std::cout << "\nDevice: " << dispositivo[0].getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
+      std::cout << "\nLocal size: " << data.local_size << ", Global size: " << data.global_size << ", Work groups: " << data.global_size/data.local_size << "\n" << std::endl;
 
       // Criar o contexto
       data.context = cl::Context( dispositivo );
 
       // Criar a fila de comandos para um dispositivo (aqui só o primeiro)
-      //data.fila = cl::CommandQueue( data.context, dispositivo[0], CL_QUEUE_PROFILING_ENABLE );
       data.fila = cl::CommandQueue( data.context, dispositivo[0], CL_QUEUE_PROFILING_ENABLE );
 
       data.buffer_inputs = cl::Buffer( data.context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, nlin * ncol * sizeof( float ) );
@@ -253,11 +290,12 @@ void acc_interpret_init( int argc, char** argv, const unsigned size, const unsig
       data.kernel.setArg( 6, nlin );
       data.kernel.setArg( 7, ncol );
       data.kernel.setArg( 8, prediction_mode );
-   }
-   catch( cl::Error& e )
-   {
-      cerr << "ERROR: " << e.what() << " ( " << e.err() << " )\n";
-   }
+//   }
+//   catch( cl::Error& e )
+//   {
+//      cerr << "ERROR: " << e.what() << " ( " << e.err() << " )\n";
+//   }
+   return 0;
 }
 
 void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int prediction_mode )
