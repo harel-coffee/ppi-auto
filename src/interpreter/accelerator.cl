@@ -3,12 +3,14 @@
 //TODO cpu: pilha[++topo] = inputs[(gr_id * local_size + lo_id) * ncol + 2];
 
 __kernel void
-evaluate_gpu( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, __local float* EP, int nlin, int ncol, int prediction_mode, int nInd )
+evaluate_gpu( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, __local float* PE, int nlin, int ncol, int prediction_mode, int nInd )
 {
-   float pilha[TAM_MAX];
+   float stack[MAX_PHENOTYPE_SIZE];
+
    int lo_id = get_local_id(0);
    int gl_id = get_global_id(0);
    int gr_id = get_group_id(0);
+
    int lo_size = get_local_size(0);
    int next_power_of_2 = (pown(2.0f, (int) ceil(log2((float)lo_size))))/2;
 
@@ -22,101 +24,100 @@ evaluate_gpu( __global const Symbol* phenotype, __global const float* ephemeral,
          continue;
       }
 
-      EP[lo_id] = 0.0f;
+      PE[lo_id] = 0.0f;
 
       if( gl_id < nlin )
       {
-         int topo = -1;
+         int stack_top = -1;
          for( int i = size[ind] - 1; i >= 0; --i )
          {
-            switch( phenotype[ind * TAM_MAX + i] )
+            switch( phenotype[ind * MAX_PHENOTYPE_SIZE + i] )
             {
                case T_IF_THEN_ELSE:
-                  topo = ( (pilha[topo] == 1.0f) ? topo - 1 : topo - 2 );
+                  stack_top = ( (stack[stack_top] == 1.0f) ? stack_top - 1 : stack_top - 2 );
                   break;
                case T_AND:
-                  pilha[topo - 1] = ( (pilha[topo] == 1.0f && pilha[topo - 1] == 1.0f) ? 1.0f : 0.0f );
-                  --topo;
+                  stack[stack_top - 1] = ( (stack[stack_top] == 1.0f && stack[stack_top - 1] == 1.0f) ? 1.0f : 0.0f );
+                  --stack_top;
                   break;
                case T_OR:
-                  pilha[topo - 1] = ( (pilha[topo] == 1.0f || pilha[topo - 1] == 1.0f) ? 1.0f : 0.0f );
-                  --topo;
+                  stack[stack_top - 1] = ( (stack[stack_top] == 1.0f || stack[stack_top - 1] == 1.0f) ? 1.0f : 0.0f );
+                  --stack_top;
                   break;
                case T_NOT:
-                  pilha[topo] = !pilha[topo];
+                  stack[stack_top] = !stack[stack_top];
                   break;
-               case T_MAIOR:
-                  pilha[topo - 1] = ( (pilha[topo] > pilha[topo - 1]) ? 1.0f : 0.0f );
-                  --topo;
+               case T_GREATER:
+                  --stack_top;
                   break;
-               case T_MENOR:
-                  pilha[topo - 1] = ( (pilha[topo] < pilha[topo - 1]) ? 1.0f : 0.0f );
-                  --topo;
+               case T_LESS:
+                  stack[stack_top - 1] = ( (stack[stack_top] < stack[stack_top - 1]) ? 1.0f : 0.0f );
+                  --stack_top;
                   break;
-               case T_IGUAL:
-                  pilha[topo - 1] = ( (pilha[topo] == pilha[topo - 1]) ? 1.0f : 0.0f );
-                  --topo;
+               case T_EQUAL:
+                  stack[stack_top - 1] = ( (stack[stack_top] == stack[stack_top - 1]) ? 1.0f : 0.0f );
+                  --stack_top;
                   break;
                case T_ADD:
-                  pilha[topo - 1] = pilha[topo] + pilha[topo - 1];
-                  --topo;
+                  stack[stack_top - 1] = stack[stack_top] + stack[stack_top - 1];
+                  --stack_top;
                   break;
                case T_SUB:
-                  pilha[topo - 1] = pilha[topo] - pilha[topo - 1];
-                  --topo;
+                  stack[stack_top - 1] = stack[stack_top] - stack[stack_top - 1];
+                  --stack_top;
                   break;
                case T_MULT:
-                  pilha[topo - 1] = pilha[topo] * pilha[topo - 1];
-                  --topo;
+                  stack[stack_top - 1] = stack[stack_top] * stack[stack_top - 1];
+                  --stack_top;
                   break;
                case T_DIV:
-                  pilha[topo - 1] = pilha[topo] / pilha[topo - 1];
-                  --topo;
+                  stack[stack_top - 1] = stack[stack_top] / stack[stack_top - 1];
+                  --stack_top;
                   break;
                case T_MEAN:
-                  pilha[topo - 1] = (pilha[topo] + pilha[topo - 1]) / 2.0f;
-                  --topo;
+                  stack[stack_top - 1] = (stack[stack_top] + stack[stack_top - 1]) / 2.0f;
+                  --stack_top;
                   break;
                case T_MAX:
-                  pilha[topo - 1] = fmax(pilha[topo], pilha[topo - 1]);
-                  --topo;
+                  stack[stack_top - 1] = fmax(stack[stack_top], stack[stack_top - 1]);
+                  --stack_top;
                   break;
                case T_MIN:
-                  pilha[topo - 1] = fmin(pilha[topo], pilha[topo - 1]);
-                  --topo;
+                  stack[stack_top - 1] = fmin(stack[stack_top], stack[stack_top - 1]);
+                  --stack_top;
                   break;
                case T_ABS:
-                  pilha[topo] = fabs(pilha[topo]);
+                  stack[stack_top] = fabs(stack[stack_top]);
                   break;
                case T_SQRT:
-                  pilha[topo] = sqrt(pilha[topo]);
+                  stack[stack_top] = sqrt(stack[stack_top]);
                   break;
                case T_POW2:
-                  pilha[topo] = pilha[topo] * pilha[topo];
+                  stack[stack_top] = stack[stack_top] * stack[stack_top];
                   break;
                case T_POW3:
-                  pilha[topo] = pilha[topo] * pilha[topo] * pilha[topo];
+                  stack[stack_top] = stack[stack_top] * stack[stack_top] * stack[stack_top];
                   break;
                case T_NEG:
-                  pilha[topo] = -pilha[topo];
+                  stack[stack_top] = -stack[stack_top];
                   break;
                case T_ATTRIBUTE:
-                  pilha[++topo] = inputs[(gr_id * lo_size + lo_id) + nlin * (int)ephemeral[ind * TAM_MAX + i]];
+                  stack[++stack_top] = inputs[(gr_id * lo_size + lo_id) + nlin * (int)ephemeral[ind * MAX_PHENOTYPE_SIZE + i]];
                   break;
-               case T_1:
-                  pilha[++topo] = 1.0f;
+               case T_1P:
+                  stack[++stack_top] = 1.0f;
                   break;
-               case T_2:
-                  pilha[++topo] = 2.0f;
+               case T_2P:
+                  stack[++stack_top] = 2.0f;
                   break;
-               case T_3:
-                  pilha[++topo] = 3.0f;
+               case T_3P:
+                  stack[++stack_top] = 3.0f;
                   break;
-               case T_4:
-                  pilha[++topo] = 4.0f;
+               case T_4P:
+                  stack[++stack_top] = 4.0f;
                   break;
-               case T_EFEMERO:
-                  pilha[++topo] = ephemeral[ind * TAM_MAX + i];
+               case T_CONST:
+                  stack[++stack_top] = ephemeral[ind * MAX_PHENOTYPE_SIZE + i];
                   break;
                default:
                   break;
@@ -124,11 +125,11 @@ evaluate_gpu( __global const Symbol* phenotype, __global const float* ephemeral,
          }
          if( !prediction_mode )
          {
-            EP[lo_id] = fabs( pilha[topo] - inputs[(gr_id * lo_size + lo_id) + nlin * (ncol - 1)] );
+            PE[lo_id] = fabs( stack[stack_top] - inputs[(gr_id * lo_size + lo_id) + nlin * (ncol - 1)] );
          }
          else
          {
-            vector[gl_id] = pilha[topo];
+            vector[gl_id] = stack[stack_top];
          }
       }
       if( !prediction_mode )
@@ -136,9 +137,9 @@ evaluate_gpu( __global const Symbol* phenotype, __global const float* ephemeral,
          for( int s = next_power_of_2; s > 0; s/=2 )
          {
             barrier(CLK_LOCAL_MEM_FENCE);
-            if( (lo_id < s) && (lo_id + s < lo_size) ) { EP[lo_id] += EP[lo_id + s]; }
+            if( (lo_id < s) && (lo_id + s < lo_size) ) { PE[lo_id] += PE[lo_id + s]; }
          }
-         if( lo_id == 0) { vector[ind * get_num_groups(0) + gr_id] = EP[0]; }
+         if( lo_id == 0) { vector[ind * get_num_groups(0) + gr_id] = PE[0]; }
       }
    } 
 }

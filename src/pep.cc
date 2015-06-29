@@ -65,7 +65,7 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
    {
       fscanf(arqentra,"%d ",&tmp); data.phenotype[i] = (Symbol)tmp;
       //fprintf(stdout,"%d ",data.phenotype[i]);
-      if( data.phenotype[i] == T_EFEMERO || data.phenotype[i] == T_ATTRIBUTE )
+      if( data.phenotype[i] == T_CONST || data.phenotype[i] == T_ATTRIBUTE )
       {
          fscanf(arqentra,"%f ",&data.ephemeral[i]);
          //fprintf(stdout,"%.12f ",data.ephemeral[i]);

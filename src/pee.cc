@@ -83,7 +83,7 @@ int decode( const int* genome, int* const allele, Symbol* phenotype, float* ephe
          phenotype[pos] = r->symbols[i];
 
          // Tratamento especial para constantes efêmeras
-         if( r->symbols[i] == T_EFEMERO )
+         if( r->symbols[i] == T_CONST )
          {
            /* 
               Esta estratégia faz uso do próprio código genético do indivíduo 
@@ -331,7 +331,7 @@ void pee_individual_print( const Individual* individual, FILE* out, int print_mo
    {
       fprintf( out, "%d\n", size );
       for( int i = 0; i < size; ++i )
-         if( phenotype[i] == T_EFEMERO || phenotype[i] == T_ATTRIBUTE )
+         if( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )
             fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
          else
             fprintf( out, "%d ", phenotype[i] );
@@ -355,13 +355,13 @@ void pee_individual_print( const Individual* individual, FILE* out, int print_mo
             case T_NOT:
                fprintf( out, "NOT " );
                break;
-            case T_MAIOR:
+            case T_GREATER:
                fprintf( out, "> " );
                break;
-            case T_MENOR:
+            case T_LESS:
                fprintf( out, "< " );
                break;
-            case T_IGUAL:
+            case T_EQUAL:
                fprintf( out, "= " );
                break;
             case T_ADD:
@@ -403,19 +403,19 @@ void pee_individual_print( const Individual* individual, FILE* out, int print_mo
             case T_ATTRIBUTE:
                fprintf( out, "ATTR-%d ", (int)ephemeral[i] );
                break;
-            case T_1:
+            case T_1P:
                fprintf( out, "1 " );
                break;
-            case T_2:
+            case T_2P:
                fprintf( out, "2 " );
                break;
-            case T_3:
+            case T_3P:
                fprintf( out, "3 " );
                break;
-            case T_4:
+            case T_4P:
                fprintf( out, "4 " );
                break;
-            case T_EFEMERO:
+            case T_CONST:
                fprintf( out, "%.12f ",  ephemeral[i] );
                break;
       } 

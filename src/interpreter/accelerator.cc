@@ -46,7 +46,6 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 
    if( !Opts.Int.Found("-platform-id") && Opts.Int.Found("-device-id") )
    {
-      fprintf(stdout,"device_id\n");
       device_id = Opts.Int.Get("-device-id");
       platform_id = 0;
    }
@@ -77,47 +76,47 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 
 
       // Descobre as plataformas instaladas no hospedeiro
-      vector<cl::Platform> plataformas;
-      cl::Platform::get( &plataformas );
+      vector<cl::Platform> platforms;
+      cl::Platform::get( &platforms );
 
-      vector<cl::Device> dispositivo(1); 
+      vector<cl::Device> device(1); 
       int device_type;
 
 
       //TODO falar a plataforma que está rodando
 
       bool leave = false;
-      if( platform_id >= plataformas.size() )
+      if( platform_id >= (int) platforms.size() )
       {
-         fprintf(stderr, "Valid platform range: [0, %d].\n", (int)(plataformas.size()-1));
+         fprintf(stderr, "Valid platform range: [0, %d].\n", (int) (platforms.size()-1));
          return 1;
       }
       int first_platform = platform_id >= 0 ? platform_id : 0;
-      int last_platform  = platform_id >= 0 ? platform_id + 1 : plataformas.size();
+      int last_platform  = platform_id >= 0 ? platform_id + 1 : platforms.size();
       for( int m = first_platform; m < last_platform; m++ )
       {
-         vector<cl::Device> dispositivos;
+         vector<cl::Device> devices;
 
-         plataformas[m].getDevices( CL_DEVICE_TYPE_ALL, &dispositivos );
+         platforms[m].getDevices( CL_DEVICE_TYPE_ALL, &devices );
 
-         if( device_id >= dispositivos.size() )
+         if( device_id >= (int) devices.size() )
          {
-            fprintf(stderr, "Valid device range: [0, %d].\n", (int)(dispositivos.size()-1));
+            fprintf(stderr, "Valid device range: [0, %d].\n", (int) (devices.size()-1));
             return 1;
          }
          int first_device = device_id >= 0 ? device_id : 0;
-         dispositivo[0] = dispositivos[first_device];
-         device_type = dispositivo[0].getInfo<CL_DEVICE_TYPE>();
+         device[0] = devices[first_device];
+         device_type = device[0].getInfo<CL_DEVICE_TYPE>();
 
          if( type >= 0 && device_id < 0 )
          {
-            for ( int n = 0; n < dispositivos.size(); n++ )
+            for ( int n = 0; n < devices.size(); n++ )
             {
-               if ( dispositivos[n].getInfo<CL_DEVICE_TYPE>() == type ) 
+               if ( devices[n].getInfo<CL_DEVICE_TYPE>() == type ) 
                {
                   leave = true;
-                  dispositivo[0] = dispositivos[n];
-                  device_type = dispositivo[0].getInfo<CL_DEVICE_TYPE>();
+                  device[0] = devices[n];
+                  device_type = device[0].getInfo<CL_DEVICE_TYPE>();
                   break;
                }
             }
@@ -135,8 +134,8 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       data.nlin = nlin;
       int ncol = ninput + nmodel + 1;
 
-      unsigned max_cu = dispositivo[0].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-      unsigned max_local_size = fmin( dispositivo[0].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), dispositivo[0].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
+      unsigned max_cu = device[0].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+      unsigned max_local_size = fmin( device[0].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), device[0].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
 
       if( device_type == CL_DEVICE_TYPE_CPU ) 
       {
@@ -152,14 +151,14 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
          }
       }
 
-      std::cout << "\nDevice: " << dispositivo[0].getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
+      std::cout << "\nDevice: " << device[0].getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
       std::cout << "\nLocal size: " << data.local_size << ", Global size: " << data.global_size << ", Work groups: " << data.global_size/data.local_size << "\n" << std::endl;
 
       // Criar o contexto
-      data.context = cl::Context( dispositivo );
+      data.context = cl::Context( device );
 
       // Criar a fila de comandos para um dispositivo (aqui só o primeiro)
-      data.fila = cl::CommandQueue( data.context, dispositivo[0], CL_QUEUE_PROFILING_ENABLE );
+      data.fila = cl::CommandQueue( data.context, device[0], CL_QUEUE_PROFILING_ENABLE );
 
       data.buffer_inputs = cl::Buffer( data.context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, nlin * ncol * sizeof( float ) );
 
@@ -243,13 +242,13 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       // Compila para todos os dispositivos associados a 'programa' através do
       // 'contexto': vector<cl::Device>() é um vetor nulo
       char buildOptions[60];
-      sprintf( buildOptions, "-DTAM_MAX=%u -I.", data.max_size );  
+      sprintf( buildOptions, "-DMAX_PHENOTYPE_SIZE=%u -I.", data.max_size );  
       try {
-         programa.build( dispositivo, buildOptions );
+         programa.build( device, buildOptions );
       }
       catch( cl::Error& e )
       {
-         cerr << "Build Log:\t " << programa.getBuildInfo<CL_PROGRAM_BUILD_LOG>(dispositivo[0]) << std::endl;
+         cerr << "Build Log:\t " << programa.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device[0]) << std::endl;
 
          throw;
       }

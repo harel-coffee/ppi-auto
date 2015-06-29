@@ -64,11 +64,11 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 
    for( int ind = 0; ind < nInd; ++ind )
    {
-//      if( !size[ind] && !mode )
-//      {
-//         vector[ind] = std::numeric_limits<float>::max();
-//         break;
-//      }
+      if( size[ind] == 0 && !prediction_mode )
+      {
+         vector[ind] = std::numeric_limits<float>::max();
+         continue;
+      }
 
       sum = 0.0;
       for( int ponto = 0; ponto < data.nlin; ++ponto )
@@ -93,15 +93,15 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
                case T_NOT:
                   pilha[topo] == !pilha[topo];
                   break;
-               case T_MAIOR:
+               case T_GREATER:
                   if( pilha[topo] > pilha[topo - 1] ) { pilha[topo - 1] = 1.0; --topo; }
                   else { pilha[topo - 1] = 0.0; --topo; }
                   break;
-               case T_MENOR:
+               case T_LESS:
                   if( pilha[topo] < pilha[topo - 1] ) { pilha[topo - 1] = 1.0; --topo; }
                   else { pilha[topo - 1] = 0.0; --topo; }
                   break;
-               case T_IGUAL:
+               case T_EQUAL:
                   if( pilha[topo] == pilha[topo - 1] ) { pilha[topo - 1] = 1.0; --topo; }
                   else { pilha[topo - 1] = 0.0; --topo; }
                   break;
@@ -144,19 +144,19 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
                case T_ATTRIBUTE:
                   pilha[++topo] = data.inputs[ponto][(int)ephemeral[ind * data.size + i]];
                   break;
-               case T_1:
+               case T_1P:
                   pilha[++topo] = 1;
                   break;
-               case T_2:
+               case T_2P:
                   pilha[++topo] = 2;
                   break;
-               case T_3:
+               case T_3P:
                   pilha[++topo] = 3;
                   break;
-               case T_4:
+               case T_4P:
                   pilha[++topo] = 4;
                   break;
-               case T_EFEMERO:
+               case T_CONST:
                   pilha[++topo] = ephemeral[ind * data.size + i];
                   break;
             }
