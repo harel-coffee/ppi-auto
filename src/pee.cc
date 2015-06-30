@@ -131,7 +131,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    Opts.Int.Add( "-nb", "--number_of_bits", 2000, 16 );
    Opts.Int.Add( "-bg", "--bits_per_gene", 8, 8 );
    Opts.Int.Add( "-bc", "--bits_per_constant", 16, 4 );
-   Opts.Int.Add( "-seed", "", time(NULL) );
+   Opts.Int.Add( "-s", "--seed", time(NULL) );
    Opts.Float.Add( "-m", "--mutation_rate", 0.0025, 0, 1 );
    Opts.Float.Add( "-c", "--crossover_rate", 0.95, 0, 1 );
    Opts.Float.Add( "-min", "--min_constant", 0 );
@@ -149,7 +149,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    data.number_of_bits = Opts.Int.Get("-nb");
    data.bits_per_gene = Opts.Int.Get("-bg");
    data.bits_per_constant = Opts.Int.Get("-bc");
-   data.seed = Opts.Int.Get("-seed");
+   data.seed = Opts.Int.Get("-s");
    data.mutation_rate = Opts.Float.Get("-m");
    data.crossover_rate = Opts.Float.Get("-c");
 

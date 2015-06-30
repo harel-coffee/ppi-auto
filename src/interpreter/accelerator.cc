@@ -35,9 +35,9 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 
    Opts.Int.Add( "-ni", "--number_of_inputs" );
    Opts.Int.Add( "-nm", "--number_of_models" );
-   Opts.String.Add( "-type" );
    Opts.Int.Add( "-platform-id", "", -1, 0 );
    Opts.Int.Add( "-device-id", "", -1, 0 );
+   Opts.String.Add( "-type" );
    Opts.Process();
    int platform_id = Opts.Int.Get("-platform-id");
    int device_id = Opts.Int.Get("-device-id");
@@ -81,9 +81,6 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 
       vector<cl::Device> device(1); 
       int device_type;
-
-
-      //TODO falar a plataforma que está rodando
 
       bool leave = false;
       if( platform_id >= (int) platforms.size() )
@@ -132,33 +129,14 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 
       data.max_size = size;
       data.nlin = nlin;
-      int ncol = ninput + nmodel + 1;
-
-      unsigned max_cu = device[0].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-      unsigned max_local_size = fmin( device[0].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), device[0].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
-
-      if( device_type == CL_DEVICE_TYPE_CPU ) 
-      {
-         data.local_size = 1;
-         data.global_size = nlin;
-      }
-      else
-      {
-         if( device_type == CL_DEVICE_TYPE_GPU ) 
-         {
-            data.local_size = fmin( max_local_size, (unsigned) ceil( nlin/(float) max_cu ) );
-            data.global_size = (unsigned) ( ceil( nlin/(float) data.local_size ) * data.local_size );
-         }
-      }
-
-      std::cout << "\nDevice: " << device[0].getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
-      std::cout << "\nLocal size: " << data.local_size << ", Global size: " << data.global_size << ", Work groups: " << data.global_size/data.local_size << "\n" << std::endl;
 
       // Criar o contexto
       data.context = cl::Context( device );
 
       // Criar a fila de comandos para um dispositivo (aqui só o primeiro)
       data.fila = cl::CommandQueue( data.context, device[0], CL_QUEUE_PROFILING_ENABLE );
+
+      int ncol = ninput + nmodel + 1;
 
       data.buffer_inputs = cl::Buffer( data.context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, nlin * ncol * sizeof( float ) );
 
@@ -253,17 +231,51 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
          throw;
       }
 
-      // Cria a variável kernel que vai representar o kernel "avalia"
-//      if ( device_type == CL_DEVICE_TYPE_CPU ) 
-//      {
-//         fprintf(stdout,"Rodando CPU...\n");
-//         data.kernel = cl::Kernel( programa, "evaluate_cpu" );
-//      }
-//      else
-//      {
-//         fprintf(stdout,"Rodando GPU...\n");
-         data.kernel = cl::Kernel( programa, "evaluate_gpu" );
-//      }
+      unsigned max_cu = device[0].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+      unsigned max_local_size = fmin( device[0].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), device[0].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
+
+      if( device_type == CL_DEVICE_TYPE_CPU ) 
+      {
+         data.local_size = 1;
+         data.global_size = nlin;
+      }
+      else
+      {
+         if( device_type == CL_DEVICE_TYPE_GPU ) 
+         {
+            if( !strcmp(Opts.String.Get("-strategy").c_str(),"FP") ) 
+            {
+               data.local_size = fmin( max_local_size, (unsigned) ceil( nlin/(float) max_cu ) );
+               data.global_size = (unsigned) ( ceil( nlin/(float) data.local_size ) * data.local_size );
+               data.kernel = cl::Kernel( programa, "evaluate_fp" );
+            }
+            else
+            {
+               if( !strcmp(Opts.String.Get("-strategy").c_str(),"PPCU") ) 
+               {
+                  if( nlin < max_local_size )
+                  {
+                     data.local_size = nlin;
+                  }
+                  else
+                  {
+                     data.local_size = max_local_size;
+                  }
+                  data.global_size = population_size * data.local_size;
+                  data.kernel = cl::Kernel( programa, "evaluate_ppcu" );
+               }
+               else
+               {
+                  fprintf(stderr, "Not a compatible strategy found.\n");
+                  return 1;
+               }
+            }
+         }
+      }
+
+      std::cout << "\nDevice: " << device[0].getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
+      std::cout << "\nLocal size: " << data.local_size << ", Global size: " << data.global_size << ", Work groups: " << data.global_size/data.local_size << "\n" << std::endl;
+
 
       // 2) Preparação da memória dos dispositivos (leitura e escrita)
       data.buffer_phenotype = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.max_size * population_size * sizeof( Symbol ) );

@@ -6,6 +6,8 @@
 #include "pep.h"
 
 
+//TODO fazer comentários; passar para inglês; colocar obs em um vetor separado; fazer a outra estratégia; arrumar a cpu
+
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
 /** ****************************************************************** **/
