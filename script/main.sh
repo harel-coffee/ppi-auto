@@ -35,7 +35,7 @@ fi
 #$home/build/main -d $TMPTRAINING -ni $natr -nm $nmod -run $home/solution
 
 #cd $home/build; ./main -d $file -ni $natr -nm $nmod 1> $home/solution; cd -
-cd $home/build; ./main -v -acc -type GPU -d $file -ni $natr -nm $nmod p 1000 -g 10 -s 1; cd -
+cd $home/build; ./main -v -acc -type GPU -strategy FP -d $file -ni $natr -nm $nmod p 1000 -g 10 -s 1; cd -
 #cd $home/build; ./main -v -d $file -ni $natr -nm $nmod p 1000 -g 10 -s 1; cd -
 #cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution; cd -
 #cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution -acc; cd -

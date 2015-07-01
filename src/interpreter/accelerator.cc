@@ -38,6 +38,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    Opts.Int.Add( "-platform-id", "", -1, 0 );
    Opts.Int.Add( "-device-id", "", -1, 0 );
    Opts.String.Add( "-type" );
+   Opts.String.Add( "-strategy" );
    Opts.Process();
    int platform_id = Opts.Int.Get("-platform-id");
    int device_id = Opts.Int.Get("-device-id");
@@ -234,41 +235,38 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       unsigned max_cu = device[0].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
       unsigned max_local_size = fmin( device[0].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), device[0].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
 
-      if( device_type == CL_DEVICE_TYPE_CPU ) 
+      if( !strcmp(Opts.String.Get("-strategy").c_str(),"PP") ) 
       {
          data.local_size = 1;
          data.global_size = nlin;
       }
       else
       {
-         if( device_type == CL_DEVICE_TYPE_GPU ) 
+         if( !strcmp(Opts.String.Get("-strategy").c_str(),"FP") ) 
          {
-            if( !strcmp(Opts.String.Get("-strategy").c_str(),"FP") ) 
+            data.local_size = fmin( max_local_size, (unsigned) ceil( nlin/(float) max_cu ) );
+            data.global_size = (unsigned) ( ceil( nlin/(float) data.local_size ) * data.local_size );
+            data.kernel = cl::Kernel( programa, "evaluate_fp" );
+         }
+         else
+         {
+            if( !strcmp(Opts.String.Get("-strategy").c_str(),"PPCU") ) 
             {
-               data.local_size = fmin( max_local_size, (unsigned) ceil( nlin/(float) max_cu ) );
-               data.global_size = (unsigned) ( ceil( nlin/(float) data.local_size ) * data.local_size );
-               data.kernel = cl::Kernel( programa, "evaluate_fp" );
-            }
-            else
-            {
-               if( !strcmp(Opts.String.Get("-strategy").c_str(),"PPCU") ) 
+               if( nlin < max_local_size )
                {
-                  if( nlin < max_local_size )
-                  {
-                     data.local_size = nlin;
-                  }
-                  else
-                  {
-                     data.local_size = max_local_size;
-                  }
-                  data.global_size = population_size * data.local_size;
-                  data.kernel = cl::Kernel( programa, "evaluate_ppcu" );
+                  data.local_size = nlin;
                }
                else
                {
-                  fprintf(stderr, "Not a compatible strategy found.\n");
-                  return 1;
+                  data.local_size = max_local_size;
                }
+               data.global_size = population_size * data.local_size;
+               data.kernel = cl::Kernel( programa, "evaluate_ppcu" );
+            }
+            else
+            {
+               fprintf(stderr, "Not a compatible strategy found.\n");
+               return 1;
             }
          }
       }
@@ -287,9 +285,18 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       }
       else 
       {
-         data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.global_size/data.local_size) * population_size * sizeof( float ) );
-      } 
-
+         if( !strcmp(Opts.String.Get("-strategy").c_str(),"FP") ) 
+         {
+            data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.global_size/data.local_size) * population_size * sizeof( float ) );
+         }
+         else
+         {
+            if( !strcmp(Opts.String.Get("-strategy").c_str(),"PPCU") ) 
+            {
+               data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, population_size * sizeof( float ) );
+            }
+         }
+      }
 
       // Execução do kernel: definição dos argumentos e trabalho/particionamento
       data.kernel.setArg( 0, data.buffer_phenotype );
@@ -316,7 +323,10 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    data.fila.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, data.max_size * nInd * sizeof( float ), ephemeral ); 
    data.fila.enqueueWriteBuffer( data.buffer_size, CL_TRUE, 0, nInd * sizeof( int ), size ); 
 
-   data.kernel.setArg( 9, nInd );
+   if( !strcmp(Opts.String.Get("-strategy").c_str(),"FP") ) 
+   {
+      data.kernel.setArg( 9, nInd );
+   }
 
    data.fila.enqueueNDRangeKernel( data.kernel, cl::NDRange(), cl::NDRange( data.global_size ), cl::NDRange( data.local_size ) );
   
@@ -331,17 +341,26 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    }
    else
    {
-      float* tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, (data.global_size/data.local_size) * nInd * sizeof( float ) );
-      float sum;
-      for( int ind = 0; ind < nInd; ind++)
+      if( !strcmp(Opts.String.Get("-strategy").c_str(),"FP") ) 
       {
-         sum = 0.0;
-         for( int i = 0; i < (data.global_size/data.local_size); i++ ) {sum += tmp[ind * (data.global_size/data.local_size) + i];}
-
-         if( isnan( sum ) || isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
-         else {vector[ind] = sum/data.nlin;}
+         float* tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, (data.global_size/data.local_size) * nInd * sizeof( float ) );
+         float sum;
+         for( int ind = 0; ind < nInd; ind++)
+         {
+            sum = 0.0;
+            for( int i = 0; i < (data.global_size/data.local_size); i++ ) {sum += tmp[ind * (data.global_size/data.local_size) + i];}
+            if( isnan( sum ) || isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
+            else {vector[ind] = sum/data.nlin;}
+         }
       }
-      // Unmapping
-      data.fila.enqueueUnmapMemObject( data.buffer_vector, tmp ); 
+      else
+      {
+         if( !strcmp(Opts.String.Get("-strategy").c_str(),"PPCU") ) 
+         {
+            float* tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ) );
+            for( int i = 0; i < nInd; i++ ) {vector[i] = tmp[i];}
+         }
+      }
    }
+   data.fila.enqueueUnmapMemObject( data.buffer_vector, tmp ); 
 }
