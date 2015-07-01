@@ -23,7 +23,7 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int max_size; int nlin; unsigned local_size; unsigned global_size; cl::Context context; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
+static struct t_data { int max_size; int nlin; unsigned local_size; unsigned global_size; std::string strategy; cl::Context context; cl::Kernel kernel; cl::CommandQueue fila; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
@@ -40,6 +40,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    Opts.String.Add( "-type" );
    Opts.String.Add( "-strategy" );
    Opts.Process();
+   data.strategy = Opts.String.Get("-strategy");
    int platform_id = Opts.Int.Get("-platform-id");
    int device_id = Opts.Int.Get("-device-id");
    int ninput = Opts.Int.Get("-ni");
@@ -235,14 +236,14 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       unsigned max_cu = device[0].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
       unsigned max_local_size = fmin( device[0].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), device[0].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
 
-      if( !strcmp(Opts.String.Get("-strategy").c_str(),"PP") ) 
+      if( data.strategy == "PP" ) 
       {
          data.local_size = 1;
          data.global_size = nlin;
       }
       else
       {
-         if( !strcmp(Opts.String.Get("-strategy").c_str(),"FP") ) 
+         if( data.strategy == "FP" ) 
          {
             data.local_size = fmin( max_local_size, (unsigned) ceil( nlin/(float) max_cu ) );
             data.global_size = (unsigned) ( ceil( nlin/(float) data.local_size ) * data.local_size );
@@ -250,7 +251,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
          }
          else
          {
-            if( !strcmp(Opts.String.Get("-strategy").c_str(),"PPCU") ) 
+            if( data.strategy == "PPCU" ) 
             {
                if( nlin < max_local_size )
                {
@@ -271,9 +272,8 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
          }
       }
 
-      std::cout << "\nDevice: " << device[0].getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
-      std::cout << "\nLocal size: " << data.local_size << ", Global size: " << data.global_size << ", Work groups: " << data.global_size/data.local_size << "\n" << std::endl;
-
+//      std::cout << "\nDevice: " << device[0].getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
+//      std::cout << "\nLocal size: " << data.local_size << ", Global size: " << data.global_size << ", Work groups: " << data.global_size/data.local_size << "\n" << std::endl;
 
       // 2) Preparação da memória dos dispositivos (leitura e escrita)
       data.buffer_phenotype = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.max_size * population_size * sizeof( Symbol ) );
@@ -285,13 +285,13 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       }
       else 
       {
-         if( !strcmp(Opts.String.Get("-strategy").c_str(),"FP") ) 
+         if( data.strategy == "FP" ) 
          {
             data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.global_size/data.local_size) * population_size * sizeof( float ) );
          }
          else
          {
-            if( !strcmp(Opts.String.Get("-strategy").c_str(),"PPCU") ) 
+            if( data.strategy == "PPCU" ) 
             {
                data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, population_size * sizeof( float ) );
             }
@@ -323,7 +323,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    data.fila.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, data.max_size * nInd * sizeof( float ), ephemeral ); 
    data.fila.enqueueWriteBuffer( data.buffer_size, CL_TRUE, 0, nInd * sizeof( int ), size ); 
 
-   if( !strcmp(Opts.String.Get("-strategy").c_str(),"FP") ) 
+   if( data.strategy == "FP" ) 
    {
       data.kernel.setArg( 9, nInd );
    }
@@ -333,17 +333,17 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    // Espera pela finalização da execução do kernel (forçar sincronia)
    data.fila.finish();
 
-   // Transferência dos resultados para o hospedeiro 
+   float *tmp;
    if ( prediction_mode )
    {
-      float* tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, data.nlin * sizeof( float ) );
+      tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, data.nlin * sizeof( float ) );
       for( int i = 0; i < data.nlin; i++ ) {vector[i] = tmp[i];}
    }
    else
    {
-      if( !strcmp(Opts.String.Get("-strategy").c_str(),"FP") ) 
+      if( data.strategy == "FP" ) 
       {
-         float* tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, (data.global_size/data.local_size) * nInd * sizeof( float ) );
+         tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, (data.global_size/data.local_size) * nInd * sizeof( float ) );
          float sum;
          for( int ind = 0; ind < nInd; ind++)
          {
@@ -355,9 +355,9 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       }
       else
       {
-         if( !strcmp(Opts.String.Get("-strategy").c_str(),"PPCU") ) 
+         if( data.strategy == "PPCU" ) 
          {
-            float* tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ) );
+            tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ) );
             for( int i = 0; i < nInd; i++ ) {vector[i] = tmp[i];}
          }
       }
