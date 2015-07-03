@@ -58,9 +58,9 @@ void seq_interpret_init( const unsigned size, float** input, float** model, floa
 
 void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int prediction_mode )
 {
-   float pilha[data.size]; 
+   float stack[data.size]; 
    float sum; 
-   int topo;
+   int stack_top;
 
    for( int ind = 0; ind < nInd; ++ind )
    {
@@ -73,9 +73,24 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       sum = 0.0;
       for( int ponto = 0; ponto < data.nlin; ++ponto )
       {
-         #include "core.h"
-         if( prediction_mode ) {vector[ponto] = pilha[topo];}
-         else {sum += fabs(pilha[topo] - data.obs[ponto]);}
+         stack_top = -1;
+         for( int i = size[ind] - 1; i >= 0; --i )
+         {
+            switch( phenotype[ind * data.size + i] )
+            {
+               #include "core"
+               case T_ATTRIBUTE:
+                  stack[++stack_top] = data.inputs[ponto][(int)ephemeral[ind * data.size + i]];
+                  break;
+               case T_CONST:
+                  stack[++stack_top] = ephemeral[ind * data.size + i];
+                  break;
+               default:
+                  break;
+            }
+         }
+         if( prediction_mode ) {vector[ponto] = stack[stack_top];}
+         else {sum += fabs(stack[stack_top] - data.obs[ponto]);}
       }
       if ( !prediction_mode )
       {
