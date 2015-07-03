@@ -36,11 +36,14 @@ fi
 
 #cd $home/build; ./main -d $file -ni $natr -nm $nmod 1> $home/solution; cd -
 #cd $home/build; ./main -acc -type GPU -strategy PPCU -d $file -ni $natr -nm $nmod -p 1000 -g 50 1> $home/solution; cd -
+cd $home/build; ./main -acc -type GPU -strategy PP -d $file -ni $natr -nm $nmod -p 1000 -g 50 1> $home/solution; cd -
+more solution
 #cd $home/build; ./main -v -d $file -ni $natr -nm $nmod p 1000 -g 10 -s 1; cd -
 #cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution; cd -
 #cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution -acc -strategy PPCU; cd -
 #cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution -acc -strategy FP; cd -
-cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution; cd -
+#cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution -acc -strategy PP; cd -
+#cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution; cd -
 #cd $home/build; ./main -d $file -pred -ni $natr -nm $nmod -run $home/solution -acc -strategy PPCU; cd -
 #cd $home/build; ./main -d $file -ni $natr -nm $nmod -run $home/solution -acc -platform-id 1 -device-id 0; cd -
 
