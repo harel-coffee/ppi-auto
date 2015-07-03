@@ -144,34 +144,32 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 
       float* inputs = (float*) data.fila.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_WRITE, 0, nlin * ncol * sizeof( float ) );
 
-//      if ( device_type == CL_DEVICE_TYPE_CPU ) 
-//      {
-//         fprintf(stdout,"Lendo CPU...\n");
-//         for( int i = 0; i < nlin; i++ )
-//         {
-//            for( int j = 0; j < ninput; j++ )
-//            {
-//               inputs[i * ncol + j] = input[i][j];
-//            }
-//            for( int j = 0; j < nmodel; j++ )
-//            {
-//               inputs[i * ncol + (j + ninput)] = model[i][j];
-//            }
-//            inputs[i * ncol + (nmodel + ninput)] = obs[i];
-//         }
-//
+      if( data.strategy == "PP" ) 
+      {
+         for( int i = 0; i < nlin; i++ )
+         {
+            for( int j = 0; j < ninput; j++ )
+            {
+               inputs[i * ncol + j] = input[i][j];
+            }
+            for( int j = 0; j < nmodel; j++ )
+            {
+               inputs[i * ncol + (j + ninput)] = model[i][j];
+            }
+            inputs[i * ncol + (nmodel + ninput)] = obs[i];
+         }
+
 //         for( int j = 0; j < (ninput+nmodel+1); j++ )
 //         {
 //            fprintf(stdout,"%f ",inputs[289*ncol+j]);
 //         }
 //         fprintf(stdout,"\n");
 
-//      }
-//      else
-//      {
-//         if ( device_type == CL_DEVICE_TYPE_GPU ) 
-//         {
-//            fprintf(stdout,"Lendo GPU...\n");
+      }
+      else
+      {
+         if( data.strategy == "FP" || data.strategy == "PPCU" ) 
+         {
             for( int i = 0; i < nlin; i++ )
             {
                for( int j = 0; j < ninput; j++ )
@@ -191,12 +189,12 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 //            }
 //            fprintf(stdout,"\n");
 
-//         }
-//         else
-//         {
-//            fprintf(stderr,"Problem to get device type (%d).\n", device_type);
-//         }
-//      }
+         }
+         else
+         {
+            fprintf(stderr, "Not a compatible strategy found.\n");
+         }
+      }
 
       // Unmapping
       data.fila.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
@@ -239,7 +237,8 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       if( data.strategy == "PP" ) 
       {
          data.local_size = 1;
-         data.global_size = nlin;
+         data.global_size = population_size;
+         data.kernel = cl::Kernel( programa, "evaluate_pp" );
       }
       else
       {
@@ -291,7 +290,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
          }
          else
          {
-            if( data.strategy == "PPCU" ) 
+            if( data.strategy == "PPCU" || data.strategy == "PP" ) 
             {
                data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, population_size * sizeof( float ) );
             }
@@ -355,7 +354,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       }
       else
       {
-         if( data.strategy == "PPCU" ) 
+         if( data.strategy == "PPCU" || data.strategy == "PP" ) 
          {
             tmp = (float*) data.fila.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ) );
             for( int i = 0; i < nInd; i++ ) {vector[i] = tmp[i];}
