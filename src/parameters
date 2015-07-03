@@ -1,9 +1,0 @@
-int    population_size    = 2000;
-int    bits_number        = 2000;
-int    tournament_size    = 3;
-double mutation_rate      = 0.0025; // 0.5/numeroBits
-int    generation_number  = 10;
-int    elitism            = 1;      // 1 = habilita, 0 = desabilita
-double crossover_rate     = 0.95; 
-double interval[]         = { 0, 300 }; 
-
