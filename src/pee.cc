@@ -131,7 +131,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    Opts.Int.Add( "-nb", "--number_of_bits", 2000, 16 );
    Opts.Int.Add( "-bg", "--bits_per_gene", 8, 8 );
    Opts.Int.Add( "-bc", "--bits_per_constant", 16, 4 );
-   Opts.Int.Add( "-s", "--seed", time(NULL) );
+   Opts.Int.Add( "-s", "--seed", 0 );
    Opts.Float.Add( "-m", "--mutation_rate", 0.0025, 0, 1 );
    Opts.Float.Add( "-c", "--crossover_rate", 0.95, 0, 1 );
    Opts.Float.Add( "-min", "--min_constant", 0 );
@@ -149,7 +149,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    data.number_of_bits = Opts.Int.Get("-nb");
    data.bits_per_gene = Opts.Int.Get("-bg");
    data.bits_per_constant = Opts.Int.Get("-bc");
-   data.seed = Opts.Int.Get("-s");
+   data.seed = Opts.Int.Get("-s") == 0 ? time( NULL ) : Opts.Int.Get("-s");
    data.mutation_rate = Opts.Float.Get("-m");
    data.crossover_rate = Opts.Float.Get("-c");
 
@@ -436,6 +436,31 @@ void pee_print_best( FILE* out, int print_mode )
 
 void pee_evolve()
 {
+   /*
+      Pseudo-code for evolve:
+
+   1: Create (randomly) the initial population P
+   2: Evaluate all individuals (programs) of P
+   3: for generation ← 1 to NG do
+      4: while |Ptmp| < |P| do
+         5: Select and copy from P two fit individuals, p1 and p2
+         6: if [probabilistically] crossover then
+            7: Recombine p1 and p2, creating the children p1' and p2'
+            8: p1 ← p1' ; p2 ← p2'
+         9: end if
+         10: if [probabilistically] mutation then
+            11: Apply mutation operators in p1 and p2, generating p1' and p2'
+            12: p1 ← p1' ; p2 ← p2'
+         13: end if
+         14: Insert p1 and p2 into Ptmp
+      15: end while
+      16: Evaluate all individuals (programs) of Ptmp
+      17: Copy the best (elitism) individuals of P to the temporary population Ptmp
+      18: P ← Ptmp; then discard Ptmp
+   19: end for
+   20: return the best individual so far
+   */
+
    srand( data.seed );
 
    Individual* population_a = new Individual[data.population_size];
@@ -443,7 +468,6 @@ void pee_evolve()
 
    data.best_individual.genome = new int[data.number_of_bits];
 
-   // Alocação dos indivíduos
    for( int i = 0; i < data.population_size; ++i )
    {
       population_a[i].genome = new int[data.number_of_bits];
@@ -453,43 +477,45 @@ void pee_evolve()
    Individual* antecedentes = population_a;
    Individual* descendentes = population_b;
 
-   // Criação da população inicial (1ª geração)
+   // 1 e 2:
    pee_generate_population( antecedentes );
     
-   // Processo evolucionário
-   for( int geracao = 1; geracao <= data.generations && data.best_individual.fitness > 0.0005; ++geracao )
+   // 3:
+   for( int geracao = 1; geracao <= data.generations; ++geracao )
    {
+      // 4
       for( int i = 0; i < data.population_size; i += 2 )
       {
-         // Seleção de indivíduos adaptados para gerar descendentes
+         // 5:
          const Individual* father = pee_tournament( antecedentes );
          const Individual* mother = pee_tournament( antecedentes );
 
-         // Cruzamento
+         // 6:
          if( random_number() < data.crossover_rate )
          {
-            pee_crossover( father->genome, mother->genome, 
-                        descendentes[i].genome, descendentes[i + 1].genome );
-         }
-         else // Apenas clonagem
+            // 7 e 8:
+            pee_crossover( father->genome, mother->genome, descendentes[i].genome, descendentes[i + 1].genome );
+         } // 9
+         else 
          {
+            // 8:
             pee_clone( father, &descendentes[i] );
             pee_clone( mother, &descendentes[i + 1] );
-         }
+         } // 9
 
-         // Mutações
+         // 10, 11, 12, 13 e 14:
          pee_mutation( descendentes[i].genome );
          pee_mutation( descendentes[i + 1].genome );
-      }
+      } // 15
 
-      // Avaliação dos novos indivíduos
+      // 16:
       pee_evaluate( descendentes, data.population_size );
       pee_evaluate( descendentes, data.population_size );
 
-      // Elitismo
+      // 17:
       if( data.elitism ) pee_clone( &data.best_individual, &descendentes[0] );
 
-      // Faz população nova ser a atual, e vice-versa.
+      // 18:
       swap( antecedentes, descendentes );
 
       if( data.verbose ) 
@@ -497,8 +523,9 @@ void pee_evolve()
          printf("[%d] ", geracao);
          pee_individual_print( &data.best_individual, stdout, 0 );
       }
-   }
+   } // 19
 
+   // Clean up
    for( int i = 0; i < data.population_size; ++i )
    {
       delete[] population_a[i].genome, population_b[i].genome;
