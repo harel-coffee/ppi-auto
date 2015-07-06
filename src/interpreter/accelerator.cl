@@ -44,7 +44,10 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
       }
       if( !prediction_mode )
       {
-         vector[gl_id] = PE[0]/nlin;
+         if( isnan( PE[0] ) || isinf( PE[0] ) ) 
+            vector[gl_id] = MAXFLOAT;
+         else 
+            vector[gl_id] = PE[0]/nlin;
       }
    }
 }
@@ -171,7 +174,13 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
             barrier(CLK_LOCAL_MEM_FENCE);
             if( (lo_id < s) && (lo_id + s < lo_size) ) { PE[lo_id] += PE[lo_id + s]; }
          }
-         if( lo_id == 0) { vector[gr_id] = PE[0]/nlin; }
+         if( lo_id == 0)
+         { 
+            if( isnan( PE[0] ) || isinf( PE[0] ) ) 
+               vector[gr_id] = MAXFLOAT;
+            else 
+               vector[gr_id] = PE[0]/nlin;
+         } 
       }
    }
 }

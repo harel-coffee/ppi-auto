@@ -110,6 +110,8 @@ int opencl_init( int platform_id, int device_id, int type )
    data.context = cl::Context( data.device );
 
    data.queue = cl::CommandQueue( data.context, data.device[0], CL_QUEUE_PROFILING_ENABLE );
+
+   return 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -130,7 +132,6 @@ int build_kernel( int population_size )
    catch( cl::Error& e )
    {
       cerr << "Build Log:\t " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(data.device[0]) << std::endl;
-
       throw;
    }
 
@@ -178,6 +179,8 @@ int build_kernel( int population_size )
          }
       }
    }
+
+   return 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -350,13 +353,15 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       }
    }
 
-   if ( !opencl_init( Opts.Int.Get("-platform-id"), Opts.Int.Get("-device-id"), type ) )
+   if ( opencl_init( Opts.Int.Get("-platform-id"), Opts.Int.Get("-device-id"), type ) )
    {
+      fprintf(stderr,"Error in OpenCL initialization phase.\n");
       return 1;
    }
 
-   if ( !build_kernel( population_size ) )
+   if ( build_kernel( population_size ) )
    {
+      fprintf(stderr,"Error in build the kernel.\n");
       return 1;
    }
 
