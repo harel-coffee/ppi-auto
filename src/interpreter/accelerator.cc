@@ -1,8 +1,6 @@
 // ------------------------------------------------------------------------
-// Habilita disparar exceções C++
 #define __CL_ENABLE_EXCEPTIONS
 
-// Cabeçalho OpenCL para C++
 #include <CL/cl.hpp>
 
 #include <stdio.h>
@@ -23,7 +21,7 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int max_size; int nlin; unsigned local_size; unsigned global_size; std::string strategy; vector<cl::Device> device; cl::Context context; cl::Kernel kernel; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
+static struct t_data { int max_size; int nlin; unsigned local_size; unsigned global_size; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
 
 
 /** ****************************************************************** **/
@@ -84,7 +82,7 @@ int opencl_init( int platform_id, int device_id, int type )
       }
 
       int first_device = device_id >= 0 ? device_id : 0;
-      data.device[0] = devices[first_device];
+      data.device = devices[first_device];
 
       if( type >= 0 && device_id < 0 ) // options 4 e 5
       {
@@ -93,7 +91,7 @@ int opencl_init( int platform_id, int device_id, int type )
             if ( devices[n].getInfo<CL_DEVICE_TYPE>() == type ) 
             {
                leave = true;
-               data.device[0] = devices[n];
+               data.device = devices[n];
                break;
             }
          }
@@ -103,13 +101,13 @@ int opencl_init( int platform_id, int device_id, int type )
 
    if( type >= 0 && !leave )
    {
-      fprintf(stderr, "Not a single compatible device found.\n");
+      fprintf(stderr, "Not a single compatible type found.\n");
       return 1;
    }
 
-   data.context = cl::Context( data.device );
+   data.context = cl::Context( devices );
 
-   data.queue = cl::CommandQueue( data.context, data.device[0], CL_QUEUE_PROFILING_ENABLE );
+   data.queue = cl::CommandQueue( data.context, data.device, CL_QUEUE_PROFILING_ENABLE );
 
    return 0;
 }
@@ -126,19 +124,20 @@ int build_kernel( int population_size )
 
    char buildOptions[60];
    sprintf( buildOptions, "-DMAX_PHENOTYPE_SIZE=%u -I.", data.max_size );  
+   vector<cl::Device> device; device.push_back( data.device );
    try {
-      program.build( data.device, buildOptions );
+      program.build( device, buildOptions );
    }
    catch( cl::Error& e )
    {
-      cerr << "Build Log:\t " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(data.device[0]) << std::endl;
+      cerr << "Build Log:\t " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(data.device) << std::endl;
       throw;
    }
 
-   unsigned max_cu = data.device[0].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-   unsigned max_local_size = fmin( data.device[0].getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), data.device[0].getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
+   unsigned max_cu = data.device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+   unsigned max_local_size = fmin( data.device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), data.device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
 
-   if( data.strategy == "PP" ) 
+   if( data.strategy == "PP" )  // Population-parallel
    {
       data.local_size = 1;
       data.global_size = population_size;
@@ -146,7 +145,7 @@ int build_kernel( int population_size )
    }
    else
    {
-      if( data.strategy == "FP" ) 
+      if( data.strategy == "FP" ) // Fitness-parallel
       {
          // Evenly distribute the workload among the compute units (but avoiding local size
          // being more than the maximum allowed).
@@ -158,7 +157,7 @@ int build_kernel( int population_size )
       }
       else
       {
-         if( data.strategy == "PPCU" ) 
+         if( data.strategy == "PPCU" ) // Population-parallel computing unit
          {
             if( data.nlin < max_local_size )
             {
@@ -174,11 +173,14 @@ int build_kernel( int population_size )
          }
          else
          {
-            fprintf(stderr, "Not a compatible strategy found.\n");
+            fprintf(stderr, "Valid strategy: PP, FP and PPCU.\n");
             return 1;
          }
       }
    }
+
+   //std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
+   //std::cout << "\nLocal size: " << data.local_size << ", Global size: " << data.global_size << ", Work groups: " << data.global_size/data.local_size << "\n" << std::endl;
 
    return 0;
 }
@@ -259,7 +261,7 @@ void create_buffers( const unsigned population_size, float** input, float** mode
       }
       else
       {
-         fprintf(stderr, "Not a compatible strategy found.\n");
+         fprintf(stderr, "Valid strategy: PP, FP and PPCU.\n");
       }
    }
    // Unmapping
@@ -297,9 +299,6 @@ void create_buffers( const unsigned population_size, float** input, float** mode
       }
    }
 
-   //std::cout << "\nDevice: " << data.device[0].getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
-   //std::cout << "\nLocal size: " << data.local_size << ", Global size: " << data.global_size << ", Work groups: " << data.global_size/data.local_size << "\n" << std::endl;
-
    data.kernel.setArg( 0, data.buffer_phenotype );
    data.kernel.setArg( 1, data.buffer_ephemeral );
    data.kernel.setArg( 2, data.buffer_size );
@@ -321,10 +320,10 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 {
    CmdLine::Parser Opts( argc, argv );
 
-   Opts.Int.Add( "-ni", "--number_of_inputs" );
-   Opts.Int.Add( "-nm", "--number_of_models" );
-   Opts.Int.Add( "-platform-id", "", -1, 0 );
-   Opts.Int.Add( "-device-id", "", -1, 0 );
+   Opts.Int.Add( "-ni", "--number-of-inputs" );
+   Opts.Int.Add( "-nm", "--number-of-models" );
+   Opts.Int.Add( "-cl-p", "--platform-id", -1, 0 );
+   Opts.Int.Add( "-cl-d", "--device-id", -1, 0 );
    Opts.String.Add( "-type" );
    Opts.String.Add( "-strategy" );
    Opts.Process();
@@ -353,7 +352,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       }
    }
 
-   if ( opencl_init( Opts.Int.Get("-platform-id"), Opts.Int.Get("-device-id"), type ) )
+   if ( opencl_init( Opts.Int.Get("-cl-p"), Opts.Int.Get("-cl-d"), type ) )
    {
       fprintf(stderr,"Error in OpenCL initialization phase.\n");
       return 1;

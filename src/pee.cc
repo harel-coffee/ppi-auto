@@ -120,38 +120,51 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
 {
    CmdLine::Parser Opts( argc, argv );
 
+   Opts.Bool.Add( "-v", "--verbose" );
+
    Opts.Bool.Add( "-acc" );
-   Opts.Bool.Add( "-v" );
-   Opts.Bool.Add( "-e" );
-   Opts.Int.Add( "-ni", "--number_of_inputs" );
-   Opts.Int.Add( "-nm", "--number_of_models" );
-   Opts.Int.Add( "-p", "--population_size", 2000, 2 );
-   Opts.Int.Add( "-g", "--generations", 50, 0 );
-   Opts.Int.Add( "-ts", "--tournament_size", 3, 1 );
-   Opts.Int.Add( "-nb", "--number_of_bits", 2000, 16 );
-   Opts.Int.Add( "-bg", "--bits_per_gene", 8, 8 );
-   Opts.Int.Add( "-bc", "--bits_per_constant", 16, 4 );
-   Opts.Int.Add( "-s", "--seed", 0 );
-   Opts.Float.Add( "-m", "--mutation_rate", 0.0025, 0, 1 );
-   Opts.Float.Add( "-c", "--crossover_rate", 0.95, 0, 1 );
-   Opts.Float.Add( "-min", "--min_constant", 0 );
-   Opts.Float.Add( "-max", "--max_constant", 300 );
+
+   Opts.Int.Add( "-ni", "--number-of-inputs" );
+   Opts.Int.Add( "-nm", "--number-of-models" );
+
+   Opts.Int.Add( "-g", "--generations", 50, 1, std::numeric_limits<int>::max() );
+
+   Opts.Int.Add( "-s", "--seed", 0, 0, std::numeric_limits<long>::max() );
+
+   Opts.Int.Add( "-ps", "--population-size", 1024, 5, std::numeric_limits<int>::max() );
+   Opts.Float.Add( "-cp", "--crossover-probability", 0.95, 0.0, 1.0 );
+   Opts.Float.Add( "-mp", "--mutation-probability", 0.0025, 0.0, 1.0 );
+   Opts.Int.Add( "-ts", "--tournament-size", 3, 1, std::numeric_limits<int>::max() );
+
+   Opts.Bool.Add( "-e", "--elitism" );
+
+   Opts.Int.Add( "-nb", "--number-of-bits", 2000, 16 );
+   Opts.Int.Add( "-bg", "--bits-per-gene", 8, 8 );
+   Opts.Int.Add( "-bc", "--bits-per-constant", 16, 4 );
+
+   Opts.Float.Add( "-min", "--min-constant", 0 );
+   Opts.Float.Add( "-max", "--max-constant", 300 );
 
    // processing the command-line
    Opts.Process();
 
    // getting the results!
    data.verbose = Opts.Bool.Get("-v");
-   data.elitism = Opts.Bool.Get("-e");
-   data.population_size = Opts.Int.Get("-p");
+
    data.generations = Opts.Int.Get("-g");
+
+   data.seed = Opts.Int.Get("-s") == 0 ? time( NULL ) : Opts.Int.Get("-s");
+
+   data.population_size = Opts.Int.Get("-ps");
+   data.crossover_rate = Opts.Float.Get("-cp");
+   data.mutation_rate = Opts.Float.Get("-mp");
    data.tournament_size = Opts.Int.Get("-ts");
+
+   data.elitism = Opts.Bool.Get("-e");
+
    data.number_of_bits = Opts.Int.Get("-nb");
    data.bits_per_gene = Opts.Int.Get("-bg");
    data.bits_per_constant = Opts.Int.Get("-bc");
-   data.seed = Opts.Int.Get("-s") == 0 ? time( NULL ) : Opts.Int.Get("-s");
-   data.mutation_rate = Opts.Float.Get("-m");
-   data.crossover_rate = Opts.Float.Get("-c");
 
    if( Opts.Float.Get("-min") > Opts.Float.Get("-max") )
    {
@@ -165,16 +178,20 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    }
 
    data.initial_symbol = NT_IF_THEN_ELSE_INICIAL;
+
    data.best_individual.genome = NULL;
    data.best_individual.fitness = std::numeric_limits<float>::max();
+
    data.max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * data.number_of_bits/data.bits_per_gene;
    data.nlin = nlin;
+
    data.phenotype = new Symbol[data.population_size * data.max_size_phenotype];
    data.ephemeral = new float[data.population_size * data.max_size_phenotype];
    data.size = new int[data.population_size];
-   data.error = new float[data.population_size];
-   data.version = Opts.Bool.Get("-acc");
 
+   data.error = new float[data.population_size];
+
+   data.version = Opts.Bool.Get("-acc");
    if( data.version )
    {
       if( acc_interpret_init( argc, argv, data.max_size_phenotype, data.population_size, input, model, obs, nlin, 0 ) )
