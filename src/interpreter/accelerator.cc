@@ -190,10 +190,10 @@ void create_buffers( const unsigned population_size, float** input, float** mode
 {
    int ncol = ninput + nmodel + 1;
 
+   cl::Event event; 
+
    // Buffer (memory on the device) of training points (input, model and obs)
    data.buffer_inputs = cl::Buffer( data.context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, data.nlin * ncol * sizeof( float ) );
-
-   cl::Event event; 
 
    float* inputs = (float*) data.queue.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_WRITE, 0, data.nlin * ncol * sizeof( float ), NULL, &event );
 
@@ -267,13 +267,13 @@ void create_buffers( const unsigned population_size, float** input, float** mode
       }
    }
 
+   // Unmapping
+   data.queue.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
+
    cl_ulong start, end;
    event.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    event.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
    data.time_overhead += (end - start)/1.0E9;
-
-   // Unmapping
-   data.queue.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
 
    //inputs = (float*) data.queue.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_READ, 0, data.nlin * ncol * sizeof( float ) );
    //for( int i = 0; i < data.nlin * ncol; i++ )
@@ -486,5 +486,5 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 // -----------------------------------------------------------------------------
 void acc_print_time()
 {
-   printf("time_overhead = %lf time_kernel = %lf\n", data.time_overhead, data.time_kernel);
+   printf("time_overhead: %lf, time_kernel: %lf, ", data.time_overhead, data.time_kernel);
 }

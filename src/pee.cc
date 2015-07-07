@@ -29,7 +29,7 @@
 
 struct Individual { int* genome; float fitness; };
 
-static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; } data;
+static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; } data;
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -456,6 +456,7 @@ void pee_print_time()
    {
       acc_print_time();
    }
+   printf("time_total: %lf\n", data.time_total);
 }
 
 void pee_evolve()
@@ -560,8 +561,7 @@ void pee_evolve()
    delete[] population_a, population_b; 
 
    end = clock();
-   double time_total = ((double)(end - start))/((double)(CLOCKS_PER_SEC));
-   printf("time_total = %lf\n", time_total);
+   data.time_total = ((double)(end - start))/((double)(CLOCKS_PER_SEC));
 }
 
 void pee_destroy()
