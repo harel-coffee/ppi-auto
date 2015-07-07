@@ -21,7 +21,7 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int max_size; int nlin; unsigned local_size; unsigned global_size; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; } data;
+static struct t_data { int max_size; int nlin; unsigned local_size; unsigned global_size; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; double time_kernel; double time_overhead; } data;
 
 
 /** ****************************************************************** **/
@@ -193,7 +193,9 @@ void create_buffers( const unsigned population_size, float** input, float** mode
    // Buffer (memory on the device) of training points (input, model and obs)
    data.buffer_inputs = cl::Buffer( data.context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, data.nlin * ncol * sizeof( float ) );
 
-   float* inputs = (float*) data.queue.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_WRITE, 0, data.nlin * ncol * sizeof( float ) );
+   cl::Event event; 
+
+   float* inputs = (float*) data.queue.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_WRITE, 0, data.nlin * ncol * sizeof( float ), NULL, &event );
 
    if( data.strategy == "PP" ) 
    {
@@ -264,6 +266,12 @@ void create_buffers( const unsigned population_size, float** input, float** mode
          fprintf(stderr, "Valid strategy: PP, FP and PPCU.\n");
       }
    }
+
+   cl_ulong start, end;
+   event.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   event.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_overhead += (end - start)/1.0E9;
+
    // Unmapping
    data.queue.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
 
@@ -330,6 +338,8 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    data.strategy = Opts.String.Get("-strategy");
    data.max_size = size;
    data.nlin = nlin;
+   data.time_kernel = 0.0f;
+   data.time_overhead = 0.0f;
 
    int type = -1;
    if( Opts.String.Found("-type") )
@@ -380,9 +390,15 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 // -----------------------------------------------------------------------------
 void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int prediction_mode )
 {
-   data.queue.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, data.max_size * nInd * sizeof( Symbol ), phenotype );
-   data.queue.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, data.max_size * nInd * sizeof( float ), ephemeral ); 
-   data.queue.enqueueWriteBuffer( data.buffer_size, CL_TRUE, 0, nInd * sizeof( int ), size ); 
+   //vector<cl::Event> events(4); 
+   cl::Event event0; 
+   cl::Event event1; 
+   cl::Event event2; 
+   cl::Event event3; 
+
+   data.queue.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, data.max_size * nInd * sizeof( Symbol ), phenotype, NULL, &event1 );
+   data.queue.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, data.max_size * nInd * sizeof( float ), ephemeral, NULL, &event2 ); 
+   data.queue.enqueueWriteBuffer( data.buffer_size, CL_TRUE, 0, nInd * sizeof( int ), size, NULL, &event3 ); 
 
    if( data.strategy == "FP" ) 
    {
@@ -390,11 +406,28 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    }
 
    // ---------- begin kernel execution
-   data.queue.enqueueNDRangeKernel( data.kernel, cl::NDRange(), cl::NDRange( data.global_size ), cl::NDRange( data.local_size ) );
+   data.queue.enqueueNDRangeKernel( data.kernel, cl::NDRange(), cl::NDRange( data.global_size ), cl::NDRange( data.local_size ), NULL, &event0 );
    // ---------- end kernel execution
 
    // Wait until the kernel has finished
    data.queue.finish();
+
+
+   cl_ulong start, end;
+   event0.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   event0.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_kernel += (end - start)/1.0E9;
+
+   event1.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   event1.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_overhead += (end - start)/1.0E9;
+   event2.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   event2.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_overhead += (end - start)/1.0E9;
+   event3.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   event3.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_overhead += (end - start)/1.0E9;
+
 
    float *tmp;
    if ( prediction_mode )
@@ -448,4 +481,10 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       }
    }
    data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp ); 
+}
+
+// -----------------------------------------------------------------------------
+void acc_print_time()
+{
+   printf("time_overhead = %lf time_kernel = %lf\n", data.time_overhead, data.time_kernel);
 }

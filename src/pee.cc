@@ -450,6 +450,13 @@ void pee_print_best( FILE* out, int print_mode )
    pee_individual_print( &data.best_individual, out, print_mode );
 }
 
+void pee_print_time() 
+{
+   if( data.version )
+   {
+      acc_print_time();
+   }
+}
 
 void pee_evolve()
 {
@@ -477,6 +484,9 @@ void pee_evolve()
    19: end for
    20: return the best individual so far
    */
+
+   clock_t start, end;
+   start = clock();
 
    srand( data.seed );
 
@@ -548,6 +558,10 @@ void pee_evolve()
       delete[] population_a[i].genome, population_b[i].genome;
    }
    delete[] population_a, population_b; 
+
+   end = clock();
+   double time_total = ((double)(end - start))/((double)(CLOCKS_PER_SEC));
+   printf("time_total = %lf\n", time_total);
 }
 
 void pee_destroy()

@@ -131,6 +131,7 @@ int main(int argc, char **argv)
       pee_init( input, model, obs, nlin, argc, argv );
       pee_evolve();
       pee_print_best( stdout, 1 );
+      pee_print_time();
       pee_destroy();
    }
   
