@@ -37,7 +37,7 @@ static struct t_data { Symbol initial_symbol; Individual best_individual; unsign
 
 #define swap(i, j) {Individual* t = i; i = j; j = t;}
 
-float random_number() {return rand() / (RAND_MAX + 1.0);} // [0.0, 1.0)
+double random_number() {return (double)rand() / ((double)RAND_MAX + 1.0f);} // [0.0, 1.0)
 
 t_rule* decode_rule( const int* genome, int* const allele, Symbol cabeca )
 {
@@ -321,20 +321,6 @@ void pee_mutation( int* genome )
       if( random_number() < data.mutation_rate ) genome[i] = !genome[i];
 }
 
-const Individual* pee_tournament( const Individual* population )
-{
-   const Individual* vencedor = &population[(int)(random_number() * data.population_size)];
-
-   for( int t = 1; t < data.tournament_size; ++t )
-   {
-      const Individual* competidor = &population[(int)(random_number() * data.population_size)];
-
-      if( competidor->fitness < vencedor->fitness ) vencedor = competidor;
-   }
-
-   return vencedor;
-}
-
 void pee_individual_print( const Individual* individual, FILE* out, int print_mode )
 {
    Symbol phenotype[data.max_size_phenotype];
@@ -443,6 +429,20 @@ void pee_individual_print( const Individual* individual, FILE* out, int print_mo
    }
    else
       fprintf( out, " %.12f\n", individual->fitness );
+}
+
+const Individual* pee_tournament( const Individual* population )
+{
+   const Individual* vencedor = &population[(int)(random_number() * data.population_size)];
+
+   for( int t = 1; t < data.tournament_size; ++t )
+   {
+      const Individual* competidor = &population[(int)(random_number() * data.population_size)];
+
+      if( competidor->fitness < vencedor->fitness ) vencedor = competidor;
+   }
+
+   return vencedor;
 }
 
 void pee_print_best( FILE* out, int print_mode ) 
