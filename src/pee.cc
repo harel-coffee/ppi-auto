@@ -321,6 +321,20 @@ void pee_mutation( int* genome )
       if( random_number() < data.mutation_rate ) genome[i] = !genome[i];
 }
 
+const Individual* pee_tournament( const Individual* population )
+{
+   const Individual* vencedor = &population[(int)(random_number() * data.population_size)];
+
+   for( int t = 1; t < data.tournament_size; ++t )
+   {
+      const Individual* competidor = &population[(int)(random_number() * data.population_size)];
+
+      if( competidor->fitness < vencedor->fitness ) vencedor = competidor;
+   }
+
+   return vencedor;
+}
+
 void pee_individual_print( const Individual* individual, FILE* out, int print_mode )
 {
    Symbol phenotype[data.max_size_phenotype];
@@ -429,20 +443,6 @@ void pee_individual_print( const Individual* individual, FILE* out, int print_mo
    }
    else
       fprintf( out, " %.12f\n", individual->fitness );
-}
-
-const Individual* pee_tournament( const Individual* population )
-{
-   const Individual* vencedor = &population[(int)(random_number() * data.population_size)];
-
-   for( int t = 1; t < data.tournament_size; ++t )
-   {
-      const Individual* competidor = &population[(int)(random_number() * data.population_size)];
-
-      if( competidor->fitness < vencedor->fitness ) vencedor = competidor;
-   }
-
-   return vencedor;
 }
 
 void pee_print_best( FILE* out, int print_mode ) 
