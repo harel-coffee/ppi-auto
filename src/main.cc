@@ -128,6 +128,15 @@ int main(int argc, char **argv)
    }
    else
    {
+      //ServerSocket svs(SocketAddress( "0.0.0.0", 32768 ) );
+      //TCPServerParams* pParams = new TCPServerParams;
+      //pParams->setMaxThreads(4);
+      //pParams->setMaxQueued(4);
+      //pParams->setThreadIdleTime(100);
+      //TCPServer srv(new TCPServerConnectionFactoryImpl<Server>(), svs, pParams);
+      //srv.start();
+      //criar server.cc e server.h
+
       pee_init( input, model, obs, nlin, argc, argv );
       pee_evolve();
       pee_print_best( stdout, 1 );
