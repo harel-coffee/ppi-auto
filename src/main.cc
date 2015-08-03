@@ -2,11 +2,11 @@
 #include <stdio.h> 
 #include <cmath>    
 #include "util/CmdLineParser.h"
+#include "server/server.h"
 #include "pee.h"
 #include "pep.h"
 
-
-//TODO fazer comentários; passar para inglês; colocar obs em um vetor separado; fazer a outra estratégia; arrumar a cpu
+//TODO fazer comentários; passar para inglês
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -128,20 +128,23 @@ int main(int argc, char **argv)
    }
    else
    {
-      //ServerSocket svs(SocketAddress( "0.0.0.0", 32768 ) );
-      //TCPServerParams* pParams = new TCPServerParams;
-      //pParams->setMaxThreads(4);
-      //pParams->setMaxQueued(4);
-      //pParams->setThreadIdleTime(100);
-      //TCPServer srv(new TCPServerConnectionFactoryImpl<Server>(), svs, pParams);
-      //srv.start();
-      //criar server.cc e server.h
+      ServerSocket svs(SocketAddress( "0.0.0.0", 32768 ) );
+      TCPServerParams* pParams = new TCPServerParams;
+      pParams->setMaxThreads(4);
+      pParams->setMaxQueued(4);
+      pParams->setThreadIdleTime(100);
+      TCPServer srv(new TCPServerConnectionFactoryImpl<Server>(), svs, pParams);
+      srv.start();
+
+      //server_init( argc, argv );
 
       pee_init( input, model, obs, nlin, argc, argv );
       pee_evolve();
       pee_print_best( stdout, 1 );
       pee_print_time();
       pee_destroy();
+
+      //server_destroy();
    }
   
    destroy(input, model, obs, nlin);

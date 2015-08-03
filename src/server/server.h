@@ -1,24 +1,5 @@
-// ---------------------------------------------------------------------------
-// Copyright (C) 2013 Douglas Adriano Augusto
-//
-// This file is part of MaPLA.
-//
-// MaPLA is free software; you can redistribute it and/or modify it under the
-// terms of the GNU General Public License as published by the Free Software
-// Foundation; either version 3 of the License, or (at your option) any later
-// version.
-//
-// This program is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-// FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-// more details.
-//
-// You should have received a copy of the GNU General Public License along
-// with this program; if not, see <http://www.gnu.org/licenses/>.
-// ---------------------------------------------------------------------------
-
-#ifndef __master_h
-#define __master_h
+#ifndef __server_h
+#define __server_h
 
 #include "Poco/Net/TCPServer.h"
 #include "Poco/Net/TCPServerConnection.h"
@@ -44,7 +25,7 @@ using Poco::Net::ServerSocket;
 using Poco::Net::SocketAddress;
 using Poco::Thread;
 
-#include "common.h"
+#include "../common/common.h"
 
 struct Task {
    Task( range_t begin, range_t end, unsigned id = 0 ):
@@ -152,12 +133,12 @@ struct WorkQueue {
 
 
 /******************************************************************************/
-namespace {
-   class Master: public TCPServerConnection, public Common {
+//namespace xyz {
+   class Server: public TCPServerConnection, public Common {
    public:
       /* We cannot do Common(s) here because 's' is 'const'. TCPServerConnection(s)
          makes a copy of 's', which then can be accessed through 'socket()'. */
-      Master( const StreamSocket& s ): TCPServerConnection(s), Common( socket() ) {}
+      Server( const StreamSocket& s ): TCPServerConnection(s), Common( socket() ) {}
 
       void run();
 
@@ -180,7 +161,9 @@ namespace {
       static WorkQueue* m_workqueue;
 
    };
-}
+//}
+
+//using namespace xyz;
 
 /******************************************************************************/
 #endif
