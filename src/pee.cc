@@ -37,7 +37,7 @@ static struct t_data { Symbol initial_symbol; Individual best_individual; unsign
 
 #define swap(i, j) {Individual* t = i; i = j; j = t;}
 
-float random_number() {return rand() / (RAND_MAX + 1.0);} // [0.0, 1.0)
+double random_number() {return (double)rand() / ((double)RAND_MAX + 1.0f);} // [0.0, 1.0)
 
 t_rule* decode_rule( const int* genome, int* const allele, Symbol cabeca )
 {
