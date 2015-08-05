@@ -136,7 +136,7 @@ int main(int argc, char **argv)
       TCPServer srv(new TCPServerConnectionFactoryImpl<Server>(), svs, pParams);
       srv.start();
 
-      //server_init( argc, argv );
+      server_init( argc, argv );
 
       pee_init( input, model, obs, nlin, argc, argv );
       pee_evolve();

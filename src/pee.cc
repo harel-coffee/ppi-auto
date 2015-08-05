@@ -20,14 +20,19 @@
 #include "interpreter/accelerator.h"
 #include "interpreter/sequential.h"
 #include "pee.h"
+#include "server/server.h"
+#include "individual"
 #include "grammar"
+
+
+/** Definition of the static variables **/
+//Poco::FastMutex Server::m_mutex;
+//std::queue<Individual> Server::m_individuals;
 
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
-
-struct Individual { int* genome; float fitness; };
 
 static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; } data;
 
@@ -236,6 +241,22 @@ void pee_evaluate( Individual* individual, int nInd )
 //      fprintf(stdout,"\n");
 //   }
 
+   if( !Server::m_individuals.empty() )
+   {
+      Individual foreign;
+      printf("Tentando...\n");
+      {
+         Poco::FastMutex::ScopedLock lock( Server::m_mutex );
+         foreign = Server::m_individuals.front();
+         Server::m_individuals.pop();
+
+         printf("individual.fitness: %f\n", foreign.fitness);
+         for( int i = 0; i < data.number_of_bits; i++ )
+            printf("%d ", foreign.genome[i]);
+         printf("\n");
+      } // The mutex will be released (unlocked) at this point
+      printf("Feito...\n");
+   }
 
    if( data.version )
    {

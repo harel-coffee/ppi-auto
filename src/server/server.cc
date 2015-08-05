@@ -1,38 +1,28 @@
-#include <sstream>
 #include "../util/CmdLineParser.h"
 #include "server.h"
 
 /******************************************************************************/
 /** Definition of the static variables **/
 Poco::FastMutex Server::m_mutex;
-std::string Server::m_config;
-//bool Server::m_stop = false;
-
-WorkQueue* Server::m_workqueue = 0;
+std::queue<Individual> Server::m_individuals;
 
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-//static struct t_data { Individual* individuals; int next; genome_size; int size; } data;
+static struct t_data { int genome_size; int size; } data;
 
-//void server_init( int argc, char** argv ) 
-//{
-//   CmdLine::Parser Opts( argc, argv );
-//
-//   Opts.Int.Add( "-nb", "--number-of-bits", 2000, 16 );
-//   Opts.Process();
-//   data.genome_size = Opts.Int.Get("-nb");
-//
-//   data.next = 0;
-//   data.size = 10;
-//   data.individuals = new Individual[data.size];
-//   for( int i = 0; i < data.size; ++i )
-//   {
-//      data.individuals[i].genome = new int[data.genome_size];
-//   }
-//}
+void server_init( int argc, char** argv ) 
+{
+   CmdLine::Parser Opts( argc, argv );
+
+   Opts.Int.Add( "-nb", "--number-of-bits", 2000, 16 );
+   Opts.Process();
+   data.genome_size = Opts.Int.Get("-nb");
+
+   data.size = 10;
+}
 
 
 /******************************************************************************/
@@ -44,38 +34,36 @@ WorkQueue* Server::m_workqueue = 0;
 **/
 void Server::run()
 {
-   //poco_information_f1( m_logger, "Connection from %s", socket().peerAddress().toString() );
-
-   std::string results;
-
    bool RET = false;
-   TaskData  task_ret;
-   //Individual individual;
-   //individual.genome = new int[data.genome_size];
+
+   Individual individual;
+   individual.genome = new int[data.genome_size];
 
    char command; int msg_size;
    command = RcvHeader( msg_size );
+   //printf("command: %c msg_size:%d\n", command,msg_size);
 
    switch( command ) {
-      case 'R': {
+      case 'I': {
                    RET = true;
 
                    // Receive the message
                    char* buffer = RcvMessage( msg_size );
+                   int offset;
 
-                   sscanf( buffer, "%d %llu %llu", &task_ret.id, &task_ret.begin, &task_ret.end );
-                   //sscanf( buffer, "%f ", &individual.fitness );
-                   //for( int i = 0; i < data.genome_size-1; i++ )
-                   //{
-                   //   sscanf( buffer, "%d ", &individual.genome[i] );
-                   //}
-                   //sscanf( buffer, "%d", &individual.genome[data.genome_size-1] );
+                   sscanf( buffer, "%f%n", &individual.fitness, &offset );
+                   buffer += offset;
+                   //printf("individual.fitness: %f genome_size:%d\n", individual.fitness, data.genome_size);
+                   for( int i = 0; i < data.genome_size-1; i++ )
+                   {
+                      sscanf( buffer, "%d%n", &individual.genome[i], &offset );
+                      buffer += offset;
+                   }
+                   sscanf( buffer, "%d", &individual.genome[data.genome_size-1] );
 
-                   //if( !buffer )
-                      //poco_error( "Error receiving message!" );
-
-                   // TODO: Extract all results and put them into a private temporary space
-                   //results = std::string( buffer );
+                   //for( int i = 0; i < data.genome_size; i++ )
+                   //   printf("%d ", individual.genome[i]);
+                   //printf("\n");
                 }
                 break;
 
@@ -84,55 +72,18 @@ void Server::run()
                 return;
    }
 
-   Task* task;
    {
       Poco::FastMutex::ScopedLock lock( m_mutex );
-      //std::cerr << "[";
       if( RET )
       {
-         // Check whether task is already done
-         if( m_workqueue->sent[task_ret.id] != 0 )
+         if( m_individuals.size() > data.size ) 
          {
-            m_workqueue->DeleteTask( m_workqueue->sent[task_ret.id] );
-            //poco_information_f1( m_logger, "Task completed: %u", task_ret.id );
+             m_individuals.pop();
          }
-         //else
-            //poco_information_f1( m_logger, "Task already completed: %u", task_ret.id );
-
-         // Get results from worker
-         //std::cerr << results << std::endl;
-
-         //data.individuals[data.next].fitness = individual.fitness;
-         //for( int i = 0; i < genome_size; ++i )
-         //{
-            //data.individuals[data.next].genome[i] = individual.genome[i];
-         //}
-         //data.next++;
-         //if( data.next >= data.size ) 
-         //{
-         //   data.next = 0;
-         //}
+         m_individuals.push( individual );
+         Thread::sleep(30000);
       }
-
-      // Check if there still exists tasks to be processed
-      if( m_workqueue->first == 0 )
-      {
-         SndHeader( 'S' );
-         return;
-      }
-
-      task = m_workqueue->PickFirst();
    } // The mutex will be released (unlocked) at this point
 
-   std::stringstream task_str;
-   task_str << task->data.id << " " << task->data.begin << " " << task->data.end << "\n";
-
-   //poco_information_f2( m_logger, "Sending task to %s: %s", socket().peerAddress().toString(), task_str.str() );
-   // Send task
-   SndHeader( 'T', task_str.str().size() );
-   SndMessage( task_str.str().data(), task_str.str().size() );
-
-   //std::cerr << "]";
-
-   //delete[] individual.genome;
+   delete[] individual.genome;
 }
