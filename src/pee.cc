@@ -16,25 +16,31 @@
 #include <limits>
 #include <ctime>
 #include <string>   
+#include <sstream>
 #include "util/CmdLineParser.h"
 #include "interpreter/accelerator.h"
 #include "interpreter/sequential.h"
 #include "pee.h"
 #include "server/server.h"
+#include "client/client.h"
 #include "individual"
 #include "grammar"
-
-
-/** Definition of the static variables **/
-//Poco::FastMutex Server::m_mutex;
-//std::queue<Individual> Server::m_individuals;
 
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; } data;
+struct Peer {
+  Peer( const std::string& s, float f ):
+      address( s ), frequency( f ) {}
+
+  std::string address;
+  float frequency;
+};
+
+static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; std::vector<Peer> peers; } data;
+
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -150,6 +156,8 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    Opts.Float.Add( "-min", "--min-constant", 0 );
    Opts.Float.Add( "-max", "--max-constant", 300 );
 
+   Opts.String.Add( "-peers", "--address_of_island" );
+
    // processing the command-line
    Opts.Process();
 
@@ -196,6 +204,35 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
 
    data.error = new float[data.population_size];
 
+   std::string str = Opts.String.Get("-peers");
+   //std::cout << str << std::endl;
+
+
+   size_t pos;
+   std::string s;
+   float f;
+
+   std::string delimiter = ",";
+   while ( ( pos = str.find( delimiter ) ) != std::string::npos ) 
+   {
+      pos = str.find(delimiter);
+      s = str.substr(0, pos);
+      str.erase(0, pos + delimiter.length());
+      //std::cout << s << std::endl;
+
+      delimiter = ";";
+
+      pos = str.find(delimiter);
+      f = std::atof(str.substr(0, pos).c_str());
+      str.erase(0, pos + delimiter.length());
+      //std::cout << f << std::endl;
+
+      data.peers.push_back( Peer( s, f ) );
+
+      delimiter = ",";
+   }
+
+
    data.version = Opts.Bool.Get("-acc");
    if( data.version )
    {
@@ -241,23 +278,6 @@ void pee_evaluate( Individual* individual, int nInd )
 //      fprintf(stdout,"\n");
 //   }
 
-   if( !Server::m_individuals.empty() )
-   {
-      Individual foreign;
-      printf("Tentando...\n");
-      {
-         Poco::FastMutex::ScopedLock lock( Server::m_mutex );
-         foreign = Server::m_individuals.front();
-         Server::m_individuals.pop();
-
-         printf("individual.fitness: %f\n", foreign.fitness);
-         for( int i = 0; i < data.number_of_bits; i++ )
-            printf("%d ", foreign.genome[i]);
-         printf("\n");
-      } // The mutex will be released (unlocked) at this point
-      printf("Feito...\n");
-   }
-
    if( data.version )
    {
       acc_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
@@ -267,16 +287,17 @@ void pee_evaluate( Individual* individual, int nInd )
       seq_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
    }
 
-
+   //TODO: 0.00001 vira parâmetro para interpret (0 no pep); mudar a estrutura AoS para SoA
    for( int i = 0; i < nInd; i++ )
    {
-//      fprintf(stdout,"fitness[Ind=%d]=%f\n",i,data.error[i]);
+      //fprintf(stdout,"fitness[Ind=%d]=%f\n",i,data.error[i]);
       individual[i].fitness = data.error[i] + 0.00001*data.size[i]; 
       if( individual[i].fitness < data.best_individual.fitness )
       {
          pee_clone( &individual[i], &data.best_individual );
       }
    }
+
 }
 
 void pee_generate_population( Individual* population )
@@ -344,16 +365,36 @@ void pee_mutation( int* genome )
 
 const Individual* pee_tournament( const Individual* population )
 {
-   const Individual* vencedor = &population[(int)(random_number() * data.population_size)];
+   const Individual* winner = &population[(int)(random_number() * data.population_size)];
 
    for( int t = 1; t < data.tournament_size; ++t )
    {
-      const Individual* competidor = &population[(int)(random_number() * data.population_size)];
+      const Individual* competitor = &population[(int)(random_number() * data.population_size)];
 
-      if( competidor->fitness < vencedor->fitness ) vencedor = competidor;
+      if( competitor->fitness < winner->fitness ) winner = competitor;
    }
 
-   return vencedor;
+   return winner;
+}
+
+int pee_reverse_tournament( const Individual* population )
+{
+   int idx_winner = (int)(random_number() * data.population_size);
+   const Individual* winner = &population[idx_winner];
+
+   for( int t = 1; t < data.tournament_size; ++t )
+   {
+      int idx_competitor = (int)(random_number() * data.population_size);
+      const Individual* competitor = &population[idx_competitor];
+
+      if( competitor->fitness > winner->fitness )
+      {
+         winner = competitor;
+         idx_winner = idx_competitor;
+      }
+   }
+
+   return idx_winner;
 }
 
 void pee_individual_print( const Individual* individual, FILE* out, int print_mode )
@@ -567,6 +608,45 @@ void pee_evolve()
       // 18:
       swap( antecedentes, descendentes );
 
+      //TODO:criar uma função
+      if( !Server::m_individuals.empty() && Server::m_mutex.tryLock() )
+      {
+         while( !Server::m_individuals.empty() )
+         {
+            int idx = pee_reverse_tournament( antecedentes );
+            antecedentes[idx] = Server::m_individuals.front();
+            Server::m_individuals.pop();
+
+            printf("individual.fitness: %f\n", antecedentes[idx].fitness);
+            for( int i = 0; i < data.number_of_bits; i++ )
+               printf("%d ", antecedentes[idx].genome[i]);
+            printf("\n");
+         } 
+         Server::m_mutex.unlock();
+      }
+
+
+      //TODO:criar uma função
+      std::stringstream results;
+      //results.str("");
+      results.str(std::string());
+      results <<  data.best_individual.fitness << " ";
+      for( int i = 0; i < data.number_of_bits-1; i++ )
+         results <<  data.best_individual.genome[i] << " ";
+      results <<  data.best_individual.genome[data.number_of_bits];
+      //std::cerr << results.str() << std::endl;
+
+      for( int i = 0; i < data.peers.size(); i++ )
+      { 
+         if( random_number() < data.peers[i].frequency )
+         {
+            StreamSocket ss;
+            Client client( ss, data.peers[i].address.data() );
+            client.SndIndividual( results.str().data() );
+         }
+      }
+
+      
       if( data.verbose ) 
       {
          printf("[%d] ", geracao);

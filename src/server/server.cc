@@ -13,6 +13,7 @@ std::queue<Individual> Server::m_individuals;
 
 static struct t_data { int genome_size; int size; } data;
 
+
 void server_init( int argc, char** argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
@@ -27,10 +28,9 @@ void server_init( int argc, char** argv )
 
 /******************************************************************************/
 /** This function is called whenever a worker connects to master. The master
-   will check the request and then do one of the following actions:
+   will check the request and then do the following action:
 
-   1) Send the initialization data and first task to the worker;
-   2) Receive the results from the worker and send another task to it
+   1) Receive the results from the worker
 **/
 void Server::run()
 {
@@ -81,7 +81,7 @@ void Server::run()
              m_individuals.pop();
          }
          m_individuals.push( individual );
-         Thread::sleep(30000);
+         //Thread::sleep(10000);
       }
    } // The mutex will be released (unlocked) at this point
 

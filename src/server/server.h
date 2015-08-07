@@ -24,39 +24,35 @@ using Poco::Thread;
 #include "../common/common.h"
 #include "../individual"
 
-/******************************************************************************/
-//namespace xyz {
-   class Server: public TCPServerConnection, public Common {
-   public:
-      /* We cannot do Common(s) here because 's' is 'const'. TCPServerConnection(s)
-         makes a copy of 's', which then can be accessed through 'socket()'. */
-      Server( const StreamSocket& s ): TCPServerConnection(s), Common( socket() ) {}
-
-      void run();
-
-   public:
-      /* A 'static variable' will always be shared among all threads.
-
-         A 'standard variable' will be shared among the threads that
-         are run over the same object of this class.
-
-         A 'ThreadLocal static variable' will not be shared even if the
-         threads are run over the same object.
-
-         Finally, all variables declared inside 'run()' are private for
-         the current thread (executing the method run()). */
-      static Poco::FastMutex m_mutex;
-
-   public:
-      static std::queue<Individual> m_individuals;
-
-   };
-//}
-
-//using namespace xyz;
-
-/******************************************************************************/
-
 void server_init( int argc, char** argv );
+
+
+class Server: public TCPServerConnection, public Common {
+public:
+   /* We cannot do Common(s) here because 's' is 'const'. TCPServerConnection(s)
+      makes a copy of 's', which then can be accessed through 'socket()'. */
+   Server( const StreamSocket& s ): TCPServerConnection(s), Common( socket() ) {}
+
+   void run();
+
+public:
+   /* A 'static variable' will always be shared among all threads.
+
+      A 'standard variable' will be shared among the threads that
+      are run over the same object of this class.
+
+      A 'ThreadLocal static variable' will not be shared even if the
+      threads are run over the same object.
+
+      Finally, all variables declared inside 'run()' are private for
+      the current thread (executing the method run()). */
+   static Poco::FastMutex m_mutex;
+
+public:
+   static std::queue<Individual> m_individuals;
+
+};
+
+
 
 #endif

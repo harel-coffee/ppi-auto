@@ -101,6 +101,7 @@ int main(int argc, char **argv)
    Opts.Bool.Add( "-pred", "--prediction" );
    Opts.Int.Add( "-ni", "--number_of_inputs" );
    Opts.Int.Add( "-nm", "--number_of_models" );
+   Opts.Int.Add( "-port", "--number_of_port" );
    Opts.String.Add( "-d", "--dataset" );
    Opts.String.Add( "-run", "--program_file" );
 
@@ -108,6 +109,7 @@ int main(int argc, char **argv)
 
    int ninput = Opts.Int.Get("-ni");   
    int nmodel = Opts.Int.Get("-nm");   
+   int port = Opts.Int.Get("-port");
    const char* dataset = Opts.String.Get("-d").c_str();
 
    
@@ -128,7 +130,7 @@ int main(int argc, char **argv)
    }
    else
    {
-      ServerSocket svs(SocketAddress( "0.0.0.0", 32768 ) );
+      ServerSocket svs(SocketAddress( "0.0.0.0", port ) );
       TCPServerParams* pParams = new TCPServerParams;
       pParams->setMaxThreads(4);
       pParams->setMaxQueued(4);
@@ -143,8 +145,6 @@ int main(int argc, char **argv)
       pee_print_best( stdout, 1 );
       pee_print_time();
       pee_destroy();
-
-      //server_destroy();
    }
   
    destroy(input, model, obs, nlin);
