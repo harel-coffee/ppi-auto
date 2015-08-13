@@ -41,7 +41,6 @@ void Server::run()
 
    char command; int msg_size;
    command = RcvHeader( msg_size );
-   //printf("command: %c msg_size:%d\n", command,msg_size);
 
    switch( command ) {
       case 'I': {
@@ -53,18 +52,13 @@ void Server::run()
 
                    sscanf( buffer, "%f%n", &individual.fitness, &offset );
                    buffer += offset;
-                   //printf("individual.fitness: %f genome_size:%d\n", individual.fitness, data.genome_size);
                    for( int i = 0; i < data.genome_size-1; i++ )
                    {
                       sscanf( buffer, "%d%n", &individual.genome[i], &offset );
                       buffer += offset;
                    }
                    sscanf( buffer, "%d", &individual.genome[data.genome_size-1] );
-
-                   //for( int i = 0; i < data.genome_size; i++ )
-                   //   printf("%d ", individual.genome[i]);
-                   //printf("\n");
-                }
+               }
                 break;
 
       default:
@@ -76,14 +70,27 @@ void Server::run()
       Poco::FastMutex::ScopedLock lock( m_mutex );
       if( RET )
       {
-         if( m_individuals.size() > data.size ) 
+         while( m_individuals.size() > data.size ) 
          {
-             m_individuals.pop();
+            Individual out = m_individuals.front();
+            delete[] out.genome;
+            m_individuals.pop();
          }
          m_individuals.push( individual );
+
+         //printf("Individual:\n");
+         //printf("%f ", individual.fitness);
+         //for( int i = 0; i < data.genome_size; i++ )
+         //   printf("%d ", individual.genome[i]);
+         //printf("\n");
+
+         //printf("Queue:\n");
+         //printf("%f ", m_individuals.front().fitness);
+         //for( int i = 0; i < data.genome_size; i++ )
+         //   printf("%d ", m_individuals.front().genome[i]);
+         //printf("\n");
+ 
          //Thread::sleep(10000);
       }
    } // The mutex will be released (unlocked) at this point
-
-   delete[] individual.genome;
 }

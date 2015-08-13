@@ -19,9 +19,9 @@ public:
    Client( StreamSocket& s, const char* server ):
       Common( s ), m_server( server ) {}
 
-   void Connect();
+   int  Connect();
    void Disconnect();
-   void SndIndividual( const char* results );
+   void SndIndividual( const std::string& results );
 
 private:
    const char* m_server;

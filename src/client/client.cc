@@ -1,33 +1,32 @@
 #include "client.h"
 
 /******************************************************************************/
-void Client::SndIndividual( const char* results )
+void Client::SndIndividual( const std::string& results )
 {
-   Connect();
+   if( Connect() )
+   {
+      SndHeader( 'I', results.size() );
+      SndMessage( results.data(), results.size() );
 
-   SndHeader( 'I', strlen( results ) );
-   SndMessage( results, strlen( results ) );
-
-   Disconnect();
+      Disconnect();
+   }
 }
 
 /******************************************************************************/
-void Client::Connect()
+int Client::Connect()
 {
-   while( true ) {
-      try {
-         //std::cout << "[" << Time() << "] Trying to connect... ";
-         poco_debug( m_logger, "Trying to connect..." );
-         m_ss.connect( SocketAddress( m_server ), 10000 );
-         poco_debug( m_logger, "Connected!" );
-         //std::cout << "connected!\n";
+   bool connect = false;
+   try {
+      poco_debug( m_logger, "Trying to connect..." );
+      m_ss.connect( SocketAddress( m_server ), 10000 );
+      poco_debug( m_logger, "Connected!" );
 
-         break;
-      } catch (...) {
-         poco_error( m_logger, "Connection failed! Is the server running?" );
-         Thread::sleep( 5000 );
-      }
+      connect = true;
+
+   } catch (...) {
+      poco_error( m_logger, "Connection failed! Is the server running?" );
    }
+   return( connect );
 }
 
 /******************************************************************************/

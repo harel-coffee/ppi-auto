@@ -184,3 +184,23 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
       }
    }
 }
+
+__kernel void
+best_individual( __global float* vector, __global float* parcial )
+{
+   int lo_id = get_local_id(0);
+   int gr_id = get_group_id(0);
+
+   int lo_size = get_local_size(0);
+   int next_power_of_2 = (pown(2.0f, (int) ceil(log2((float)lo_size))))/2;
+
+   for( int s = next_power_of_2; s > 0; s/=2 )
+   {
+      barrier(CLK_LOCAL_MEM_FENCE);
+      if( (lo_id < s) && (lo_id + s < lo_size) ) 
+      { 
+         vector[gr_id * lo_size + lo_id] = min( vector[gr_id * lo_size + lo_id], vector[gr_id * lo_size + lo_id + s]); 
+      }
+   }
+   if( lo_id == 0) { parcial[gr_id] = vector[gr_id * lo_size]; }
+}

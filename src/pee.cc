@@ -521,6 +521,52 @@ void pee_print_time()
    printf("time_total: %lf\n", data.time_total);
 }
 
+void pee_receive_individual( Individual* population )
+{
+   if( !Server::m_individuals.empty() && Server::m_mutex.tryLock() )
+   {
+      while( !Server::m_individuals.empty() )
+      {
+         int idx = pee_reverse_tournament( population );
+         delete[] population[idx].genome;
+         population[idx] = Server::m_individuals.front();
+         Server::m_individuals.pop();
+
+         //std::cerr << "Receiving Individual..." << std::endl;
+         //printf("%f ", antecedentes[idx].fitness);
+         //for( int i = 0; i < data.number_of_bits; i++ )
+         //   printf("%d ", antecedentes[idx].genome[i]);
+         //printf("\n");
+      } 
+      Server::m_mutex.unlock();
+   }
+}
+
+void pee_send_individual( Individual* population )
+{
+   //TODO:colocar no intervalo do kernel
+   for( int i = 0; i < data.peers.size(); i++ )
+   { 
+      if( random_number() < data.peers[i].frequency )
+      {
+         const Individual* individual = pee_tournament( population );
+
+         std::stringstream results; //results.str(std::string());
+         results <<  individual->fitness << " ";
+         for( int j = 0; j < data.number_of_bits-1; j++ )
+            results <<  individual->genome[j] << " ";
+         results <<  individual->genome[data.number_of_bits];
+
+         //std::cerr << "Sending Individual..." << std::endl;
+         //std::cerr << results.str() << std::endl;
+
+         StreamSocket ss;
+         Client client( ss, data.peers[i].address.c_str() );
+         client.SndIndividual( results.str() );
+      }
+   }
+}
+
 void pee_evolve()
 {
    /*
@@ -608,45 +654,9 @@ void pee_evolve()
       // 18:
       swap( antecedentes, descendentes );
 
-      //TODO:criar uma função
-      if( !Server::m_individuals.empty() && Server::m_mutex.tryLock() )
-      {
-         while( !Server::m_individuals.empty() )
-         {
-            int idx = pee_reverse_tournament( antecedentes );
-            antecedentes[idx] = Server::m_individuals.front();
-            Server::m_individuals.pop();
+      pee_receive_individual( antecedentes );
+      pee_send_individual( antecedentes );
 
-            printf("individual.fitness: %f\n", antecedentes[idx].fitness);
-            for( int i = 0; i < data.number_of_bits; i++ )
-               printf("%d ", antecedentes[idx].genome[i]);
-            printf("\n");
-         } 
-         Server::m_mutex.unlock();
-      }
-
-
-      //TODO:criar uma função
-      std::stringstream results;
-      //results.str("");
-      results.str(std::string());
-      results <<  data.best_individual.fitness << " ";
-      for( int i = 0; i < data.number_of_bits-1; i++ )
-         results <<  data.best_individual.genome[i] << " ";
-      results <<  data.best_individual.genome[data.number_of_bits];
-      //std::cerr << results.str() << std::endl;
-
-      for( int i = 0; i < data.peers.size(); i++ )
-      { 
-         if( random_number() < data.peers[i].frequency )
-         {
-            StreamSocket ss;
-            Client client( ss, data.peers[i].address.data() );
-            client.SndIndividual( results.str().data() );
-         }
-      }
-
-      
       if( data.verbose ) 
       {
          printf("[%d] ", geracao);

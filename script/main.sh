@@ -34,7 +34,9 @@ fi
 #$home/build/main -v -e -d $TMPTRAINING -ni $natr -nm $nmod
 #$home/build/main -d $TMPTRAINING -ni $natr -nm $nmod -run $home/solution
 
-cd $home/build; ./main -port 32768 -peers "localhost:8080,0.3;sabatini@lncc.br:10524,1.0" -d $file -ni $natr -nm $nmod -ps 10000 -g 5; cd -
+#cd $home/build; ./main -port 32768 -peers "localhost:8080,1.0" -d $file -ni $natr -nm $nmod -ps 10000 -g 50 -nb 80; cd -
+cd $home/build; ./main -port 8080 -peers "localhost:32768,1.0" -d $file -ni $natr -nm $nmod -ps 10000 -g 50 -nb 80; cd -
+
 #cd $home/build; ./main -acc -type CPU -strategy PP -d $file -ni $natr -nm $nmod -ps 1000 -g 50; cd -
 #cd $home/build; ./main -acc -type GPU -strategy PP -d $file -ni $natr -nm $nmod -ps 1000 -g 50; cd -
 #cd $home/build; ./main -acc -type GPU -strategy FP -d $file -ni $natr -nm $nmod -ps 1000 -g 50; cd -
