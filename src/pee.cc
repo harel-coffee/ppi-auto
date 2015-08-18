@@ -278,9 +278,10 @@ void pee_evaluate( Individual* individual, int nInd )
 //      fprintf(stdout,"\n");
 //   }
 
+   int index;
    if( data.version )
    {
-      acc_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
+      acc_interpret( data.phenotype, data.ephemeral, data.size, data.error, &index, nInd, 0 );
    }
    else
    {
@@ -297,7 +298,7 @@ void pee_evaluate( Individual* individual, int nInd )
          pee_clone( &individual[i], &data.best_individual );
       }
    }
-
+   //pee_clone( &individual[index], &data.best_individual );
 }
 
 void pee_generate_population( Individual* population )

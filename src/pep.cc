@@ -96,7 +96,7 @@ void pep_interpret()
       data.vector = new float[data.nlin];
       if( data.version )
       {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 1 );
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, NULL, 1, 1 );
       }
       else
       {
@@ -108,7 +108,7 @@ void pep_interpret()
       data.vector = new float[1];
       if( data.version )
       {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 0 );
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, NULL, 1, 0 );
       }
       else
       {

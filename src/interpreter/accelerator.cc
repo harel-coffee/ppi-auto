@@ -21,7 +21,7 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int max_size; int nlin; unsigned local_size; unsigned global_size; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; double time_kernel; double time_overhead; } data;
+static struct t_data { int max_size; int nlin; unsigned local_size; unsigned global_size; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; double time_kernel; double time_overhead; } data;
 
 
 /** ****************************************************************** **/
@@ -141,7 +141,7 @@ int build_kernel( int population_size )
    {
       data.local_size = 1;
       data.global_size = population_size;
-      data.kernel = cl::Kernel( program, "evaluate_pp" );
+      data.kernel1 = cl::Kernel( program, "evaluate_pp" );
    }
    else
    {
@@ -153,7 +153,7 @@ int build_kernel( int population_size )
 
          // It is better to have global size divisible by local size
          data.global_size = (unsigned) ( ceil( data.nlin/(float) data.local_size ) * data.local_size );
-         data.kernel = cl::Kernel( program, "evaluate_fp" );
+         data.kernel1 = cl::Kernel( program, "evaluate_fp" );
       }
       else
       {
@@ -169,7 +169,7 @@ int build_kernel( int population_size )
             }
             // One individual per work-group
             data.global_size = population_size * data.local_size;
-            data.kernel = cl::Kernel( program, "evaluate_ppcu" );
+            data.kernel1 = cl::Kernel( program, "evaluate_ppcu" );
          }
          else
          {
@@ -178,6 +178,13 @@ int build_kernel( int population_size )
          }
       }
    }
+   // Evenly distribute the workload among the compute units (but avoiding local size
+   // being more than the maximum allowed).
+   //data.local_size2 = fmin( max_local_size, (unsigned) ceil( population_size/(float) max_cu ) );
+   // It is better to have global size divisible by local size
+   //data.global_size2 = (unsigned) ( ceil( population_size/(float) data.local_size2 ) * data.local_size2 );
+   //data.kernel2 = cl::Kernel( program, "best_individual" );
+
 
    //std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
    //std::cout << "\nLocal size: " << data.local_size << ", Global size: " << data.global_size << ", Work groups: " << data.global_size/data.local_size << "\n" << std::endl;
@@ -297,25 +304,41 @@ void create_buffers( const unsigned population_size, float** input, float** mode
       if( data.strategy == "FP" ) 
       {
          data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.global_size/data.local_size) * population_size * sizeof( float ) );
+
+         //data.buffer_error = cl::Buffer( data.context, CL_MEM_READ_ONLY, population_size * sizeof( float ) );
+         //data.kernel2.setArg( 0, data.buffer_error );
       }
       else
       {
          if( data.strategy == "PPCU" || data.strategy == "PP" ) // (one por program)
          {
-            data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, population_size * sizeof( float ) );
+            data.buffer_vector = cl::Buffer( data.context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, population_size * sizeof( float ) );
+
+            //data.kernel2.setArg( 0, data.buffer_vector );
          }
       }
    }
 
-   data.kernel.setArg( 0, data.buffer_phenotype );
-   data.kernel.setArg( 1, data.buffer_ephemeral );
-   data.kernel.setArg( 2, data.buffer_size );
-   data.kernel.setArg( 3, data.buffer_inputs );
-   data.kernel.setArg( 4, data.buffer_vector );
-   data.kernel.setArg( 5, sizeof( float ) * data.local_size, NULL );
-   data.kernel.setArg( 6, data.nlin );
-   data.kernel.setArg( 7, ncol );
-   data.kernel.setArg( 8, prediction_mode );
+   data.kernel1.setArg( 0, data.buffer_phenotype );
+   data.kernel1.setArg( 1, data.buffer_ephemeral );
+   data.kernel1.setArg( 2, data.buffer_size );
+   data.kernel1.setArg( 3, data.buffer_inputs );
+   data.kernel1.setArg( 4, data.buffer_vector );
+   data.kernel1.setArg( 5, sizeof( float ) * data.local_size, NULL );
+   data.kernel1.setArg( 6, data.nlin );
+   data.kernel1.setArg( 7, ncol );
+   data.kernel1.setArg( 8, prediction_mode );
+
+   //const unsigned num_work_groups2 = data.global_size2 / data.local_size2;
+
+   //data.buffer_pb = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, num_work_groups2 * sizeof( float ) );
+   //data.buffer_pi = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, num_work_groups2 * sizeof( int ) );
+
+   //data.kernel2.setArg( 1, data.buffer_pb );
+   //data.kernel2.setArg( 2, data.buffer_pi );
+   //data.kernel2.setArg( 3, sizeof( float ) * data.local_size2, NULL );
+   //data.kernel2.setArg( 4, sizeof( int ) * data.local_size2, NULL );
+   //data.kernel2.setArg( 5, population_size );
 }
 
 
@@ -388,7 +411,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 }
 
 // -----------------------------------------------------------------------------
-void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int prediction_mode )
+void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int* index, int nInd, int prediction_mode )
 {
    //vector<cl::Event> events(4); 
    cl::Event event0; 
@@ -402,12 +425,22 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 
    if( data.strategy == "FP" ) 
    {
-      data.kernel.setArg( 9, nInd );
+      data.kernel1.setArg( 9, nInd );
    }
 
    // ---------- begin kernel execution
-   data.queue.enqueueNDRangeKernel( data.kernel, cl::NDRange(), cl::NDRange( data.global_size ), cl::NDRange( data.local_size ), NULL, &event0 );
+   data.queue.enqueueNDRangeKernel( data.kernel1, cl::NDRange(), cl::NDRange( data.global_size ), cl::NDRange( data.local_size ), NULL, &event0 );
    // ---------- end kernel execution
+
+   //if ( !prediction_mode )
+   //{
+      //if( data.strategy == "PPCU" || data.strategy == "PP" ) 
+      //{
+         // ---------- begin kernel execution
+         //data.queue.enqueueNDRangeKernel( data.kernel2, cl::NDRange(), cl::NDRange( data.global_size2 ), cl::NDRange( data.local_size2 ) );
+         // ---------- end kernel execution
+      //}
+   //}
 
    // Wait until the kernel has finished
    data.queue.finish();
@@ -470,14 +503,31 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
             else 
                vector[ind] = sum/data.nlin;
          }
+         //data.queue.enqueueWriteBuffer( data.buffer_error, CL_TRUE, 0, population_size * sizeof( float ), vector );
       }
       else
       {
          if( data.strategy == "PPCU" || data.strategy == "PP" ) 
          {
             tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ) );
-            for( int i = 0; i < nInd; i++ ) {vector[i] = tmp[i];}
+            for( int i = 0; i < nInd; i++ ) { vector[i] = tmp[i]; }
          }
+         //const unsigned num_work_groups2 = data.global_size2 / data.local_size2;
+
+         //// The line below maps the contents of 'data_buffer_vector' into 'tmp'.
+         //PB = (float*) data.queue.enqueueMapBuffer( data.buffer_pb, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( float ) );
+         //PI = (int*)   data.queue.enqueueMapBuffer( data.buffer_pi, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( int ) );
+
+         // Reduction on host!
+         //float best = std::numeric_limits<float>::max();
+         //for( int gr_id = 0; gr_id < num_work_groups2; gr_id++ ) 
+         //if( PB[gr_id] < best ) 
+         //{ 
+         //   best  = PB[gr_id]; 
+         //   index = PI[gr_id]; 
+         //}
+         //data.queue.enqueueUnmapMemObject( data.buffer_pb, PB ); 
+         //data.queue.enqueueUnmapMemObject( data.buffer_pi, PI ); 
       }
    }
    data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp ); 
