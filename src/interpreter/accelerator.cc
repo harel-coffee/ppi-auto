@@ -21,7 +21,9 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int max_size; int nlin; unsigned local_size; unsigned global_size; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; double time_kernel; double time_overhead; } data;
+namespace {
+static struct t_data { int max_size; int nlin; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_kernel; double time_overhead; } data;
+};
 
 
 /** ****************************************************************** **/
@@ -139,8 +141,8 @@ int build_kernel( int population_size )
 
    if( data.strategy == "PP" )  // Population-parallel
    {
-      data.local_size = 1;
-      data.global_size = population_size;
+      data.local_size1 = 1;
+      data.global_size1 = population_size;
       data.kernel1 = cl::Kernel( program, "evaluate_pp" );
    }
    else
@@ -149,10 +151,10 @@ int build_kernel( int population_size )
       {
          // Evenly distribute the workload among the compute units (but avoiding local size
          // being more than the maximum allowed).
-         data.local_size = fmin( max_local_size, (unsigned) ceil( data.nlin/(float) max_cu ) );
+         data.local_size1 = fmin( max_local_size, (unsigned) ceil( data.nlin/(float) max_cu ) );
 
          // It is better to have global size divisible by local size
-         data.global_size = (unsigned) ( ceil( data.nlin/(float) data.local_size ) * data.local_size );
+         data.global_size1 = (unsigned) ( ceil( data.nlin/(float) data.local_size1 ) * data.local_size1 );
          data.kernel1 = cl::Kernel( program, "evaluate_fp" );
       }
       else
@@ -161,14 +163,14 @@ int build_kernel( int population_size )
          {
             if( data.nlin < max_local_size )
             {
-               data.local_size = data.nlin;
+               data.local_size1 = data.nlin;
             }
             else
             {
-               data.local_size = max_local_size;
+               data.local_size1 = max_local_size;
             }
             // One individual per work-group
-            data.global_size = population_size * data.local_size;
+            data.global_size1 = population_size * data.local_size1;
             data.kernel1 = cl::Kernel( program, "evaluate_ppcu" );
          }
          else
@@ -187,7 +189,7 @@ int build_kernel( int population_size )
 
 
    //std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
-   //std::cout << "\nLocal size: " << data.local_size << ", Global size: " << data.global_size << ", Work groups: " << data.global_size/data.local_size << "\n" << std::endl;
+   //std::cout << "\nLocal size: " << data.local_size1 << ", Global size: " << data.global_size1 << ", Work groups: " << data.global_size1/data.local_size1 << "\n" << std::endl;
 
    return 0;
 }
@@ -303,7 +305,7 @@ void create_buffers( const unsigned population_size, float** input, float** mode
    {
       if( data.strategy == "FP" ) 
       {
-         data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.global_size/data.local_size) * population_size * sizeof( float ) );
+         data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.global_size1/data.local_size1) * population_size * sizeof( float ) );
 
          //data.buffer_error = cl::Buffer( data.context, CL_MEM_READ_ONLY, population_size * sizeof( float ) );
          //data.kernel2.setArg( 0, data.buffer_error );
@@ -312,7 +314,8 @@ void create_buffers( const unsigned population_size, float** input, float** mode
       {
          if( data.strategy == "PPCU" || data.strategy == "PP" ) // (one por program)
          {
-            data.buffer_vector = cl::Buffer( data.context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, population_size * sizeof( float ) );
+            data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, population_size * sizeof( float ) );
+            //data.buffer_vector = cl::Buffer( data.context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, population_size * sizeof( float ) );
 
             //data.kernel2.setArg( 0, data.buffer_vector );
          }
@@ -324,7 +327,7 @@ void create_buffers( const unsigned population_size, float** input, float** mode
    data.kernel1.setArg( 2, data.buffer_size );
    data.kernel1.setArg( 3, data.buffer_inputs );
    data.kernel1.setArg( 4, data.buffer_vector );
-   data.kernel1.setArg( 5, sizeof( float ) * data.local_size, NULL );
+   data.kernel1.setArg( 5, sizeof( float ) * data.local_size1, NULL );
    data.kernel1.setArg( 6, data.nlin );
    data.kernel1.setArg( 7, ncol );
    data.kernel1.setArg( 8, prediction_mode );
@@ -358,7 +361,11 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    Opts.String.Add( "-type" );
    Opts.String.Add( "-strategy" );
    Opts.Process();
+   std::cerr << Opts.String.Get("-strategy") << std::endl;
+   std::cerr << Opts.String.Get("-type") << std::endl;
    data.strategy = Opts.String.Get("-strategy");
+   std::cerr << Opts.String.Get("-type") << std::endl;
+   std::cerr << data.strategy << std::endl;
    data.max_size = size;
    data.nlin = nlin;
    data.time_kernel = 0.0f;
@@ -429,17 +436,17 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    }
 
    // ---------- begin kernel execution
-   data.queue.enqueueNDRangeKernel( data.kernel1, cl::NDRange(), cl::NDRange( data.global_size ), cl::NDRange( data.local_size ), NULL, &event0 );
+   data.queue.enqueueNDRangeKernel( data.kernel1, cl::NDRange(), cl::NDRange( data.global_size1 ), cl::NDRange( data.local_size1 ), NULL, &event0 );
    // ---------- end kernel execution
 
    //if ( !prediction_mode )
    //{
-      //if( data.strategy == "PPCU" || data.strategy == "PP" ) 
-      //{
-         // ---------- begin kernel execution
-         //data.queue.enqueueNDRangeKernel( data.kernel2, cl::NDRange(), cl::NDRange( data.global_size2 ), cl::NDRange( data.local_size2 ) );
-         // ---------- end kernel execution
-      //}
+   //   if( data.strategy == "PPCU" || data.strategy == "PP" ) 
+   //   {
+   //      // ---------- begin kernel execution
+   //      data.queue.enqueueNDRangeKernel( data.kernel2, cl::NDRange(), cl::NDRange( data.global_size2 ), cl::NDRange( data.local_size2 ) );
+   //      // ---------- end kernel execution
+   //   }
    //}
 
    // Wait until the kernel has finished
@@ -484,7 +491,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
             last 'partial error', that is, 'n-1' is the index of the last work-group (gr_id).
           */
 
-         const unsigned num_work_groups = data.global_size / data.local_size;
+         const unsigned num_work_groups = data.global_size1 / data.local_size1;
 
          // The line below maps the contents of 'data_buffer_vector' into 'tmp'.
          tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, num_work_groups * nInd * sizeof( float ) );
@@ -512,19 +519,20 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
             tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ) );
             for( int i = 0; i < nInd; i++ ) { vector[i] = tmp[i]; }
          }
+
          //const unsigned num_work_groups2 = data.global_size2 / data.local_size2;
 
          //// The line below maps the contents of 'data_buffer_vector' into 'tmp'.
-         //PB = (float*) data.queue.enqueueMapBuffer( data.buffer_pb, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( float ) );
-         //PI = (int*)   data.queue.enqueueMapBuffer( data.buffer_pi, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( int ) );
+         //float* PB = (float*) data.queue.enqueueMapBuffer( data.buffer_pb, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( float ) );
+         //int* PI = (int*) data.queue.enqueueMapBuffer( data.buffer_pi, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( int ) );
 
-         // Reduction on host!
+         //// Reduction on host!
          //float best = std::numeric_limits<float>::max();
          //for( int gr_id = 0; gr_id < num_work_groups2; gr_id++ ) 
          //if( PB[gr_id] < best ) 
          //{ 
          //   best  = PB[gr_id]; 
-         //   index = PI[gr_id]; 
+         //   *index = PI[gr_id]; 
          //}
          //data.queue.enqueueUnmapMemObject( data.buffer_pb, PB ); 
          //data.queue.enqueueUnmapMemObject( data.buffer_pi, PI ); 

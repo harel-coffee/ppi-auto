@@ -208,34 +208,35 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    //std::cout << str << std::endl;
 
 
-   size_t pos;
-   std::string s;
-   float f;
+   //size_t pos;
+   //std::string s;
+   //float f;
 
-   std::string delimiter = ",";
-   while ( ( pos = str.find( delimiter ) ) != std::string::npos ) 
-   {
-      pos = str.find(delimiter);
-      s = str.substr(0, pos);
-      str.erase(0, pos + delimiter.length());
-      //std::cout << s << std::endl;
+   //std::string delimiter = ",";
+   //while ( ( pos = str.find( delimiter ) ) != std::string::npos ) 
+   //{
+   //   pos = str.find(delimiter);
+   //   s = str.substr(0, pos);
+   //   str.erase(0, pos + delimiter.length());
+   //   //std::cout << s << std::endl;
 
-      delimiter = ";";
+   //   delimiter = ";";
 
-      pos = str.find(delimiter);
-      f = std::atof(str.substr(0, pos).c_str());
-      str.erase(0, pos + delimiter.length());
-      //std::cout << f << std::endl;
+   //   pos = str.find(delimiter);
+   //   f = std::atof(str.substr(0, pos).c_str());
+   //   str.erase(0, pos + delimiter.length());
+   //   //std::cout << f << std::endl;
 
-      data.peers.push_back( Peer( s, f ) );
+   //   data.peers.push_back( Peer( s, f ) );
 
-      delimiter = ",";
-   }
+   //   delimiter = ",";
+   //}
 
 
    data.version = Opts.Bool.Get("-acc");
    if( data.version )
    {
+      std::cout << "Chegou1" << std::endl;
       if( acc_interpret_init( argc, argv, data.max_size_phenotype, data.population_size, input, model, obs, nlin, 0 ) )
       {
          fprintf(stderr,"Error in initialization phase.\n");
@@ -287,6 +288,8 @@ void pee_evaluate( Individual* individual, int nInd )
    {
       seq_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
    }
+
+   //std::cout << index << std::endl;
 
    //TODO: 0.00001 vira parâmetro para interpret (0 no pep); mudar a estrutura AoS para SoA
    for( int i = 0; i < nInd; i++ )
@@ -655,8 +658,8 @@ void pee_evolve()
       // 18:
       swap( antecedentes, descendentes );
 
-      pee_receive_individual( antecedentes );
-      pee_send_individual( antecedentes );
+      //pee_receive_individual( antecedentes );
+      //pee_send_individual( antecedentes );
 
       if( data.verbose ) 
       {
