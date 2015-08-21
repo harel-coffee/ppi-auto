@@ -130,15 +130,15 @@ int main(int argc, char **argv)
    }
    else
    {
-      //ServerSocket svs(SocketAddress( "0.0.0.0", port ) );
-      //TCPServerParams* pParams = new TCPServerParams;
-      //pParams->setMaxThreads(4);
-      //pParams->setMaxQueued(4);
-      //pParams->setThreadIdleTime(100);
-      //TCPServer srv(new TCPServerConnectionFactoryImpl<Server>(), svs, pParams);
-      //srv.start();
+      ServerSocket svs(SocketAddress( "0.0.0.0", port ) );
+      TCPServerParams* pParams = new TCPServerParams;
+      pParams->setMaxThreads(4);
+      pParams->setMaxQueued(4);
+      pParams->setThreadIdleTime(100);
+      TCPServer srv(new TCPServerConnectionFactoryImpl<Server>(), svs, pParams);
+      srv.start();
 
-      //server_init( argc, argv );
+      server_init( argc, argv );
 
       pee_init( input, model, obs, nlin, argc, argv );
       pee_evolve();

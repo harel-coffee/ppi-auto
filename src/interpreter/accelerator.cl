@@ -186,7 +186,7 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
 }
 
 __kernel void
-best_individual( __global const float* error, __global float* PB, __global int* PI, __local float* lo_best, __local int* lo_idx, int population_size )
+best_individual( __global const float* vector, __global float* PB, __global int* PI, __local float* lo_best, __local int* lo_idx, int population_size )
 {
    int lo_id = get_local_id(0);
    int gr_id = get_group_id(0);
@@ -197,7 +197,7 @@ best_individual( __global const float* error, __global float* PB, __global int* 
 
    if( gl_id < population_size )
    {
-      lo_best[lo_id] = error[gr_id * lo_size + lo_id];
+      lo_best[lo_id] = vector[gr_id * lo_size + lo_id];
       lo_idx[lo_id]  = gr_id * lo_size + lo_id;
    }
    else

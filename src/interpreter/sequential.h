@@ -18,7 +18,7 @@ void seq_interpret_init( const unsigned size, float** input, float** model, floa
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int prediction_mode );
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int* index, int nInd, int prediction_mode );
 
 /** ************************************************************************************************** **/
 /** ********************************** Function interpret_destroy ************************************ **/

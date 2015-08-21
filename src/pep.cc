@@ -24,8 +24,7 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { int nlin; Symbol* phenotype; float* ephemeral; int* size; float* vector; int prediction; int version; } data;
-
+namespace { static struct t_data { int nlin; Symbol* phenotype; float* ephemeral; int* size; float* vector; int prediction; int version; } data; };
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTIONS ************************* **/
@@ -100,7 +99,7 @@ void pep_interpret()
       }
       else
       {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 1 );
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, NULL, 1, 1 );
       }
    }
    else
@@ -112,7 +111,7 @@ void pep_interpret()
       }
       else
       {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, 0 );
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, NULL, 1, 0 );
       }
    }
 }

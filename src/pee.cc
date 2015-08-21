@@ -39,8 +39,7 @@ struct Peer {
   float frequency;
 };
 
-static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; std::vector<Peer> peers; } data;
-
+namespace { static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; std::vector<Peer> peers; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -208,35 +207,34 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    //std::cout << str << std::endl;
 
 
-   //size_t pos;
-   //std::string s;
-   //float f;
+   size_t pos;
+   std::string s;
+   float f;
 
-   //std::string delimiter = ",";
-   //while ( ( pos = str.find( delimiter ) ) != std::string::npos ) 
-   //{
-   //   pos = str.find(delimiter);
-   //   s = str.substr(0, pos);
-   //   str.erase(0, pos + delimiter.length());
-   //   //std::cout << s << std::endl;
+   std::string delimiter = ",";
+   while ( ( pos = str.find( delimiter ) ) != std::string::npos ) 
+   {
+      pos = str.find(delimiter);
+      s = str.substr(0, pos);
+      str.erase(0, pos + delimiter.length());
+      //std::cout << s << std::endl;
 
-   //   delimiter = ";";
+      delimiter = ";";
 
-   //   pos = str.find(delimiter);
-   //   f = std::atof(str.substr(0, pos).c_str());
-   //   str.erase(0, pos + delimiter.length());
-   //   //std::cout << f << std::endl;
+      pos = str.find(delimiter);
+      f = std::atof(str.substr(0, pos).c_str());
+      str.erase(0, pos + delimiter.length());
+      //std::cout << f << std::endl;
 
-   //   data.peers.push_back( Peer( s, f ) );
+      data.peers.push_back( Peer( s, f ) );
 
-   //   delimiter = ",";
-   //}
+      delimiter = ",";
+   }
 
 
    data.version = Opts.Bool.Get("-acc");
    if( data.version )
    {
-      std::cout << "Chegou1" << std::endl;
       if( acc_interpret_init( argc, argv, data.max_size_phenotype, data.population_size, input, model, obs, nlin, 0 ) )
       {
          fprintf(stderr,"Error in initialization phase.\n");
@@ -253,152 +251,6 @@ void pee_clone( const Individual* original, Individual* copy )
    for( int i = 0; i < data.number_of_bits; ++i ) copy->genome[i] = original->genome[i];
 
    copy->fitness = original->fitness;
-}
-
-void pee_evaluate( Individual* individual, int nInd )
-{
-   int allele;
-   for( int i = 0; i < nInd; i++ )
-   {
-      allele = 0;
-      data.size[i] = decode( individual[i].genome, &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
-   }
-   
-//   for( int j = 0; j < nInd; j++ )
-//   {
-//      fprintf(stdout,"Ind[%d]=%d\n",j,data.size[j]);
-//      for( int i = 0; i < data.size[j]; i++ )
-//      {
-//         fprintf(stdout,"%d ",data.phenotype[j * data.max_size_phenotype + i]);
-//      }
-//      fprintf(stdout,"\n");
-//      for( int i = 0; i < data.size[j]; i++ )
-//      {
-//         fprintf(stdout,"%f ",data.ephemeral[j * data.max_size_phenotype + i]);
-//      }
-//      fprintf(stdout,"\n");
-//   }
-
-   int index;
-   if( data.version )
-   {
-      acc_interpret( data.phenotype, data.ephemeral, data.size, data.error, &index, nInd, 0 );
-   }
-   else
-   {
-      seq_interpret( data.phenotype, data.ephemeral, data.size, data.error, nInd, 0 );
-   }
-
-   //std::cout << index << std::endl;
-
-   //TODO: 0.00001 vira parâmetro para interpret (0 no pep); mudar a estrutura AoS para SoA
-   for( int i = 0; i < nInd; i++ )
-   {
-      //fprintf(stdout,"fitness[Ind=%d]=%f\n",i,data.error[i]);
-      individual[i].fitness = data.error[i] + 0.00001*data.size[i]; 
-      if( individual[i].fitness < data.best_individual.fitness )
-      {
-         pee_clone( &individual[i], &data.best_individual );
-      }
-   }
-   //pee_clone( &individual[index], &data.best_individual );
-}
-
-void pee_generate_population( Individual* population )
-{
-   for( int i = 0; i < data.population_size; ++i)
-   {
-      for( int j = 0; j < data.number_of_bits; j++ )
-      {
-         population[i].genome[j] = (random_number() < 0.5) ? 1 : 0;
-      }
-   }
-   pee_evaluate( population, data.population_size );
-}
-
-void pee_crossover( const int* father, const int* mother, int* offspring1, int* offspring2 )
-{
-#ifdef TWO_POINT_CROSSOVER
-   // Cruzamento de dois pontos
-   int pontos[2];
-
-   // Cortar apenas nas bordas dos genes
-   pontos[0] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
-   pontos[1] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
-
-   int tmp;
-   if( pontos[0] > pontos[1] ) { tmp = pontos[0]; pontos[0] = pontos[1]; pontos[1] = tmp; }
-
-   for( int i = 0; i < pontos[0]; ++i )
-   {
-      offspring1[i] = father[i];
-      offspring2[i] = mother[i];
-   }
-   for( int i = pontos[0]; i < pontos[1]; ++i )
-   {
-      offspring1[i] = mother[i];
-      offspring2[i] = father[i];
-   }
-   for( int i = pontos[1]; i < data.number_of_bits; ++i )
-   {
-      offspring1[i] = father[i];
-      offspring2[i] = mother[i];
-   }
-#else
-   // Cruzamento de um ponto
-   int pontoDeCruzamento = (int)(random_number() * data.number_of_bits);
-
-   for( int i = 0; i < pontoDeCruzamento; ++i )
-   {
-      offspring1[i] = father[i];
-      offspring2[i] = mother[i];
-   }
-   for( int i = pontoDeCruzamento; i < data.number_of_bits; ++i )
-   {
-      offspring1[i] = mother[i];
-      offspring2[i] = father[i];
-   }
-#endif
-}
-
-void pee_mutation( int* genome )
-{
-   for( int i = 0; i < data.number_of_bits; ++i )
-      if( random_number() < data.mutation_rate ) genome[i] = !genome[i];
-}
-
-const Individual* pee_tournament( const Individual* population )
-{
-   const Individual* winner = &population[(int)(random_number() * data.population_size)];
-
-   for( int t = 1; t < data.tournament_size; ++t )
-   {
-      const Individual* competitor = &population[(int)(random_number() * data.population_size)];
-
-      if( competitor->fitness < winner->fitness ) winner = competitor;
-   }
-
-   return winner;
-}
-
-int pee_reverse_tournament( const Individual* population )
-{
-   int idx_winner = (int)(random_number() * data.population_size);
-   const Individual* winner = &population[idx_winner];
-
-   for( int t = 1; t < data.tournament_size; ++t )
-   {
-      int idx_competitor = (int)(random_number() * data.population_size);
-      const Individual* competitor = &population[idx_competitor];
-
-      if( competitor->fitness > winner->fitness )
-      {
-         winner = competitor;
-         idx_winner = idx_competitor;
-      }
-   }
-
-   return idx_winner;
 }
 
 void pee_individual_print( const Individual* individual, FILE* out, int print_mode )
@@ -509,6 +361,165 @@ void pee_individual_print( const Individual* individual, FILE* out, int print_mo
    }
    else
       fprintf( out, " %.12f\n", individual->fitness );
+}
+
+
+void pee_evaluate( Individual* individual, int nInd )
+{
+   int allele;
+   for( int i = 0; i < nInd; i++ )
+   {
+      allele = 0;
+      data.size[i] = decode( individual[i].genome, &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
+   }
+   
+//   for( int j = 0; j < nInd; j++ )
+//   {
+//      fprintf(stdout,"Ind[%d]=%d\n",j,data.size[j]);
+//      for( int i = 0; i < data.size[j]; i++ )
+//      {
+//         fprintf(stdout,"%d ",data.phenotype[j * data.max_size_phenotype + i]);
+//      }
+//      fprintf(stdout,"\n");
+//      for( int i = 0; i < data.size[j]; i++ )
+//      {
+//         fprintf(stdout,"%f ",data.ephemeral[j * data.max_size_phenotype + i]);
+//      }
+//      fprintf(stdout,"\n");
+//   }
+
+   int index;
+   if( data.version )
+   {
+      acc_interpret( data.phenotype, data.ephemeral, data.size, data.error, &index, nInd, 0 );
+   }
+   else
+   {
+      seq_interpret( data.phenotype, data.ephemeral, data.size, data.error, &index, nInd, 0 );
+   }
+
+   //TODO: 0.00001 vira parâmetro para interpret (0 no pep); mudar a estrutura AoS para SoA
+   //bool flag = false;
+   for( int i = 0; i < nInd; i++ )
+   {
+      //individual[i].fitness = data.error[i] + 0.00001*data.size[i]; 
+      individual[i].fitness = data.error[i]; 
+      //if( individual[i].fitness < data.best_individual.fitness )
+      //{
+      //   flag = true;
+      //   pee_clone( &individual[i], &data.best_individual );
+      //}
+   }
+   
+   //if( flag )
+   //{
+   //   printf("Método1:%d  ",flag);
+   //   pee_individual_print( &data.best_individual, stdout, 0 );
+   //   printf("Método2:%d  ",flag);
+   //   pee_individual_print( &individual[index], stdout, 0 );
+   //}
+
+   if( individual[index].fitness < data.best_individual.fitness )
+   {
+      pee_clone( &individual[index], &data.best_individual );
+   }
+}
+
+void pee_generate_population( Individual* population )
+{
+   for( int i = 0; i < data.population_size; ++i)
+   {
+      for( int j = 0; j < data.number_of_bits; j++ )
+      {
+         population[i].genome[j] = (random_number() < 0.5) ? 1 : 0;
+      }
+   }
+   pee_evaluate( population, data.population_size );
+}
+
+void pee_crossover( const int* father, const int* mother, int* offspring1, int* offspring2 )
+{
+#ifdef TWO_POINT_CROSSOVER
+   // Cruzamento de dois pontos
+   int pontos[2];
+
+   // Cortar apenas nas bordas dos genes
+   pontos[0] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
+   pontos[1] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
+
+   int tmp;
+   if( pontos[0] > pontos[1] ) { tmp = pontos[0]; pontos[0] = pontos[1]; pontos[1] = tmp; }
+
+   for( int i = 0; i < pontos[0]; ++i )
+   {
+      offspring1[i] = father[i];
+      offspring2[i] = mother[i];
+   }
+   for( int i = pontos[0]; i < pontos[1]; ++i )
+   {
+      offspring1[i] = mother[i];
+      offspring2[i] = father[i];
+   }
+   for( int i = pontos[1]; i < data.number_of_bits; ++i )
+   {
+      offspring1[i] = father[i];
+      offspring2[i] = mother[i];
+   }
+#else
+   // Cruzamento de um ponto
+   int pontoDeCruzamento = (int)(random_number() * data.number_of_bits);
+
+   for( int i = 0; i < pontoDeCruzamento; ++i )
+   {
+      offspring1[i] = father[i];
+      offspring2[i] = mother[i];
+   }
+   for( int i = pontoDeCruzamento; i < data.number_of_bits; ++i )
+   {
+      offspring1[i] = mother[i];
+      offspring2[i] = father[i];
+   }
+#endif
+}
+
+void pee_mutation( int* genome )
+{
+   for( int i = 0; i < data.number_of_bits; ++i )
+      if( random_number() < data.mutation_rate ) genome[i] = !genome[i];
+}
+
+const Individual* pee_tournament( const Individual* population )
+{
+   const Individual* winner = &population[(int)(random_number() * data.population_size)];
+
+   for( int t = 1; t < data.tournament_size; ++t )
+   {
+      const Individual* competitor = &population[(int)(random_number() * data.population_size)];
+
+      if( competitor->fitness < winner->fitness ) winner = competitor;
+   }
+
+   return winner;
+}
+
+int pee_reverse_tournament( const Individual* population )
+{
+   int idx_winner = (int)(random_number() * data.population_size);
+   const Individual* winner = &population[idx_winner];
+
+   for( int t = 1; t < data.tournament_size; ++t )
+   {
+      int idx_competitor = (int)(random_number() * data.population_size);
+      const Individual* competitor = &population[idx_competitor];
+
+      if( competitor->fitness > winner->fitness )
+      {
+         winner = competitor;
+         idx_winner = idx_competitor;
+      }
+   }
+
+   return idx_winner;
 }
 
 void pee_print_best( FILE* out, int print_mode ) 
@@ -650,7 +661,6 @@ void pee_evolve()
 
       // 16:
       pee_evaluate( descendentes, data.population_size );
-      pee_evaluate( descendentes, data.population_size );
 
       // 17:
       if( data.elitism ) pee_clone( &data.best_individual, &descendentes[0] );
@@ -658,8 +668,8 @@ void pee_evolve()
       // 18:
       swap( antecedentes, descendentes );
 
-      //pee_receive_individual( antecedentes );
-      //pee_send_individual( antecedentes );
+      pee_receive_individual( antecedentes );
+      pee_send_individual( antecedentes );
 
       if( data.verbose ) 
       {

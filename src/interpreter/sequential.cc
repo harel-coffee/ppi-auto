@@ -56,12 +56,13 @@ void seq_interpret_init( const unsigned size, float** input, float** model, floa
 //   }
 }
 
-void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int prediction_mode )
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int* index, int nInd, int prediction_mode )
 {
    float stack[data.size]; 
    float sum; 
    int stack_top;
 
+   float best = std::numeric_limits<float>::max();
    for( int ind = 0; ind < nInd; ++ind )
    {
       if( size[ind] == 0 && !prediction_mode )
@@ -95,7 +96,15 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       if ( !prediction_mode )
       {
          if( isnan( sum ) || isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
-         else {vector[ind] = sum/data.nlin;}
+         else 
+         {
+            vector[ind] = sum/data.nlin;
+            if( vector[ind] < best )
+            {
+               best = vector[ind];
+               *index = ind;
+            }
+         }
       }
    }
 }
