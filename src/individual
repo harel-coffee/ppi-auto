@@ -7,5 +7,7 @@
 
 struct Individual { int* genome; float fitness; };
 
+struct Population { int** genomes; float* fitnesses; };
+
 #endif
 

@@ -45,7 +45,7 @@ namespace { static struct t_data { Symbol initial_symbol; Individual best_indivi
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
 /** ****************************************************************** **/
 
-#define swap(i, j) {Individual* t = i; i = j; j = t;}
+#define swap(i, j) {Population* t = i; i = j; j = t;}
 
 double random_number() {return (double)rand() / ((double)RAND_MAX + 1.0f);} // [0.0, 1.0)
 
@@ -246,6 +246,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    }
 }
 
+//void pee_clone( const float fitness, const int* genome, Individual* copy )
 void pee_clone( const Individual* original, Individual* copy )
 {
    for( int i = 0; i < data.number_of_bits; ++i ) copy->genome[i] = original->genome[i];
@@ -364,13 +365,13 @@ void pee_individual_print( const Individual* individual, FILE* out, int print_mo
 }
 
 
-void pee_evaluate( Individual* individual, int nInd )
+void pee_evaluate( Population* population, int nInd )
 {
    int allele;
    for( int i = 0; i < nInd; i++ )
    {
       allele = 0;
-      data.size[i] = decode( individual[i].genome, &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
+      data.size[i] = decode( population->genomes[i], &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
    }
    
 //   for( int j = 0; j < nInd; j++ )
@@ -402,12 +403,12 @@ void pee_evaluate( Individual* individual, int nInd )
    //bool flag = false;
    for( int i = 0; i < nInd; i++ )
    {
-      //individual[i].fitness = data.error[i] + 0.00001*data.size[i]; 
-      individual[i].fitness = data.error[i]; 
-      //if( individual[i].fitness < data.best_individual.fitness )
+      //population[i].fitness = data.error[i] + 0.00001*data.size[i]; 
+      population->fitnesses[i] = data.error[i]; 
+      //if( population[i].fitness < data.best_individual.fitness )
       //{
       //   flag = true;
-      //   pee_clone( &individual[i], &data.best_individual );
+      //   pee_clone( &population[i], &data.best_individual );
       //}
    }
    
@@ -416,22 +417,23 @@ void pee_evaluate( Individual* individual, int nInd )
    //   printf("Método1:%d  ",flag);
    //   pee_individual_print( &data.best_individual, stdout, 0 );
    //   printf("Método2:%d  ",flag);
-   //   pee_individual_print( &individual[index], stdout, 0 );
+   //   pee_individual_print( &population[index], stdout, 0 );
    //}
 
-   if( individual[index].fitness < data.best_individual.fitness )
-   {
-      pee_clone( &individual[index], &data.best_individual );
-   }
+   //if( population.fitnesses[index] < data.best_individual.fitness )
+   //{
+   //   //pee_clone( population.fitnesses[index], &population.genomes[index], &data.best_individual );
+   //   //pee_clone( &population[index], &data.best_individual );
+   //}
 }
 
-void pee_generate_population( Individual* population )
+void pee_generate_population( Population* population )
 {
    for( int i = 0; i < data.population_size; ++i)
    {
       for( int j = 0; j < data.number_of_bits; j++ )
       {
-         population[i].genome[j] = (random_number() < 0.5) ? 1 : 0;
+         population->genomes[i][j] = (random_number() < 0.5) ? 1 : 0;
       }
    }
    pee_evaluate( population, data.population_size );
@@ -488,33 +490,45 @@ void pee_mutation( int* genome )
       if( random_number() < data.mutation_rate ) genome[i] = !genome[i];
 }
 
-const Individual* pee_tournament( const Individual* population )
-{
-   const Individual* winner = &population[(int)(random_number() * data.population_size)];
-
-   for( int t = 1; t < data.tournament_size; ++t )
-   {
-      const Individual* competitor = &population[(int)(random_number() * data.population_size)];
-
-      if( competitor->fitness < winner->fitness ) winner = competitor;
-   }
-
-   return winner;
-}
-
-int pee_reverse_tournament( const Individual* population )
+int pee_tournament( const Population* population )
 {
    int idx_winner = (int)(random_number() * data.population_size);
-   const Individual* winner = &population[idx_winner];
+   float fitness_winner = population->fitnesses[idx_winner];
+   //const Individual* winner = &population[(int)(random_number() * data.population_size)];
 
    for( int t = 1; t < data.tournament_size; ++t )
    {
       int idx_competitor = (int)(random_number() * data.population_size);
-      const Individual* competitor = &population[idx_competitor];
+      const float fitness_competitor = population->fitnesses[idx_competitor];
+      //const Individual* competitor = &population[(int)(random_number() * data.population_size)];
 
-      if( competitor->fitness > winner->fitness )
+      //if( competitor->fitness < winner->fitness ) winner = competitor;
+      if( fitness_competitor < fitness_winner ) 
       {
-         winner = competitor;
+         fitness_winner = fitness_competitor;
+         idx_winner = idx_competitor;
+      }
+   }
+
+   return idx_winner;
+}
+
+int pee_reverse_tournament( const Population* population )
+{
+   int idx_winner = (int)(random_number() * data.population_size);
+   float fitness_winner = population->fitnesses[idx_winner];
+   //const Individual* winner = &population[idx_winner];
+
+   for( int t = 1; t < data.tournament_size; ++t )
+   {
+      int idx_competitor = (int)(random_number() * data.population_size);
+      const float fitness_competitor = population->fitnesses[idx_competitor];
+      //const Individual* competitor = &population[idx_competitor];
+
+      //if( competitor->fitness > winner->fitness )
+      if( fitness_competitor > fitness_winner ) 
+      {
+         fitness_winner = fitness_competitor;
          idx_winner = idx_competitor;
       }
    }
@@ -536,15 +550,18 @@ void pee_print_time()
    printf("time_total: %lf\n", data.time_total);
 }
 
-void pee_receive_individual( Individual* population )
+void pee_receive_individual( Population* population )
 {
    if( !Server::m_individuals.empty() && Server::m_mutex.tryLock() )
    {
       while( !Server::m_individuals.empty() )
       {
          int idx = pee_reverse_tournament( population );
-         delete[] population[idx].genome;
-         population[idx] = Server::m_individuals.front();
+         delete[] population->genomes[idx];
+         //population[idx] = Server::m_individuals.front();
+         Individual individual = Server::m_individuals.front();
+         population->fitnesses[idx] = individual.fitness;
+         population->genomes[idx] = individual.genome;
          Server::m_individuals.pop();
 
          //std::cerr << "Receiving Individual..." << std::endl;
@@ -557,20 +574,24 @@ void pee_receive_individual( Individual* population )
    }
 }
 
-void pee_send_individual( Individual* population )
+void pee_send_individual( Population* population )
 {
    //TODO:colocar no intervalo do kernel
    for( int i = 0; i < data.peers.size(); i++ )
    { 
       if( random_number() < data.peers[i].frequency )
       {
-         const Individual* individual = pee_tournament( population );
+         const int idx = pee_tournament( population );
+         //const Individual* individual = pee_tournament( population );
 
          std::stringstream results; //results.str(std::string());
-         results <<  individual->fitness << " ";
+         results <<  population->fitnesses[idx] << " ";
+         //results <<  individual->fitness << " ";
          for( int j = 0; j < data.number_of_bits-1; j++ )
-            results <<  individual->genome[j] << " ";
-         results <<  individual->genome[data.number_of_bits];
+            results <<  population->genomes[idx][j] << " ";
+            //results <<  individual->genome[j] << " ";
+         results <<  population->genomes[idx][data.number_of_bits];
+         //results <<  individual->genome[data.number_of_bits];
 
          //std::cerr << "Sending Individual..." << std::endl;
          //std::cerr << results.str() << std::endl;
@@ -614,22 +635,24 @@ void pee_evolve()
 
    srand( data.seed );
 
-   Individual* population_a = new Individual[data.population_size];
-   Individual* population_b = new Individual[data.population_size];
+   Population antecedentes, descendentes;
 
-   data.best_individual.genome = new int[data.number_of_bits];
+   antecedentes.fitnesses = new float[data.population_size];
+   descendentes.fitnesses = new float[data.population_size];
+
+   antecedentes.genomes = new int*[data.population_size];
+   descendentes.genomes = new int*[data.population_size];
 
    for( int i = 0; i < data.population_size; ++i )
    {
-      population_a[i].genome = new int[data.number_of_bits];
-      population_b[i].genome = new int[data.number_of_bits];
+      antecedentes.genomes[i] = new int[data.number_of_bits];
+      descendentes.genomes[i] = new int[data.number_of_bits];
    }
 
-   Individual* antecedentes = population_a;
-   Individual* descendentes = population_b;
+   data.best_individual.genome = new int[data.number_of_bits];
 
    // 1 e 2:
-   pee_generate_population( antecedentes );
+   pee_generate_population( &antecedentes );
     
    // 3:
    for( int geracao = 1; geracao <= data.generations; ++geracao )
@@ -638,38 +661,41 @@ void pee_evolve()
       for( int i = 0; i < data.population_size; i += 2 )
       {
          // 5:
-         const Individual* father = pee_tournament( antecedentes );
-         const Individual* mother = pee_tournament( antecedentes );
+         //const Individual* father = pee_tournament( antecedentes );
+         //const Individual* mother = pee_tournament( antecedentes );
+         int idx_father = pee_tournament( &antecedentes );
+         int idx_mother = pee_tournament( &antecedentes );
 
          // 6:
          if( random_number() < data.crossover_rate )
          {
             // 7 e 8:
-            pee_crossover( father->genome, mother->genome, descendentes[i].genome, descendentes[i + 1].genome );
+            //pee_crossover( father->genome, mother->genome, descendentes[i].genome, descendentes[i + 1].genome );
+            pee_crossover( antecedentes.genomes[idx_father], antecedentes.genomes[idx_mother], descendentes.genomes[i], descendentes.genomes[i + 1] );
          } // 9
-         else 
-         {
-            // 8:
-            pee_clone( father, &descendentes[i] );
-            pee_clone( mother, &descendentes[i + 1] );
-         } // 9
+         //else 
+         //{
+         //   // 8:
+         //   pee_clone( father, &descendentes[i] );
+         //   pee_clone( mother, &descendentes[i + 1] );
+         //} // 9
 
          // 10, 11, 12, 13 e 14:
-         pee_mutation( descendentes[i].genome );
-         pee_mutation( descendentes[i + 1].genome );
+         pee_mutation( descendentes.genomes[i] );
+         pee_mutation( descendentes.genomes[i + 1] );
       } // 15
 
       // 16:
-      pee_evaluate( descendentes, data.population_size );
+      pee_evaluate( &descendentes, data.population_size );
 
       // 17:
-      if( data.elitism ) pee_clone( &data.best_individual, &descendentes[0] );
+      //if( data.elitism ) pee_clone( &data.best_individual, &descendentes[0] );
 
       // 18:
-      swap( antecedentes, descendentes );
+      swap( &antecedentes, &descendentes );
 
-      pee_receive_individual( antecedentes );
-      pee_send_individual( antecedentes );
+      pee_receive_individual( &antecedentes );
+      pee_send_individual( &antecedentes );
 
       if( data.verbose ) 
       {
@@ -681,9 +707,9 @@ void pee_evolve()
    // Clean up
    for( int i = 0; i < data.population_size; ++i )
    {
-      delete[] population_a[i].genome, population_b[i].genome;
+      delete[] antecedentes.genomes[i], descendentes.genomes[i];
    }
-   delete[] population_a, population_b; 
+   delete[] antecedentes.genomes, antecedentes.fitnesses, descendentes.genomes, descendentes.fitnesses; 
 
    end = clock();
    data.time_total = ((double)(end - start))/((double)(CLOCKS_PER_SEC));
