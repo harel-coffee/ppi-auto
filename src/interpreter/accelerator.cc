@@ -9,6 +9,7 @@
 #include <limits>
 #include <string>   
 #include <vector>
+#include <queue>
 #include <utility>
 #include <iostream> 
 #include <fstream> 
@@ -415,7 +416,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 }
 
 // -----------------------------------------------------------------------------
-void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int* index, int nInd, int prediction_mode )
+void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int prediction_mode, int alpha )
 {
    //vector<cl::Event> events(4); 
    cl::Event event0; 
@@ -496,16 +497,16 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          float sum;
 
          // Reduction on host!
-         for( int ind = 0; ind < nInd; ind++)
+         for( int i = 0; i < nInd; i++)
          {
             sum = 0.0;
             for( int gr_id = 0; gr_id < num_work_groups; gr_id++ ) 
-               sum += tmp[ind * num_work_groups + gr_id];
+               sum += tmp[i * num_work_groups + gr_id];
 
             if( isnan( sum ) || isinf( sum ) ) 
-               vector[ind] = std::numeric_limits<float>::max();
+               vector[i] = std::numeric_limits<float>::max();
             else 
-               vector[ind] = sum/data.nlin;
+               vector[i] = sum/data.nlin + alpha * size[i];
          }
 
          data.queue.enqueueWriteBuffer( data.buffer_error, CL_TRUE, 0, data.population_size * sizeof( float ), vector );
@@ -522,7 +523,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          if( data.strategy == "PPCU" || data.strategy == "PP" ) 
          {
             tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ) );
-            for( int i = 0; i < nInd; i++ ) { vector[i] = tmp[i]; }
+            for( int i = 0; i < nInd; i++ ) { vector[i] = tmp[i] + alpha * size[i]; }
          }
       }
 
@@ -532,14 +533,20 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       float* PB = (float*) data.queue.enqueueMapBuffer( data.buffer_pb, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( float ) );
       int* PI = (int*) data.queue.enqueueMapBuffer( data.buffer_pi, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( int ) );
 
-      // Reduction on host!
-      float best = std::numeric_limits<float>::max();
-      for( int gr_id = 0; gr_id < num_work_groups2; gr_id++ ) 
-         if( PB[gr_id] < best ) 
-         { 
-            best  = PB[gr_id]; 
-            *index = PI[gr_id]; 
-         }
+      if( *best_size > num_work_groups2 ) { *best_size = num_work_groups2; }
+      
+      std::priority_queue<std::pair<float, int> > q;
+      for( int i = 0; i < num_work_groups2; ++i ) 
+      {
+         q.push( std::pair<float, int>(PB[i], i) );
+      }
+      for( int i = 0; i < *best_size; ++i ) 
+      {
+         int idx = q.top().second;
+         index[i] = PI[idx];
+         q.pop();
+      }
+
       data.queue.enqueueUnmapMemObject( data.buffer_pb, PB ); 
       data.queue.enqueueUnmapMemObject( data.buffer_pi, PI );
    }

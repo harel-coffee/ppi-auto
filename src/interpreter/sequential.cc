@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <cmath>    
 #include <limits>
+#include <queue>
 #include "sequential.h"
 
 
@@ -56,13 +57,12 @@ void seq_interpret_init( const unsigned size, float** input, float** model, floa
 //   }
 }
 
-void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int* index, int nInd, int prediction_mode )
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int prediction_mode, int alpha )
 {
    float stack[data.size]; 
    float sum; 
    int stack_top;
 
-   float best = std::numeric_limits<float>::max();
    for( int ind = 0; ind < nInd; ++ind )
    {
       if( size[ind] == 0 && !prediction_mode )
@@ -98,14 +98,20 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          if( isnan( sum ) || isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
          else 
          {
-            vector[ind] = sum/data.nlin;
-            if( vector[ind] < best )
-            {
-               best = vector[ind];
-               *index = ind;
-            }
+            vector[ind] = sum/data.nlin + alpha * size[ind];
          }
       }
+   }
+
+   std::priority_queue<std::pair<float, int> > q;
+   for( int i = 0; i < nInd; ++i ) 
+   {
+      q.push( std::pair<float, int>(vector[i], i) );
+   }
+   for( int i = 0; i < *best_size; ++i ) 
+   {
+      index[i] = q.top().second;
+      q.pop();
    }
 }
 
