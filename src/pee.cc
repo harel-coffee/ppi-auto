@@ -192,7 +192,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
 
    data.initial_symbol = NT_IF_THEN_ELSE_INICIAL;
 
-   data.best_size = 1;
+   data.best_size = 10;
    data.best_individual.genome = NULL;
    data.best_individual.fitness = NULL;
 
@@ -388,6 +388,7 @@ void pee_evaluate( Population* population, int nInd )
 //      fprintf(stdout,"\n");
 //   }
 
+   //std::cout << data.best_size << std::endl;
    int index[data.best_size];
    if( data.version )
    {
@@ -397,6 +398,7 @@ void pee_evaluate( Population* population, int nInd )
    {
       seq_interpret( data.phenotype, data.ephemeral, data.size, population->fitness, nInd, index, &data.best_size, 0, 0.00001 );
    }
+   //std::cout << data.best_size << std::endl;
 
    //bool flag = false;
    //for( int i = 0; i < nInd; i++ )

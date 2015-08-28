@@ -106,7 +106,7 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    std::priority_queue<std::pair<float, int> > q;
    for( int i = 0; i < nInd; ++i ) 
    {
-      q.push( std::pair<float, int>(vector[i], i) );
+      q.push( std::pair<float, int>(vector[i]*(-1), i) );
    }
    for( int i = 0; i < *best_size; ++i ) 
    {

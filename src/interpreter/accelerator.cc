@@ -538,14 +538,18 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       std::priority_queue<std::pair<float, int> > q;
       for( int i = 0; i < num_work_groups2; ++i ) 
       {
-         q.push( std::pair<float, int>(PB[i], i) );
+         //fprintf(stdout,"%f ", PB[i]);
+         q.push( std::pair<float, int>(PB[i]*(-1), i) );
       }
+      //fprintf(stdout,"\n============================\n");
       for( int i = 0; i < *best_size; ++i ) 
       {
          int idx = q.top().second;
+         //fprintf(stdout,"%f ", PB[idx]);
          index[i] = PI[idx];
          q.pop();
       }
+      //fprintf(stdout,"\n============================\n");
 
       data.queue.enqueueUnmapMemObject( data.buffer_pb, PB ); 
       data.queue.enqueueUnmapMemObject( data.buffer_pi, PI );
