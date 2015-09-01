@@ -3,6 +3,8 @@
 #ifndef pee_h
 #define pee_h
 
+#include "client/client.h"
+
 /** Funcoes exportadas **/
 /** ****************************************************************************************** **/
 /** ************************************* Function init ************************************** **/
@@ -38,6 +40,27 @@ void pee_print_time();
 /**                                                                                            **/
 /** ****************************************************************************************** **/
 void pee_destroy();
+
+/******************************************************************************/
+class Pool {
+public:
+
+   Pool( unsigned size ): threads( size, NULL ), ss( size ), clients( size, NULL ) {}
+
+   ~Pool()
+   {
+      for( unsigned i = 0; i < clients.size(); i++ )
+      {
+         if( threads[i]->isRunning() ) { threads[i]->join(); }
+         delete clients[i], threads[i];
+      } 
+   }
+
+   std::vector<Poco::Thread*> threads;
+   std::vector<StreamSocket> ss;
+   std::vector<Client*> clients;
+};
+/******************************************************************************/
 
 #endif
 
