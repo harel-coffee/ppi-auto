@@ -39,7 +39,7 @@ struct Peer {
   float frequency;
 };
 
-namespace { static struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; std::vector<Peer> peers; } data; };
+namespace { struct t_data { Symbol initial_symbol; Individual best_individual; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; float* error; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; std::vector<Peer> peers; Pool* pool; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -231,6 +231,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
       delimiter = ",";
    }
 
+   data.pool = new Pool( data.peers.size() );
 
    data.version = Opts.Bool.Get("-acc");
    if( data.version )
@@ -564,6 +565,8 @@ void pee_send_individual( Individual* population )
    { 
       if( random_number() < data.peers[i].frequency )
       {
+         if( data.pool->threads[i]->isRunning() ) continue;
+
          const Individual* individual = pee_tournament( population );
 
          std::stringstream results; //results.str(std::string());
@@ -575,9 +578,11 @@ void pee_send_individual( Individual* population )
          //std::cerr << "Sending Individual..." << std::endl;
          //std::cerr << results.str() << std::endl;
 
-         StreamSocket ss;
-         Client client( ss, data.peers[i].address.c_str() );
-         client.SndIndividual( results.str() );
+         delete data.pool->clients[i], data.pool->threads[i];
+         data.pool->clients[i] = new Client( data.pool->ss[i], data.peers[i].address.c_str(), results.str() );
+         data.pool->threads[i] = new Poco::Thread();
+         data.pool->threads[i]->start(*(data.pool->clients[i]));
+         //thread.join();
       }
    }
 }
@@ -678,6 +683,7 @@ void pee_evolve()
       }
    } // 19
 
+   // join all threads
    // Clean up
    for( int i = 0; i < data.population_size; ++i )
    {
@@ -692,5 +698,6 @@ void pee_evolve()
 void pee_destroy()
 {
    delete[] data.best_individual.genome, data.phenotype, data.ephemeral, data.size, data.error;
+   delete data.pool;
    if( !data.version ) {seq_interpret_destroy();}
 }

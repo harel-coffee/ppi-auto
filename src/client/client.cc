@@ -1,12 +1,12 @@
 #include "client.h"
 
 /******************************************************************************/
-void Client::SndIndividual( const std::string& results )
+void Client::SndIndividual()
 {
    if( Connect() )
    {
-      SndHeader( 'I', results.size() );
-      SndMessage( results.data(), results.size() );
+      SndHeader( 'I', m_results.size() );
+      SndMessage( m_results.data(), m_results.size() );
 
       Disconnect();
    }

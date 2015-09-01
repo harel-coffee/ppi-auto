@@ -51,6 +51,7 @@ public:
 public:
    static std::queue<Individual> m_individuals;
 
+
 };
 
 
