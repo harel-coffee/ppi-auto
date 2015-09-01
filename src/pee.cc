@@ -577,7 +577,7 @@ void pee_send_individual( Population* population )
    { 
       if( random_number() < data.peers[i].frequency )
       {
-         if( data.pool->threads[i]->isRunning() ) continue;
+         if( !(data.pool->threads[i] == NULL) && data.pool->threads[i]->isRunning() ) continue;
 
          const int idx = pee_tournament( population );
 
