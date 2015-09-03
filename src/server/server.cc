@@ -58,9 +58,8 @@ void Server::run()
                       buffer += offset;
                    }
                    sscanf( buffer, "%d", &individual.genome[data.genome_size-1] );
-               }
+                }
                 break;
-
       default:
                 poco_fatal( m_logger, "Unrecognized command!" );
                 return;
@@ -84,7 +83,7 @@ void Server::run()
          //   printf("%d ", individual.genome[i]);
          //printf("\n");
 
-         //printf("Queue:\n");
+         //printf( "Queue: %d\n", m_individuals.size() );
          //printf("%f ", m_individuals.front().fitness);
          //for( int i = 0; i < data.genome_size; i++ )
          //   printf("%d ", m_individuals.front().genome[i]);

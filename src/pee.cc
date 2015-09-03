@@ -206,7 +206,6 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    std::string str = Opts.String.Get("-peers");
    //std::cout << str << std::endl;
 
-
    size_t pos;
    std::string s;
    float f;
@@ -547,6 +546,7 @@ void pee_print_time()
 
 void pee_receive_individual( Population* population )
 {
+
    if( !Server::m_individuals.empty() && Server::m_mutex.tryLock() )
    {
       while( !Server::m_individuals.empty() )
@@ -560,10 +560,10 @@ void pee_receive_individual( Population* population )
             population->genome[idx * data.number_of_bits + i] = individual.genome[i];
          Server::m_individuals.pop();
 
-         //std::cerr << "Receiving Individual..." << std::endl;
-         //printf("%f ", antecedentes[idx].fitness);
+         std::cerr << "Receiving Individual: " << population->fitness[idx] << std::endl;
+         //printf("%f ", population->fitness[idx]);
          //for( int i = 0; i < data.number_of_bits; i++ )
-         //   printf("%d ", antecedentes[idx].genome[i]);
+         //   printf("%d ", population->genome[idx * data.number_of_bits + i]);
          //printf("\n");
       } 
       Server::m_mutex.unlock();
@@ -577,7 +577,10 @@ void pee_send_individual( Population* population )
    { 
       if( random_number() < data.peers[i].frequency )
       {
-         if( !(data.pool->threads[i] == NULL) && data.pool->threads[i]->isRunning() ) continue;
+         //Testa se o thread ainda está mandando o indivíduo, escolhido na geração anterior, para a ilha.
+         //if( !(data.pool->threads[i] == NULL) && data.pool->threads[i]->isRunning() ) continue;
+         //std::cerr << "Thread[0]: " << data.pool->threads[0]->isRunning() << std::endl;
+         if( data.pool->threads[i]->isRunning() ) continue;
 
          const int idx = pee_tournament( population );
 
@@ -587,14 +590,13 @@ void pee_send_individual( Population* population )
             results <<  population->genome[idx * data.number_of_bits + j] << " ";
          results <<  population->genome[idx * data.number_of_bits + data.number_of_bits];
 
-         //std::cerr << "Sending Individual..." << std::endl;
-         //std::cerr << results.str() << std::endl;
+         delete data.pool->clients[i], data.pool->ss[i];
+         data.pool->ss[i] = new StreamSocket();
+         data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str() );
+         data.pool->threads[i]->start( *( data.pool->clients[i] ) );
 
-         delete data.pool->clients[i], data.pool->threads[i];
-         data.pool->clients[i] = new Client( data.pool->ss[i], data.peers[i].address.c_str(), results.str() );
-         data.pool->threads[i] = new Poco::Thread();
-         data.pool->threads[i]->start(*(data.pool->clients[i]));
-         //thread.join();
+         std::cerr << "Sending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
+         //std::cerr << results.str() << std::endl;
       }
    }
 }
@@ -687,8 +689,10 @@ void pee_evolve()
       swap( antecedentes, descendentes );
       //swap( &antecedentes, &descendentes );
 
+      std::cerr << "Geracao: " << geracao << std::endl;
       pee_receive_individual( &antecedentes );
       pee_send_individual( &antecedentes );
+      //std::cerr << "Thread[0]: " << data.pool->threads[0]->isRunning() << std::endl;
 
       if( data.verbose ) 
       {

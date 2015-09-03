@@ -132,9 +132,9 @@ int main(int argc, char **argv)
    {
       ServerSocket svs(SocketAddress( "0.0.0.0", port ) );
       TCPServerParams* pParams = new TCPServerParams;
-      pParams->setMaxThreads(4);
-      pParams->setMaxQueued(4);
-      pParams->setThreadIdleTime(100);
+      //pParams->setMaxThreads(10);
+      //pParams->setMaxQueued(10);
+      //pParams->setThreadIdleTime(100000000000);
       TCPServer srv(new TCPServerConnectionFactoryImpl<Server>(), svs, pParams);
       srv.start();
 

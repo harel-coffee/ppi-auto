@@ -45,19 +45,28 @@ void pee_destroy();
 class Pool {
 public:
 
-   Pool( unsigned size ): threads( size, NULL ), ss( size ), clients( size, NULL ) {}
-
+   Pool( unsigned size ): threads( size ), ss( size, NULL), clients( size, NULL ) 
+   {
+      for( int i = 0; i < threads.size(); i++ )
+      {
+         threads[i] = new Poco::Thread();
+      }
+   }
+ 
    ~Pool()
    {
       for( unsigned i = 0; i < clients.size(); i++ )
       {
+         //Testa se o thread ainda está mandando o indivíduo para a ilha. Caso afirmativo, 
+         //it will wait until the thread terminates.
          if( threads[i]->isRunning() ) { threads[i]->join(); }
+         //Clean up. They were allocated in pee_send_individual (pee.cc)
          delete clients[i], threads[i];
       } 
    }
 
    std::vector<Poco::Thread*> threads;
-   std::vector<StreamSocket> ss;
+   std::vector<StreamSocket*> ss;
    std::vector<Client*> clients;
 };
 /******************************************************************************/
