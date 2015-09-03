@@ -26,6 +26,9 @@
 #include "individual"
 #include "grammar"
 
+/******************************************************************************/
+/** Definition of the static variables **/
+Poco::FastMutex Server::m_mutex;
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
@@ -229,7 +232,8 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
 
       delimiter = ",";
    }
-
+   
+   //A thread pool used to manage the sending of individuals to the islands.
    data.pool = new Pool( data.peers.size() );
 
    data.version = Opts.Bool.Get("-acc");
@@ -546,27 +550,12 @@ void pee_print_time()
 
 void pee_receive_individual( Population* population )
 {
-
-   if( !Server::m_individuals.empty() && Server::m_mutex.tryLock() )
    {
-      while( !Server::m_individuals.empty() )
-      {
-         int idx = pee_reverse_tournament( population );
-         //delete[] population->genome[idx];
-         //population[idx] = Server::m_individuals.front();
-         Individual individual = Server::m_individuals.front();
-         population->fitness[idx] = individual.fitness;
-         for( int i = 0; i < data.number_of_bits; i++ )
-            population->genome[idx * data.number_of_bits + i] = individual.genome[i];
-         Server::m_individuals.pop();
+      Poco::FastMutex::ScopedLock lock( Server::m_mutex );
 
-         std::cerr << "Receiving Individual: " << population->fitness[idx] << std::endl;
-         //printf("%f ", population->fitness[idx]);
-         //for( int i = 0; i < data.number_of_bits; i++ )
-         //   printf("%d ", population->genome[idx * data.number_of_bits + i]);
-         //printf("\n");
-      } 
-      Server::m_mutex.unlock();
+      Server::m_pop = population;
+      Server::m_immigrants = 0;
+      Server::m_writepos = 0;
    }
 }
 
@@ -648,6 +637,7 @@ void pee_evolve()
       data.best_individual.fitness[i] = std::numeric_limits<float>::max();
    }
 
+   Server::m_pop = &descendentes;
 
    // 1 e 2:
    pee_generate_population( &antecedentes );

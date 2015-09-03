@@ -9,7 +9,6 @@
 #include "Poco/Net/ServerSocket.h"
 #include "Poco/Net/SocketAddress.h"
 #include "Poco/Thread.h"
-#include <queue>
 
 using Poco::Net::TCPServer;
 using Poco::Net::TCPServerConnection;
@@ -49,11 +48,9 @@ public:
    static Poco::FastMutex m_mutex;
 
 public:
-   static std::queue<Individual> m_individuals;
-
-
+   static Population* m_pop;
+   static int m_writepos;
+   static int m_immigrants;
 };
-
-
 
 #endif
