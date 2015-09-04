@@ -143,7 +143,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    Opts.Int.Add( "-s", "--seed", 0, 0, std::numeric_limits<long>::max() );
 
    Opts.Int.Add( "-ps", "--population-size", 1024, 5, std::numeric_limits<int>::max() );
-   Opts.Int.Add( "-is", "--immigrants-size", 10, 0 );
+   Opts.Int.Add( "-is", "--immigrants-size", 5, 1 );
    Opts.Float.Add( "-cp", "--crossover-probability", 0.95, 0.0, 1.0 );
    Opts.Float.Add( "-mp", "--mutation-probability", 0.0025, 0.0, 1.0 );
    Opts.Int.Add( "-ts", "--tournament-size", 3, 1, std::numeric_limits<int>::max() );
@@ -499,13 +499,23 @@ void pee_mutation( int* genome )
 
 int pee_tournament( const Population* population )
 {
-   int idx_winner = (int)(random_number() * (data.population_size + data.immigrants_size));
+   int idx_winner = (int)(random_number() * (data.population_size + Server::m_immigrants));
    float fitness_winner = population->fitness[idx_winner];
+   if( idx_winner >= data.population_size ) 
+   { 
+      std::cerr << "immigrants: " << Server::m_immigrants << "  idx_winner: " << idx_winner << std::endl; 
+      //pee_individual_print( population, idx_winner, stdout, 0 );
+   }
 
    for( int t = 1; t < data.tournament_size; ++t )
    {
-      int idx_competitor = (int)(random_number() * (data.population_size + data.immigrants_size));
+      int idx_competitor = (int)(random_number() * (data.population_size + Server::m_immigrants));
       const float fitness_competitor = population->fitness[idx_competitor];
+      if( idx_competitor >= data.population_size ) 
+      { 
+         std::cerr << "immigrants: " << Server::m_immigrants << "  idx_competitor: " << idx_competitor << std::endl; 
+         //pee_individual_print( population, idx_competitor, stdout, 0 );
+      }
 
       if( fitness_competitor < fitness_winner ) 
       {
@@ -538,13 +548,11 @@ void pee_receive_individual( Population* population )
 
       Server::m_pop = population;
       Server::m_immigrants = 0;
-      Server::m_writepos = 0;
    }
 }
 
 void pee_send_individual( Population* population )
 {
-   //TODO:colocar no intervalo do kernel
    for( int i = 0; i < data.peers.size(); i++ )
    { 
       if( random_number() < data.peers[i].frequency )
@@ -607,6 +615,13 @@ void pee_evolve()
 
    Population antecedentes, descendentes;
 
+   {
+      Poco::FastMutex::ScopedLock lock( Server::m_mutex );
+
+      Server::m_pop = &descendentes; 
+      Server::m_immigrants = 0;
+   }
+
    antecedentes.fitness = new float[data.population_size + data.immigrants_size];
    descendentes.fitness = new float[data.population_size + data.immigrants_size];
 
@@ -620,14 +635,14 @@ void pee_evolve()
       data.best_individual.fitness[i] = std::numeric_limits<float>::max();
    }
 
-   Server::m_pop = &descendentes;
-
    // 1 e 2:
    pee_generate_population( &antecedentes );
     
    // 3:
    for( int geracao = 1; geracao <= data.generations; ++geracao )
    {
+      std::cerr << "Geracao: " << geracao << std::endl;
+
       // 4
       for( int i = 0; i < data.population_size; i += 2 )
       {
@@ -662,7 +677,6 @@ void pee_evolve()
       swap( antecedentes, descendentes );
       //swap( &antecedentes, &descendentes );
 
-      std::cerr << "Geracao: " << geracao << std::endl;
       pee_receive_individual( &antecedentes );
       pee_send_individual( &antecedentes );
       //std::cerr << "Thread[0]: " << data.pool->threads[0]->isRunning() << std::endl;
@@ -674,7 +688,6 @@ void pee_evolve()
       }
    } // 19
 
-   // join all threads
    // Clean up
    delete[] antecedentes.genome, antecedentes.fitness, descendentes.genome, descendentes.fitness; 
 
