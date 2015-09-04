@@ -51,6 +51,10 @@ public:
    static Population* m_pop;
    static int m_writepos;
    static int m_immigrants;
+
+   static int m_genome_size;
+   static int m_immigrants_size;
+   static int m_population_size;
 };
 
 #endif

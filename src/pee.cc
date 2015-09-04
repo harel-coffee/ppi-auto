@@ -26,9 +26,6 @@
 #include "individual"
 #include "grammar"
 
-/******************************************************************************/
-/** Definition of the static variables **/
-Poco::FastMutex Server::m_mutex;
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
@@ -42,7 +39,7 @@ struct Peer {
   float frequency;
 };
 
-namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int verbose; int elitism; int population_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; std::vector<Peer> peers; Pool* pool; } data; };
+namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int verbose; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; std::vector<Peer> peers; Pool* pool; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -146,6 +143,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    Opts.Int.Add( "-s", "--seed", 0, 0, std::numeric_limits<long>::max() );
 
    Opts.Int.Add( "-ps", "--population-size", 1024, 5, std::numeric_limits<int>::max() );
+   Opts.Int.Add( "-is", "--immigrants-size", 10, 0 );
    Opts.Float.Add( "-cp", "--crossover-probability", 0.95, 0.0, 1.0 );
    Opts.Float.Add( "-mp", "--mutation-probability", 0.0025, 0.0, 1.0 );
    Opts.Int.Add( "-ts", "--tournament-size", 3, 1, std::numeric_limits<int>::max() );
@@ -172,6 +170,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    data.seed = Opts.Int.Get("-s") == 0 ? time( NULL ) : Opts.Int.Get("-s");
 
    data.population_size = Opts.Int.Get("-ps");
+   data.immigrants_size = Opts.Int.Get("-is");
    data.crossover_rate = Opts.Float.Get("-cp");
    data.mutation_rate = Opts.Float.Get("-mp");
    data.tournament_size = Opts.Int.Get("-ts");
@@ -235,6 +234,10 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    
    //A thread pool used to manage the sending of individuals to the islands.
    data.pool = new Pool( data.peers.size() );
+
+   Server::m_genome_size = data.number_of_bits;
+   Server::m_immigrants_size = data.immigrants_size;
+   Server::m_population_size = data.population_size;
 
    data.version = Opts.Bool.Get("-acc");
    if( data.version )
@@ -496,35 +499,15 @@ void pee_mutation( int* genome )
 
 int pee_tournament( const Population* population )
 {
-   int idx_winner = (int)(random_number() * data.population_size);
+   int idx_winner = (int)(random_number() * (data.population_size + data.immigrants_size));
    float fitness_winner = population->fitness[idx_winner];
 
    for( int t = 1; t < data.tournament_size; ++t )
    {
-      int idx_competitor = (int)(random_number() * data.population_size);
+      int idx_competitor = (int)(random_number() * (data.population_size + data.immigrants_size));
       const float fitness_competitor = population->fitness[idx_competitor];
 
       if( fitness_competitor < fitness_winner ) 
-      {
-         fitness_winner = fitness_competitor;
-         idx_winner = idx_competitor;
-      }
-   }
-
-   return idx_winner;
-}
-
-int pee_reverse_tournament( const Population* population )
-{
-   int idx_winner = (int)(random_number() * data.population_size);
-   float fitness_winner = population->fitness[idx_winner];
-
-   for( int t = 1; t < data.tournament_size; ++t )
-   {
-      int idx_competitor = (int)(random_number() * data.population_size);
-      const float fitness_competitor = population->fitness[idx_competitor];
-
-      if( fitness_competitor > fitness_winner ) 
       {
          fitness_winner = fitness_competitor;
          idx_winner = idx_competitor;
@@ -624,11 +607,11 @@ void pee_evolve()
 
    Population antecedentes, descendentes;
 
-   antecedentes.fitness = new float[data.population_size];
-   descendentes.fitness = new float[data.population_size];
+   antecedentes.fitness = new float[data.population_size + data.immigrants_size];
+   descendentes.fitness = new float[data.population_size + data.immigrants_size];
 
-   antecedentes.genome = new int[data.population_size * data.number_of_bits];
-   descendentes.genome = new int[data.population_size * data.number_of_bits];
+   antecedentes.genome = new int[(data.population_size + data.immigrants_size) * data.number_of_bits];
+   descendentes.genome = new int[(data.population_size + data.immigrants_size) * data.number_of_bits];
 
    data.best_individual.fitness = new float[data.best_size];
    data.best_individual.genome = new int[data.best_size * data.number_of_bits];
