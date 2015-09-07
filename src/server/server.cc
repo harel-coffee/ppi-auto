@@ -4,7 +4,7 @@
 /******************************************************************************/
 /** Definition of the static variables **/
 Poco::FastMutex Server::m_mutex;
-Population* Server::m_pop;
+Population* Server::m_pop = NULL;
 int Server::m_immigrants;
 int Server::m_immigrants_size;
 int Server::m_population_size;

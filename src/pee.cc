@@ -559,7 +559,6 @@ void pee_send_individual( Population* population )
       {
          //Testa se o thread ainda está mandando o indivíduo, escolhido na geração anterior, para a ilha.
          //if( !(data.pool->threads[i] == NULL) && data.pool->threads[i]->isRunning() ) continue;
-         //std::cerr << "Thread[0]: " << data.pool->threads[0]->isRunning() << std::endl;
          if( data.pool->threads[i]->isRunning() ) continue;
 
          const int idx = pee_tournament( population );
@@ -589,20 +588,20 @@ void pee_evolve()
    1: Create (randomly) the initial population P
    2: Evaluate all individuals (programs) of P
    3: for generation ← 1 to NG do
-      4: while |Ptmp| < |P| do
-         5: Select and copy from P two fit individuals, p1 and p2
-         6: if [probabilistically] crossover then
-            7: Recombine p1 and p2, creating the children p1' and p2'
-            8: p1 ← p1' ; p2 ← p2'
-         9: end if
-         10: if [probabilistically] mutation then
-            11: Apply mutation operators in p1 and p2, generating p1' and p2'
-            12: p1 ← p1' ; p2 ← p2'
-         13: end if
-         14: Insert p1 and p2 into Ptmp
-      15: end while
-      16: Evaluate all individuals (programs) of Ptmp
-      17: Copy the best (elitism) individuals of P to the temporary population Ptmp
+      4: Copy the best (elitism) individuals of P to the temporary population Ptmp
+      5: while |Ptmp| < |P| do
+         6: Select and copy from P two fit individuals, p1 and p2
+         7: if [probabilistically] crossover then
+            8: Recombine p1 and p2, creating the children p1' and p2'
+            9: p1 ← p1' ; p2 ← p2'
+         10: end if
+         11: if [probabilistically] mutation then
+            12: Apply mutation operators in p1 and p2, generating p1' and p2'
+            13: p1 ← p1' ; p2 ← p2'
+         14: end if
+         15: Insert p1 and p2 into Ptmp
+      16: end while
+      17: Evaluate all individuals (programs) of Ptmp
       18: P ← Ptmp; then discard Ptmp
    19: end for
    20: return the best individual so far
@@ -615,12 +614,7 @@ void pee_evolve()
 
    Population antecedentes, descendentes;
 
-   {
-      Poco::FastMutex::ScopedLock lock( Server::m_mutex );
-
-      Server::m_pop = &descendentes; 
-      Server::m_immigrants = 0;
-   }
+   pee_receive_individual( &descendentes );
 
    antecedentes.fitness = new float[data.population_size + data.immigrants_size];
    descendentes.fitness = new float[data.population_size + data.immigrants_size];
@@ -643,43 +637,48 @@ void pee_evolve()
    {
       std::cerr << "Geracao: " << geracao << std::endl;
 
-      // 4
-      for( int i = 0; i < data.population_size; i += 2 )
+      // 4:
+      int init = 0;
+      if( data.elitism ) 
       {
-         // 5:
+         pee_clone( &data.best_individual, 0, &descendentes, 0 );
+         init = 1;
+      }
+
+      // 5
+      for( int i = init; i < data.population_size; i += 2 )
+      {
+         // 6:
          int idx_father = pee_tournament( &antecedentes );
          int idx_mother = pee_tournament( &antecedentes );
 
-         // 6:
+         // 7:
          if( random_number() < data.crossover_rate )
          {
-            // 7 e 8:
+            // 8 e 9:
             pee_crossover( antecedentes.genome + (idx_father * data.number_of_bits), antecedentes.genome + (idx_mother * data.number_of_bits), descendentes.genome + (i * data.number_of_bits), descendentes.genome + ((i + 1) * data.number_of_bits));
-         } // 9
+         } // 10
          else 
          {
-            // 8:
+            // 9:
             pee_clone( &antecedentes, idx_father, &descendentes, i );
             pee_clone( &antecedentes, idx_mother, &descendentes, i + 1 );
-         } // 9
+         } // 10
 
-         // 10, 11, 12, 13 e 14:
+         // 11, 12, 13, 14 e 15:
          pee_mutation( descendentes.genome + (i * data.number_of_bits) );
          pee_mutation( descendentes.genome + ((i + 1) * data.number_of_bits) );
-      } // 15
-
-      // 16:
-      pee_evaluate( &descendentes, data.population_size );
+      } // 16
 
       // 17:
-      if( data.elitism ) pee_clone( &data.best_individual, 0, &descendentes, 0 );
+      pee_evaluate( &descendentes, data.population_size );
+
       // 18:
       swap( antecedentes, descendentes );
       //swap( &antecedentes, &descendentes );
 
       pee_receive_individual( &antecedentes );
       pee_send_individual( &antecedentes );
-      //std::cerr << "Thread[0]: " << data.pool->threads[0]->isRunning() << std::endl;
 
       if( data.verbose ) 
       {
