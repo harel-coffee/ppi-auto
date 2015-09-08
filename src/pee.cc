@@ -379,6 +379,55 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
       fprintf( out, " %.12f\n", individual->fitness[idx] );
 }
 
+int pee_tournament( const Population* population )
+{
+   int idx_winner = (int)(random_number() * data.population_size);
+   float fitness_winner = population->fitness[idx_winner];
+
+   for( int t = 1; t < data.tournament_size; ++t )
+   {
+      int idx_competitor = (int)(random_number() * data.population_size);
+      const float fitness_competitor = population->fitness[idx_competitor];
+
+      if( fitness_competitor < fitness_winner ) 
+      {
+         fitness_winner = fitness_competitor;
+         idx_winner = idx_competitor;
+      }
+   }
+
+   return idx_winner;
+}
+
+void pee_send_individual( Population* population )
+{
+   for( int i = 0; i < data.peers.size(); i++ )
+   { 
+      if( random_number() < data.peers[i].frequency )
+      {
+         //Testa se o thread ainda está mandando o indivíduo, escolhido na geração anterior, para a ilha.
+         //if( !(data.pool->threads[i] == NULL) && data.pool->threads[i]->isRunning() ) continue;
+         if( data.pool->threads[i]->isRunning() ) continue;
+
+         const int idx = pee_tournament( population );
+
+         std::stringstream results; //results.str(std::string());
+         results <<  population->fitness[idx] << " ";
+         for( int j = 0; j < data.number_of_bits-1; j++ )
+            results <<  population->genome[idx * data.number_of_bits + j] << " ";
+         results <<  population->genome[idx * data.number_of_bits + data.number_of_bits];
+
+         delete data.pool->clients[i], data.pool->ss[i];
+         data.pool->ss[i] = new StreamSocket();
+         data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str() );
+         data.pool->threads[i]->start( *( data.pool->clients[i] ) );
+
+         std::cerr << "Sending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
+         //std::cerr << results.str() << std::endl;
+      }
+   }
+}
+
 int pee_receive_individual( int* immigrants )
 {
    int slot; int nImmigrants = 0;
@@ -537,26 +586,6 @@ void pee_mutation( int* genome )
       if( random_number() < data.mutation_rate ) genome[i] = !genome[i];
 }
 
-int pee_tournament( const Population* population )
-{
-   int idx_winner = (int)(random_number() * data.population_size);
-   float fitness_winner = population->fitness[idx_winner];
-
-   for( int t = 1; t < data.tournament_size; ++t )
-   {
-      int idx_competitor = (int)(random_number() * data.population_size);
-      const float fitness_competitor = population->fitness[idx_competitor];
-
-      if( fitness_competitor < fitness_winner ) 
-      {
-         fitness_winner = fitness_competitor;
-         idx_winner = idx_competitor;
-      }
-   }
-
-   return idx_winner;
-}
-
 void pee_print_best( FILE* out, int print_mode ) 
 {
    pee_individual_print( &data.best_individual, 0, out, print_mode );
@@ -569,35 +598,6 @@ void pee_print_time()
       acc_print_time();
    }
    printf("time_total: %lf\n", data.time_total);
-}
-
-void pee_send_individual( Population* population )
-{
-   for( int i = 0; i < data.peers.size(); i++ )
-   { 
-      if( random_number() < data.peers[i].frequency )
-      {
-         //Testa se o thread ainda está mandando o indivíduo, escolhido na geração anterior, para a ilha.
-         //if( !(data.pool->threads[i] == NULL) && data.pool->threads[i]->isRunning() ) continue;
-         if( data.pool->threads[i]->isRunning() ) continue;
-
-         const int idx = pee_tournament( population );
-
-         std::stringstream results; //results.str(std::string());
-         results <<  population->fitness[idx] << " ";
-         for( int j = 0; j < data.number_of_bits-1; j++ )
-            results <<  population->genome[idx * data.number_of_bits + j] << " ";
-         results <<  population->genome[idx * data.number_of_bits + data.number_of_bits];
-
-         delete data.pool->clients[i], data.pool->ss[i];
-         data.pool->ss[i] = new StreamSocket();
-         data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str() );
-         data.pool->threads[i]->start( *( data.pool->clients[i] ) );
-
-         std::cerr << "Sending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
-         //std::cerr << results.str() << std::endl;
-      }
-   }
 }
 
 void pee_evolve()
