@@ -235,7 +235,6 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    //A thread pool used to manage the sending of individuals to the islands.
    data.pool = new Pool( data.peers.size() );
 
-
    {
       Poco::FastMutex::ScopedLock lock( Server::m_mutex );
 
@@ -380,14 +379,43 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
       fprintf( out, " %.12f\n", individual->fitness[idx] );
 }
 
+int pee_receive_individual( int* immigrants )
+{
+   int slot; int nImmigrants = 0;
+   while( !Server::m_ready.empty() && nImmigrants < data.immigrants_size )
+   {
+      //std::cerr << "immigrants: " << immigrants << " ready.size: " << Server::m_ready.size() << " freeslots.size: " << Server::m_freeslots.size() << std::endl;
+      {
+         Poco::FastMutex::ScopedLock lock( Server::m_mutex );
 
-void pee_evaluate( Population* population, int nInd )
+         slot = Server::m_ready.front();
+         Server::m_ready.pop();
+      }
+
+      //std::cerr << "Funcao receive immigrants[slot=" << slot << "]" << std::endl;
+
+      for( int i = 0; i < data.number_of_bits; i++ )
+      {
+         immigrants[nImmigrants * data.number_of_bits + i] = Server::m_immigrants[slot * data.number_of_bits + i];
+      }
+      nImmigrants++;
+
+      {
+         Poco::FastMutex::ScopedLock lock( Server::m_mutex );
+
+         Server::m_freeslots.push(slot);
+      }
+   }
+   return nImmigrants;
+}
+
+void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImmigrants )
 {
    int allele;
-   for( int i = 0; i < nInd; i++ )
+   for( int i = 0; i < data.population_size; i++ )
    {
       allele = 0;
-      data.size[i] = decode( population->genome + (i * data.number_of_bits), &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
+      data.size[i] = decode( descendentes->genome + (i * data.number_of_bits), &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
    }
    
 //   for( int j = 0; j < nInd; j++ )
@@ -405,15 +433,17 @@ void pee_evaluate( Population* population, int nInd )
 //      fprintf(stdout,"\n");
 //   }
 
-   //std::cout << data.best_size << std::endl;
+   
    int index[data.best_size];
+
    if( data.version )
    {
-      acc_interpret( data.phenotype, data.ephemeral, data.size, population->fitness, nInd, index, &data.best_size, 0, 0.00001 );
+      acc_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, &pee_receive_individual, antecedentes->genome, nImmigrants, index, &data.best_size, 0, 0.00001 );
    }
    else
    {
-      seq_interpret( data.phenotype, data.ephemeral, data.size, population->fitness, nInd, index, &data.best_size, 0, 0.00001 );
+      seq_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, index, &data.best_size, 0, 0.00001 );
+      *nImmigrants = pee_receive_individual( antecedentes->genome );
    }
    //std::cout << data.best_size << std::endl;
 
@@ -437,23 +467,23 @@ void pee_evaluate( Population* population, int nInd )
 
    for( int i = 0; i < data.best_size; i++ )
    {
-      if( population->fitness[index[i]] < data.best_individual.fitness[i] )
+      if( descendentes->fitness[index[i]] < data.best_individual.fitness[i] )
       {
-         pee_clone( population, index[i], &data.best_individual, i );
+         pee_clone( descendentes, index[i], &data.best_individual, i );
       }
    }
 }
 
-void pee_generate_population( Population* population )
+void pee_generate_population( Population* antecedentes, Population* descendentes, int* nImmigrants )
 {
    for( int i = 0; i < data.population_size; ++i)
    {
       for( int j = 0; j < data.number_of_bits; j++ )
       {
-         population->genome[i * data.number_of_bits + j] = (random_number() < 0.5) ? 1 : 0;
+         antecedentes->genome[i * data.number_of_bits + j] = (random_number() < 0.5) ? 1 : 0;
       }
    }
-   pee_evaluate( population, data.population_size );
+   pee_evaluate( antecedentes, descendentes, nImmigrants );
 }
 
 void pee_crossover( const int* father, const int* mother, int* offspring1, int* offspring2 )
@@ -541,36 +571,6 @@ void pee_print_time()
    printf("time_total: %lf\n", data.time_total);
 }
 
-int pee_receive_individual( Population* population )
-{
-   int slot; int immigrants = 0;
-   while( !Server::m_ready.empty() && immigrants < data.immigrants_size )
-   {
-      //std::cerr << "immigrants: " << immigrants << " ready.size: " << Server::m_ready.size() << " freeslots.size: " << Server::m_freeslots.size() << std::endl;
-      {
-         Poco::FastMutex::ScopedLock lock( Server::m_mutex );
-
-         slot = Server::m_ready.front();
-         Server::m_ready.pop();
-      }
-
-      //std::cerr << "Funcao receive immigrants[slot=" << slot << "]" << std::endl;
-
-      for( int i = 0; i < data.number_of_bits; i++ )
-      {
-         population->genome[immigrants * data.number_of_bits + i] = Server::m_immigrants[slot * data.number_of_bits + i];
-      }
-      immigrants++;
-
-      {
-         Poco::FastMutex::ScopedLock lock( Server::m_mutex );
-
-         Server::m_freeslots.push(slot);
-      }
-   }
-   return immigrants;
-}
-
 void pee_send_individual( Population* population )
 {
    for( int i = 0; i < data.peers.size(); i++ )
@@ -647,25 +647,25 @@ void pee_evolve()
       data.best_individual.fitness[i] = std::numeric_limits<float>::max();
    }
 
+   int nImmigrants;
+
    // 1 e 2:
-   pee_generate_population( &antecedentes );
+   pee_generate_population( &antecedentes, &descendentes, &nImmigrants );
     
    // 3:
    for( int geracao = 1; geracao <= data.generations; ++geracao )
    {
-      int immigrants = pee_receive_individual( &descendentes );
-
       // 4:
       if( data.elitism ) 
       {
          pee_clone( &data.best_individual, 0, &descendentes, 0 );
-         immigrants++;
+         nImmigrants++;
       }
 
-      std::cerr << "Immigrants[" << geracao << "]: " << immigrants << std::endl;
+      std::cerr << "Immigrants[" << geracao << "]: " << nImmigrants << std::endl;
 
       // 5
-      for( int i = immigrants; i < data.population_size; i += 2 )
+      for( int i = nImmigrants; i < data.population_size; i += 2 )
       {
          // 6:
          int idx_father = pee_tournament( &antecedentes );
@@ -703,7 +703,7 @@ void pee_evolve()
       } // 16
 
       // 17:
-      pee_evaluate( &descendentes, data.population_size );
+      pee_evaluate( &descendentes, &antecedentes, &nImmigrants );
 
       pee_send_individual( &descendentes );
 

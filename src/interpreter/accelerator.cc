@@ -14,6 +14,7 @@
 #include <iostream> 
 #include <fstream> 
 #include "accelerator.h"
+#include "../server/server.h"
 #include "../util/CmdLineParser.h"
 
 using namespace std;
@@ -416,7 +417,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 }
 
 // -----------------------------------------------------------------------------
-void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int prediction_mode, int alpha )
+void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int (*function)(int*), int* immigrants, int* nImmigrants, int* index, int* best_size, int prediction_mode, int alpha )
 {
    //vector<cl::Event> events(4); 
    cl::Event event0; 
@@ -446,6 +447,8 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          // ---------- end kernel execution
       }
    }
+
+   *nImmigrants = function( immigrants );
 
    // Wait until the kernel has finished
    data.queue.finish();

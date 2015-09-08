@@ -18,7 +18,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int prediction_mode, int alpha );
+void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int (*function)(int*), int* immigrants, int* nImmigrants, int* index, int* best_size, int prediction_mode, int alpha );
 
 /** ************************************************************************************************** **/
 /** ************************************** Function print_time *************************************** **/
