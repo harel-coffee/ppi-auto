@@ -61,7 +61,7 @@ public:
          //it will wait until the thread terminates.
          if( threads[i]->isRunning() ) { threads[i]->join(); }
          //Clean up. They were allocated in pee_send_individual (pee.cc)
-         delete clients[i], threads[i];
+         delete threads[i], clients[i], ss[i];
       } 
    }
 

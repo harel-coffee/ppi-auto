@@ -4,10 +4,13 @@
 /******************************************************************************/
 /** Definition of the static variables **/
 Poco::FastMutex Server::m_mutex;
-Population* Server::m_pop = NULL;
-int Server::m_immigrants;
-int Server::m_immigrants_size;
-int Server::m_population_size;
+
+int* Server::m_immigrants = NULL;
+float* Server::m_fitness = NULL;
+
+std::queue<int> Server::m_freeslots;
+std::queue<int> Server::m_ready;
+
 int Server::m_genome_size;
 
 
@@ -22,50 +25,54 @@ void Server::run()
    char command; int msg_size;
    command = RcvHeader( msg_size );
 
-   Population* mypop;
+   bool flag = false;
+   char* buffer; int offset;
+   int slot;
 
    switch( command ) {
       case 'I': {
-                   while( m_immigrants >= m_immigrants_size ) { Thread::sleep(1000); }
+                   //std::cerr << "Inicio: ready.size: " << m_ready.size() << " freeslots.size: " << m_freeslots.size() << std::endl;
+
+                   if( m_freeslots.empty() )
+                   {
+                      // Receive the message
+                      buffer = RcvMessage( msg_size );
+                      flag = true;
+                      while( m_freeslots.empty() ) { Thread::sleep(1000); }
+                   }
+
+                   if( !flag ) 
+                   {
+                      // Receive the message
+                      buffer = RcvMessage( msg_size );
+                      flag = true;
+                   }
 
                    {
                       Poco::FastMutex::ScopedLock lock( m_mutex );
 
-                      //if( m_immigrants >= m_immigrants_size ) { return; } 
-
-                      mypop = m_pop;
+                      if( m_freeslots.empty() ) { return; }
+                      slot = m_freeslots.front();
+                      m_freeslots.pop();
                    }
- 
-                   // Receive the message
-                   char* buffer = RcvMessage( msg_size );
-                   int offset;
 
-                   // Checking if the m_pop was modified during the evolutionary process (pee_receice_individual)
-                   if( mypop != m_pop ) { return; }
-                   sscanf( buffer, "%f%n", &m_pop->fitness[m_population_size + m_immigrants], &offset );
+                   sscanf( buffer, "%f%n", &m_fitness[slot], &offset );
                    buffer += offset;
                    for( int i = 0; i < m_genome_size-1; i++ )
                    {
-                      if( mypop != m_pop ) { return; }
-                      sscanf( buffer, "%d%n", &m_pop->genome[(m_population_size + m_immigrants) * m_genome_size + i], &offset );
+                      sscanf( buffer, "%d%n", &m_immigrants[slot * m_genome_size + i], &offset );
                       buffer += offset;
                    }
-                   if( mypop != m_pop ) { return; }
-                   sscanf( buffer, "%d", &m_pop->genome[(m_population_size + m_immigrants) * (m_genome_size - 1)]);
-
-                   std::cerr << "Receiving Individual [" << m_immigrants << "]: " << m_pop->fitness[m_population_size + m_immigrants] << std::endl;
+                   sscanf( buffer, "%d", &m_immigrants[slot * (m_genome_size - 1)]);
 
                    {
                       Poco::FastMutex::ScopedLock lock( m_mutex );
 
-                      //m_immigrants_size = 1 ... m_immigrants_size
-                      //if( mypop == m_pop && m_immigrants < m_immigrants_size ) 
-                      if( mypop == m_pop ) 
-                      { 
-                         m_immigrants++; 
-                      } 
+                      m_ready.push(slot);
                    }
 
+                   std::cerr << "Receiving[slot=" << slot << "]: " << m_fitness[slot] << std::endl;
+                   //std::cerr << "Fim: ready.size: " << m_ready.size() << " freeslots.size: " << m_freeslots.size() << std::endl;
                 }
                 break;
       default:

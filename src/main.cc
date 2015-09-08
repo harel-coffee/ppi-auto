@@ -2,9 +2,9 @@
 #include <stdio.h> 
 #include <cmath>    
 #include "util/CmdLineParser.h"
-#include "server/server.h"
 #include "pee.h"
 #include "pep.h"
+#include "server/server.h"
 
 //TODO fazer comentários; passar para inglês
 
@@ -109,9 +109,7 @@ int main(int argc, char **argv)
 
    int ninput = Opts.Int.Get("-ni");   
    int nmodel = Opts.Int.Get("-nm");   
-   int port = Opts.Int.Get("-port");
    const char* dataset = Opts.String.Get("-d").c_str();
-
    
    int nlin;
    float** input;
@@ -130,13 +128,14 @@ int main(int argc, char **argv)
    }
    else
    {
-      ServerSocket svs(SocketAddress( "0.0.0.0", port ) );
+      ServerSocket svs(SocketAddress("0.0.0.0", Opts.Int.Get("-port")));
       TCPServerParams* pParams = new TCPServerParams;
-      //pParams->setMaxThreads(10);
-      //pParams->setMaxQueued(10);
-      //pParams->setThreadIdleTime(100000000000);
+      //pParams->setMaxThreads(4);
+      //pParams->setMaxQueued(4);
+      //pParams->setThreadIdleTime(1000);
       TCPServer srv(new TCPServerConnectionFactoryImpl<Server>(), svs, pParams);
       srv.start();
+      //sleep(100);
 
       pee_init( input, model, obs, nlin, argc, argv );
       pee_evolve();
