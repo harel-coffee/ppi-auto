@@ -13,37 +13,17 @@
 #include <memory>
 #include <vector>
 
-
-
 #include "Poco/FormattingChannel.h"
 #include "Poco/PatternFormatter.h"
 
 using Poco::FormattingChannel;
 using Poco::PatternFormatter;
 
-
-
 using Poco::Net::StreamSocket;
 using Poco::Logger;
 using Poco::ConsoleChannel;
 using Poco::AutoPtr;
 
-typedef unsigned long long range_t;
-
-struct TaskData {
-   TaskData() {}
-   TaskData( range_t begin, range_t end, range_t id ):
-      begin(begin), end(end), id(id) {}
-
-   range_t begin;
-   range_t end;
-   unsigned id;
-};
-
-/******************************************************************************/
-#if 0
-const char* Time();
-#endif
 
 /******************************************************************************/
 class Common {
@@ -89,63 +69,5 @@ public:
 
    std::vector<char> m_buffer;
 };
-
-
-#if 0
-/** Buffer using the copy-and-swap idiom
-    http://stackoverflow.com/questions/3279543/what-is-the-copy-and-swap-idiom
-**/
-struct Buffer {
-   Buffer( std::size_t s = 0 ): size( s + 1 ), buffer( new char[size] )
-   {
-      // NULL termination char
-      buffer[size-1] = '\0';
-
-      std::cerr << "<C>";
-   }
-
-   ~Buffer() { 
-      std::cerr << "<~>";
-      delete[] buffer; }
-
-   // Copy constructor
-   Buffer( const Buffer& o ): size( o.size ), buffer( new char[size] ) {
-      std::cerr << "<CC>";
-      std::copy( o.buffer, o.buffer + size, buffer );
-   }
-
-   // Copy assignment constructor
-   Buffer& operator=( Buffer o ) {
-      std::cerr << "<=>";
-      swap( *this, o );
-
-      return *this;
-   }
-
-public:
-   // Actual storage space for content (excludes the char used for NULL
-   // termination char)
-   std::size_t capacity() const { return size - 1; }
-
-   char* data() { return buffer; }
-   const char* data() const { return buffer; }
-
-   char& operator[]( std::size_t i ) { return buffer[i]; }
-   const char& operator[]( std::size_t i ) const { return buffer[i]; }
-
-   // Swap every class member
-   friend void swap( Buffer& first, Buffer& second ) {
-      using std::swap;
-
-      swap( first.size, second.size );
-      swap( first.buffer, second.buffer );
-   }
-
-public:
-   std::size_t size;
-   char* buffer;
-};
-#endif
-
 /******************************************************************************/
 #endif

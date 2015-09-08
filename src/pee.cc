@@ -45,8 +45,7 @@ namespace { struct t_data { Symbol initial_symbol; Population best_individual; i
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
 /** ****************************************************************** **/
 
-#define swap(i, j) {Population t = i; i = j; j = t;}
-//#define swap(i, j) {Population t = *i; *i = *j; *j = t;}
+#define swap(i, j) {Population t = *i; *i = *j; *j = t;}
 
 double random_number() {return (double)rand() / ((double)RAND_MAX + 1.0f);} // [0.0, 1.0)
 
@@ -379,15 +378,15 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
       fprintf( out, " %.12f\n", individual->fitness[idx] );
 }
 
-int pee_tournament( const Population* population )
+int pee_tournament( const float* fitness )
 {
    int idx_winner = (int)(random_number() * data.population_size);
-   float fitness_winner = population->fitness[idx_winner];
+   float fitness_winner = fitness[idx_winner];
 
    for( int t = 1; t < data.tournament_size; ++t )
    {
       int idx_competitor = (int)(random_number() * data.population_size);
-      const float fitness_competitor = population->fitness[idx_competitor];
+      const float fitness_competitor = fitness[idx_competitor];
 
       if( fitness_competitor < fitness_winner ) 
       {
@@ -409,7 +408,7 @@ void pee_send_individual( Population* population )
          //if( !(data.pool->threads[i] == NULL) && data.pool->threads[i]->isRunning() ) continue;
          if( data.pool->threads[i]->isRunning() ) continue;
 
-         const int idx = pee_tournament( population );
+         const int idx = pee_tournament( population->fitness );
 
          std::stringstream results; //results.str(std::string());
          results <<  population->fitness[idx] << " ";
@@ -662,14 +661,14 @@ void pee_evolve()
          nImmigrants++;
       }
 
-      std::cerr << "Immigrants[" << geracao << "]: " << nImmigrants << std::endl;
+      std::cerr << "nImmigrants[geration:" << geracao << "]: " << nImmigrants << std::endl;
 
       // 5
       for( int i = nImmigrants; i < data.population_size; i += 2 )
       {
          // 6:
-         int idx_father = pee_tournament( &antecedentes );
-         int idx_mother = pee_tournament( &antecedentes );
+         int idx_father = pee_tournament( antecedentes.fitness );
+         int idx_mother = pee_tournament( antecedentes.fitness );
 
          // 7:
          if( random_number() < data.crossover_rate )
@@ -708,8 +707,7 @@ void pee_evolve()
       pee_send_individual( &descendentes );
 
       // 18:
-      swap( antecedentes, descendentes );
-      //swap( &antecedentes, &descendentes );
+      swap( &antecedentes, &descendentes );
 
       if( data.verbose ) 
       {

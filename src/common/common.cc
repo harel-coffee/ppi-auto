@@ -1,19 +1,6 @@
 #include "common.h"
 
 /******************************************************************************/
-#if 0
-const char* Time()
-{
-   static char buffer[80];
-   static std::time_t now;
-
-   std::time( &now );
-   strftime(buffer, 80, "%F %T", std::localtime(&now) );
-
-   return buffer;
-}
-#endif 
-
 Logger& Common::m_logger( Logger::get( "logger" ) ); 
 
 
