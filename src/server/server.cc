@@ -5,14 +5,11 @@
 /** Definition of the static variables **/
 Poco::FastMutex Server::m_mutex;
 
-std::vector<char>* Server::m_buffer_immigrants = NULL;
-int* Server::m_immigrants = NULL;
+std::vector<char>* Server::m_immigrants = NULL;
 float* Server::m_fitness = NULL;
 
 std::queue<int> Server::m_freeslots;
 std::queue<int> Server::m_ready;
-
-int Server::m_genome_size;
 
 
 /******************************************************************************/
@@ -26,28 +23,11 @@ void Server::run()
    char command; int msg_size;
    command = RcvHeader( msg_size );
 
-   //bool flag = false;
-   //char* buffer; int offset;
    int slot;
 
    switch( command ) {
       case 'I': {
                    while( m_freeslots.empty() ) { Thread::sleep(1000); }
-
-                   //if( m_freeslots.empty() )
-                   //{
-                   //   // Receive the message
-                   //   buffer = RcvMessage( msg_size );
-                   //   flag = true;
-                   //   while( m_freeslots.empty() ) { Thread::sleep(1000); }
-                   //}
-
-                   //if( !flag ) 
-                   //{
-                   //   // Receive the message
-                   //   buffer = RcvMessage( msg_size );
-                   //   flag = true;
-                   //}
 
                    {
                       Poco::FastMutex::ScopedLock lock( m_mutex );
@@ -58,24 +38,15 @@ void Server::run()
                    }
 
                    // Receive the message
-                   RcvMessage( msg_size, m_buffer_immigrants[slot] );
+                   RcvMessage( msg_size, m_immigrants[slot] );
                    
-                   //sscanf( buffer, "%f%n", &m_fitness[slot], &offset );
-                   //buffer += offset;
-                   //for( int i = 0; i < m_genome_size-1; i++ )
-                   //{
-                   //   sscanf( buffer, "%d%n", &m_immigrants[slot * m_genome_size + i], &offset );
-                   //   buffer += offset;
-                   //}
-                   //sscanf( buffer, "%d", &m_immigrants[slot * (m_genome_size - 1)]);
-
                    {
                       Poco::FastMutex::ScopedLock lock( m_mutex );
 
                       m_ready.push(slot);
                    }
 
-                   std::cerr << "Receiving[slot=" << slot << "]: " << m_buffer_immigrants[slot].data() << std::endl;
+                   std::cerr << "Receiving[slot=" << slot << "]: " << m_immigrants[slot].data() << std::endl;
                 }
                 break;
       default:
