@@ -12,11 +12,11 @@ void Common::SndMessage( const void* buffer, int msg_size )
 }
 
 /******************************************************************************/
-char* Common::RcvMessage( int msg_size )
+char* Common::RcvMessage( int msg_size, std::vector<char>& buffer )
 {
-   ExpandBuffer( msg_size );
+   ExpandBuffer( msg_size, buffer );
 
-   int n = m_ss.receiveBytes( m_buffer.data(), msg_size );
+   int n = m_ss.receiveBytes( buffer.data(), msg_size );
 
    /*
    if( n != msg_size ) {
@@ -27,7 +27,12 @@ char* Common::RcvMessage( int msg_size )
 
    assert( n == msg_size );
 
-   return m_buffer.data();
+   return buffer.data();
+}
+
+char* Common::RcvMessage( int msg_size )
+{
+   return RcvMessage( msg_size, m_buffer );
 }
 
 /******************************************************************************/

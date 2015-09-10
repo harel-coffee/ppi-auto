@@ -51,6 +51,7 @@ public:
    static Poco::FastMutex m_mutex;
 
 public:
+   static std::vector<char>* m_buffer_immigrants;
    static int* m_immigrants;
    static float* m_fitness;
 

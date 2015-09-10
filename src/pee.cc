@@ -237,6 +237,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    {
       Poco::FastMutex::ScopedLock lock( Server::m_mutex );
 
+      Server::m_buffer_immigrants = new std::vector<char>[data.immigrants_size];
       Server::m_immigrants = new int[data.immigrants_size * data.number_of_bits];
       Server::m_fitness = new float[data.immigrants_size];
       Server::m_genome_size = data.number_of_bits;
@@ -432,27 +433,42 @@ int pee_receive_individual( int* immigrants )
    int slot; int nImmigrants = 0;
    while( !Server::m_ready.empty() && nImmigrants < data.immigrants_size )
    {
-      //std::cerr << "immigrants: " << immigrants << " ready.size: " << Server::m_ready.size() << " freeslots.size: " << Server::m_freeslots.size() << std::endl;
       {
          Poco::FastMutex::ScopedLock lock( Server::m_mutex );
 
          slot = Server::m_ready.front();
          Server::m_ready.pop();
       }
+      
+      std::cerr << "Receiving[slot=" << slot << "]: " << Server::m_buffer_immigrants[slot].data() << std::endl;
 
-      //std::cerr << "Funcao receive immigrants[slot=" << slot << "]" << std::endl;
+      //int offset;
+      //sscanf( Server::m_buffer_immigrants[slot], "%f%n", &Server::m_fitness[slot], &offset );
+      //Server::m_buffer_immigrants[slot] += offset;
 
-      for( int i = 0; i < data.number_of_bits; i++ )
-      {
-         immigrants[nImmigrants * data.number_of_bits + i] = Server::m_immigrants[slot * data.number_of_bits + i];
-      }
-      nImmigrants++;
+      //std::cerr << "Receiving[slot=" << slot << "]: " << Server::m_fitness[slot] << std::endl;
+
+      //for( int i = 0; i < (data.number_of_bits - 1); i++ )
+      //{
+      //   sscanf( Server::m_buffer_immigrants[slot], "%d%n", &immigrants[nImmigrants * data.number_of_bits + i], &offset );
+      //   Server::m_buffer_immigrants[slot] += offset;
+      //}
+      //sscanf( Server::m_buffer_immigrants[slot], "%d", &immigrants[nImmigrants * (data.number_of_bits - 1)] );
+      //nImmigrants++;
+
+      //for( int i = 0; i < data.number_of_bits; i++ )
+      //{
+      //   immigrants[nImmigrants * data.number_of_bits + i] = Server::m_immigrants[slot * data.number_of_bits + i];
+      //}
+      //sscanf( buffer, "%d", &m_immigrants[slot * (m_genome_size - 1)]);
+      //nImmigrants++;
 
       {
          Poco::FastMutex::ScopedLock lock( Server::m_mutex );
 
          Server::m_freeslots.push(slot);
       }
+
    }
    return nImmigrants;
 }
@@ -726,7 +742,7 @@ void pee_evolve()
 void pee_destroy()
 {
    delete[] data.best_individual.genome, data.best_individual.fitness, data.phenotype, data.ephemeral, data.size;
-   delete[] Server::m_immigrants, Server::m_fitness;
+   delete[] Server::m_immigrants, Server::m_fitness, Server::m_buffer_immigrants;
    delete data.pool;
    if( !data.version ) {seq_interpret_destroy();}
 }
