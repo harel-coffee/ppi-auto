@@ -441,24 +441,30 @@ int pee_receive_individual( int* immigrants )
       int offset;
       char *tmp = Server::m_immigrants[slot].data(); 
 
-      //for( int i = offset; i < (data.number_of_bits - 1); i++ )
-      //   immigrants[i-offset] = tmp[i] - 48;
-
       sscanf( tmp, "%f%n", &Server::m_fitness[slot], &offset );
-      tmp += offset;
-
+      tmp += offset + 1; 
+      
       //std::cerr << "Receiving[slot=" << slot << "]: " << tmp << std::endl;
 
-      //fprintf(stdout,"Receiving[slot=%d]:  ",slot);
-      for( int i = 0; i < (data.number_of_bits - 1); i++ )
+      //tmp += offset;
+      //fprintf(stdout,"Receiving[slot=%d]: ",slot);
+      //for( int i = 0; i < (data.number_of_bits - 1); i++ )
+      //{
+      //   sscanf( tmp, "%d%n", &immigrants[nImmigrants * data.number_of_bits + i], &offset );
+      //   tmp += offset;
+      //   fprintf(stdout,"%d ",immigrants[nImmigrants * data.number_of_bits + i]);
+      //}
+      //sscanf( tmp, "%d", &immigrants[nImmigrants * (data.number_of_bits - 1)] );
+      //fprintf(stdout,"%d\n",immigrants[nImmigrants * (data.number_of_bits - 1)]);
+
+      //fprintf(stdout,"Receiving[slot=%d]: ",slot);
+      for( int i = 0, j = 0; i < data.number_of_bits; i++, j += 2 )
       {
-         sscanf( tmp, "%d%n", &immigrants[nImmigrants * data.number_of_bits + i], &offset );
-         tmp += offset;
+         immigrants[nImmigrants * data.number_of_bits + i] = tmp[j] - '0';
          //fprintf(stdout,"%d ",immigrants[nImmigrants * data.number_of_bits + i]);
       }
-      sscanf( tmp, "%d", &immigrants[nImmigrants * (data.number_of_bits - 1)] );
-      //fprintf(stdout,"%d\n",immigrants[nImmigrants * (data.number_of_bits - 1)]);
       nImmigrants++;
+      //fprintf(stdout,"\n");
 
       {
          Poco::FastMutex::ScopedLock lock( Server::m_mutex );
