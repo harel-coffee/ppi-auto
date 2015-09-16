@@ -448,6 +448,8 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       }
    }
 
+   data.queue.flush();
+
    *nImmigrants = function( immigrants );
 
    // Wait until the kernel has finished
