@@ -458,6 +458,11 @@ int pee_receive_individual( int* immigrants )
       //fprintf(stdout,"%d\n",immigrants[nImmigrants * (data.number_of_bits - 1)]);
 
       //fprintf(stdout,"Receiving[slot=%d]: ",slot);
+
+      /* FIXME:
+         Existe um caso que precisa ser tratado:
+          - quando o tamanho do array apontado por 'tmp' é *menor* do que 'data.number_of_bits' -> neste caso só se pode copiar a quantidade de chars que existem em 'tmp' (é preciso verificar pelo caracter fim de linha, isto é, '\0').
+      */
       for( int i = 0, j = 0; i < data.number_of_bits; i++, j += 2 )
       {
          immigrants[nImmigrants * data.number_of_bits + i] = tmp[j] - '0';
