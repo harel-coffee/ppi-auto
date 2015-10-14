@@ -326,7 +326,7 @@ void create_buffers( float** input, float** model, float* obs, int ninput, int n
    data.kernel1.setArg( 2, data.buffer_size );
    data.kernel1.setArg( 3, data.buffer_inputs );
    data.kernel1.setArg( 4, data.buffer_vector );
-   data.kernel1.setArg( 5, sizeof( float ) * data.local_size1, NULL );
+   data.kernel1.setArg( 5, sizeof( float ) * data.local_size1, NULL ); // FIXME: Por que é size(float)?
    data.kernel1.setArg( 6, data.nlin );
    data.kernel1.setArg( 7, ncol );
    data.kernel1.setArg( 8, prediction_mode );
@@ -340,7 +340,7 @@ void create_buffers( float** input, float** model, float* obs, int ninput, int n
 
       data.kernel2.setArg( 1, data.buffer_pb );
       data.kernel2.setArg( 2, data.buffer_pi );
-      data.kernel2.setArg( 3, sizeof( float ) * data.local_size2, NULL );
+      data.kernel2.setArg( 3, sizeof( float ) * data.local_size2, NULL ); // FIXME: Por que é size(float)?
       data.kernel2.setArg( 4, sizeof( int ) * data.local_size2, NULL );
       data.kernel2.setArg( 5, data.population_size );
    }
