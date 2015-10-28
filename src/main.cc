@@ -12,14 +12,14 @@
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
 /** ****************************************************************** **/
 
-int read( const char* dataset, float**& input, float**& model, float*& obs, int ninput, int nmodel, int& nlin, int prediction )
+int read( const std::string& dataset, float**& input, float**& model, float*& obs, int ninput, int nmodel, int& nlin, int prediction )
 {
    char c;
    FILE *arqentra;
 
-   arqentra = fopen(dataset,"r");
+   arqentra = fopen(dataset.c_str(),"r");
    if(arqentra == NULL) {
-     fprintf(stderr, "Could not open file for reading (%s).\n", dataset);
+     fprintf(stderr, "Could not open file for reading (%s).\n", dataset.c_str());
      return 1;
    }
  
@@ -109,14 +109,13 @@ int main(int argc, char **argv)
 
    int ninput = Opts.Int.Get("-ni");   
    int nmodel = Opts.Int.Get("-nm");   
-   const char* dataset = Opts.String.Get("-d").c_str();
    
    int nlin;
    float** input;
    float** model;
    float* obs;
 
-   int error = read( dataset, input, model, obs, ninput, nmodel, nlin, Opts.Bool.Get("-pred") );
+   int error = read( Opts.String.Get("-d"), input, model, obs, ninput, nmodel, nlin, Opts.Bool.Get("-pred") );
    if ( error ) {return error;}
 
    if( Opts.String.Found("-run") )
