@@ -30,15 +30,14 @@ namespace { static struct t_data { int nlin; Symbol* phenotype; float* ephemeral
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void pep_init( float** input, float** model, float* obs, int nlin, int argc, char **argv ) 
+void pep_init( float** input, int nlin, int argc, char **argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
 
    Opts.String.Add( "-run", "--program_file" );
    Opts.Bool.Add( "-acc" );
    Opts.Bool.Add( "-pred", "--prediction" );
-   Opts.Int.Add( "-ni", "--number_of_inputs" );
-   Opts.Int.Add( "-nm", "--number_of_models" );
+   Opts.Int.Add( "-ncol", "--number_of_columns" );
    Opts.Process();
    const char* file = Opts.String.Get("-run").c_str();
 
@@ -77,14 +76,14 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
 
    if( data.version )
    {
-      if( acc_interpret_init( argc, argv, data.size[0], 1, input, model, obs, nlin, data.prediction ) )
+      if( acc_interpret_init( argc, argv, data.size[0], 1, input, nlin, data.prediction ) )
       {
          fprintf(stderr,"Error in initialization phase.\n");
       }
    }
    else
    {
-      seq_interpret_init( data.size[0], input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
+      seq_interpret_init( data.size[0], input, nlin, Opts.Int.Get("-ncol") );
    }
 }
 

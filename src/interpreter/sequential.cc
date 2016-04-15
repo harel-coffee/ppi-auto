@@ -10,49 +10,39 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { float** inputs; float* obs; unsigned size; int nlin; } data;
+static struct t_data { unsigned size; float** inputs; int nlin; int ncol; } data;
 
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void seq_interpret_init( const unsigned size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel ) 
+void seq_interpret_init( const unsigned size, float** input, int nlin, int ncol ) 
 {
    data.size = size;
    data.nlin = nlin;
+   data.ncol = ncol;
 
    data.inputs = new float*[nlin];
    for( int i = 0; i < nlin; i++ )
-     data.inputs[i] = new float[ninput + nmodel];
-   data.obs = new float[nlin];
+     data.inputs[i] = new float[ncol];
 
    for( int i = 0; i < nlin; i++ )
    {
-     for( int j = 0; j < ninput; j++ )
+     for( int j = 0; j < ncol; j++ )
      {
        data.inputs[i][j] = input[i][j];
      }
-     for( int j = 0; j < nmodel; j++ )
-     {
-       data.inputs[i][j + ninput] = model[i][j];
-     }
-     data.obs[i] = obs[i];
    }
 
 //   for( int i = 0; i < nlin; i++ )
 //   {
 //      if( i == 289 )
 //      {
-//         for( int j = 0; j < ninput; j++ )
+//         for( int j = 0; j < ncol; j++ )
 //         {
 //            fprintf(stdout,"%f ",data.inputs[i][j]);
 //         }
-//         for( int j = 0; j < nmodel; j++ )
-//         {
-//            fprintf(stdout,"%f ",data.inputs[i][j + ninput]);
-//         }
-//         fprintf(stdout,"%f\n",data.obs[i]);
 //      }
 //   }
 }
@@ -91,7 +81,7 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
             }
          }
          if( prediction_mode ) {vector[ponto] = stack[stack_top];}
-         else {sum += fabs(stack[stack_top] - data.obs[ponto]);}
+         else {sum += fabs(stack[stack_top] - data.inputs[ponto][data.ncol-1]);}
       }
       if ( !prediction_mode )
       {
@@ -117,8 +107,6 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 
 void seq_interpret_destroy() 
 {
-   delete[] data.obs;
-
    for( int i = 0; i < data.nlin; ++i )
      delete [] data.inputs[i];
    delete [] data.inputs;

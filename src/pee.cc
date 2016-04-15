@@ -126,7 +126,7 @@ int decode( const int* genome, int* const allele, Symbol* phenotype, float* ephe
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void pee_init( float** input, float** model, float* obs, int nlin, int argc, char** argv ) 
+void pee_init( float** input, int nlin, int argc, char** argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
 
@@ -134,8 +134,7 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
 
    Opts.Bool.Add( "-acc" );
 
-   Opts.Int.Add( "-ni", "--number-of-inputs" );
-   Opts.Int.Add( "-nm", "--number-of-models" );
+   Opts.Int.Add( "-ncol", "--number-of-columns" );
 
    Opts.Int.Add( "-g", "--generations", 50, 1, std::numeric_limits<int>::max() );
 
@@ -249,14 +248,14 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    data.version = Opts.Bool.Get("-acc");
    if( data.version )
    {
-      if( acc_interpret_init( argc, argv, data.max_size_phenotype, data.population_size, input, model, obs, nlin, 0 ) )
+      if( acc_interpret_init( argc, argv, data.max_size_phenotype, data.population_size, input, nlin, 0 ) )
       {
          fprintf(stderr,"Error in initialization phase.\n");
       }
    }
    else
    {
-      seq_interpret_init( data.max_size_phenotype, input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
+      seq_interpret_init( data.max_size_phenotype, input, nlin, Opts.Int.Get("-ncol") );
    }
 }
 

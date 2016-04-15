@@ -194,10 +194,9 @@ int build_kernel( )
 }
 
 // -----------------------------------------------------------------------------
-void create_buffers( float** input, float** model, float* obs, int ninput, int nmodel, int prediction_mode )
-{
-   int ncol = ninput + nmodel + 1;
 
+void create_buffers( float** input, int ncol, int prediction_mode )
+{
    cl::Event event; 
 
    // Buffer (memory on the device) of training points (input, model and obs)
@@ -209,15 +208,10 @@ void create_buffers( float** input, float** model, float* obs, int ninput, int n
    {
       for( int i = 0; i < data.nlin; i++ )
       {
-         for( int j = 0; j < ninput; j++ )
+         for( int j = 0; j < ncol; j++ )
          {
             inputs[i * ncol + j] = input[i][j];
          }
-         for( int j = 0; j < nmodel; j++ )
-         {
-            inputs[i * ncol + (j + ninput)] = model[i][j];
-         }
-         inputs[i * ncol + (nmodel + ninput)] = obs[i];
       }
    }
    else
@@ -258,15 +252,10 @@ void create_buffers( float** input, float** model, float* obs, int ninput, int n
       {
          for( int i = 0; i < data.nlin; i++ )
          {
-            for( int j = 0; j < ninput; j++ )
+            for( int j = 0; j < ncol; j++ )
             {
                inputs[j * data.nlin + i] = input[i][j];
             }
-            for( int j = 0; j < nmodel; j++ )
-            {
-               inputs[(j + ninput) * data.nlin + i] = model[i][j];
-            }
-            inputs[(nmodel + ninput) * data.nlin + i] = obs[i];
          }
       }
       else
@@ -352,12 +341,11 @@ void create_buffers( float** input, float** model, float* obs, int ninput, int n
 /** ****************************************************************** **/
 
 // -----------------------------------------------------------------------------
-int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int prediction_mode )
+int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned population_size, float** input, int nlin, int prediction_mode )
 {
    CmdLine::Parser Opts( argc, argv );
 
-   Opts.Int.Add( "-ni", "--number-of-inputs" );
-   Opts.Int.Add( "-nm", "--number-of-models" );
+   Opts.Int.Add( "-ncol", "--number-of-columns" );
    Opts.Int.Add( "-cl-p", "--platform-id", -1, 0 );
    Opts.Int.Add( "-cl-d", "--device-id", -1, 0 );
    Opts.String.Add( "-type" );
@@ -403,7 +391,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       return 1;
    }
 
-   create_buffers( input, model, obs, Opts.Int.Get("-ni"), Opts.Int.Get("-nm"), prediction_mode );
+   create_buffers( input, Opts.Int.Get("-ncol"), prediction_mode );
 
 //   try
 //   {
