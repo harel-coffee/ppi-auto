@@ -12,25 +12,20 @@ void Common::SndMessage( const void* buffer, int msg_size )
 }
 
 /******************************************************************************/
-char* Common::RcvMessage( int msg_size )
+char* Common::RcvMessage( int msg_size, std::vector<char>& buffer )
 {
-   ExpandBuffer( msg_size );
+   ExpandBuffer( msg_size, buffer );
 
    /* The function receiveBytes only receives a dataframe at a time. Because of
 that, a sequence of calls to it must be made until the complete message is
 fully delivered. */
    int n = 0, bytes = 0;
    do {
-      bytes = m_ss.receiveBytes( m_buffer.data()+n, msg_size-n );
+      bytes = m_ss.receiveBytes( buffer.data()+n, msg_size-n );
       n += bytes;
    } while (n<msg_size && bytes != 0);
 
-   if( n != msg_size ) {
-      std::cerr <<  "Error receiving message: only received " << n << " bytes out of " << msg_size << " bytes!\n";
-      return 0;
-   }
-
-   //int n = m_ss.receiveBytes( m_buffer.data(), msg_size );
+   //int n = m_ss.receiveBytes( buffer.data(), msg_size );
 
    ///*
    //if( n != msg_size ) {
@@ -41,7 +36,12 @@ fully delivered. */
 
    //assert( n == msg_size );
 
-   return m_buffer.data();
+   return buffer.data();
+}
+
+char* Common::RcvMessage( int msg_size )
+{
+   return RcvMessage( msg_size, m_buffer );
 }
 
 /******************************************************************************/

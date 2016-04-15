@@ -237,9 +237,8 @@ void pee_init( float** input, float** model, float* obs, int nlin, int argc, cha
    {
       Poco::FastMutex::ScopedLock lock( Server::m_mutex );
 
-      Server::m_immigrants = new int[data.immigrants_size * data.number_of_bits];
+      Server::m_immigrants = new std::vector<char>[data.immigrants_size];
       Server::m_fitness = new float[data.immigrants_size];
-      Server::m_genome_size = data.number_of_bits;
       for( int i = 0; i < data.immigrants_size; i++ )
       {
          Server::m_freeslots.push(i);
@@ -432,27 +431,52 @@ int pee_receive_individual( int* immigrants )
    int slot; int nImmigrants = 0;
    while( !Server::m_ready.empty() && nImmigrants < data.immigrants_size )
    {
-      //std::cerr << "immigrants: " << immigrants << " ready.size: " << Server::m_ready.size() << " freeslots.size: " << Server::m_freeslots.size() << std::endl;
       {
          Poco::FastMutex::ScopedLock lock( Server::m_mutex );
 
          slot = Server::m_ready.front();
          Server::m_ready.pop();
       }
+      
+      int offset;
+      char *tmp = Server::m_immigrants[slot].data(); 
 
-      //std::cerr << "Funcao receive immigrants[slot=" << slot << "]" << std::endl;
+      sscanf( tmp, "%f%n", &Server::m_fitness[slot], &offset );
+      tmp += offset + 1; 
+      
+      //std::cerr << "Receiving[slot=" << slot << "]: " << tmp << std::endl;
 
-      for( int i = 0; i < data.number_of_bits; i++ )
+      //tmp += offset;
+      //fprintf(stdout,"Receiving[slot=%d]: ",slot);
+      //for( int i = 0; i < (data.number_of_bits - 1); i++ )
+      //{
+      //   sscanf( tmp, "%d%n", &immigrants[nImmigrants * data.number_of_bits + i], &offset );
+      //   tmp += offset;
+      //   fprintf(stdout,"%d ",immigrants[nImmigrants * data.number_of_bits + i]);
+      //}
+      //sscanf( tmp, "%d", &immigrants[nImmigrants * (data.number_of_bits - 1)] );
+      //fprintf(stdout,"%d\n",immigrants[nImmigrants * (data.number_of_bits - 1)]);
+
+      //fprintf(stdout,"Receiving[slot=%d]: ",slot);
+
+      /* FIXME:
+         Existe um caso que precisa ser tratado:
+          - quando o tamanho do array apontado por 'tmp' é *menor* do que 'data.number_of_bits' -> neste caso só se pode copiar a quantidade de chars que existem em 'tmp' (é preciso verificar pelo caracter fim de linha, isto é, '\0').
+      */
+      for( int i = 0, j = 0; i < data.number_of_bits; i++, j += 2 )
       {
-         immigrants[nImmigrants * data.number_of_bits + i] = Server::m_immigrants[slot * data.number_of_bits + i];
+         immigrants[nImmigrants * data.number_of_bits + i] = tmp[j] - '0';
+         //fprintf(stdout,"%d ",immigrants[nImmigrants * data.number_of_bits + i]);
       }
       nImmigrants++;
+      //fprintf(stdout,"\n");
 
       {
          Poco::FastMutex::ScopedLock lock( Server::m_mutex );
 
          Server::m_freeslots.push(slot);
       }
+
    }
    return nImmigrants;
 }

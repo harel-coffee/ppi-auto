@@ -47,10 +47,11 @@ public:
    }
 
    void SndMessage( const void* buffer, int msg_size );
-   char* RcvMessage( int msg_size );
    void SndHeader( char command, int msg_size = 0 );
    char RcvHeader( int& msg_size );
 
+   char* RcvMessage( int msg_size );
+   char* RcvMessage( int msg_size, std::vector<char>& buffer );
 public:
    /* As each server connection thread constructs a new object then we
       do not need to declared m_ss as ThreadLocal because each thread
@@ -59,12 +60,12 @@ public:
    static Logger& m_logger;
 
 public:
-   void ExpandBuffer( std::size_t size )
+   void ExpandBuffer( std::size_t size, std::vector<char>& buffer )
    {
-      if( m_buffer.size() < size + 1 ) m_buffer.resize( size + 1 );
+      if( buffer.size() < size + 1 ) buffer.resize( size + 1 );
 
       // NULL termination char
-      m_buffer[size] = '\0';
+      buffer[size] = '\0';
    }
 
    std::vector<char> m_buffer;

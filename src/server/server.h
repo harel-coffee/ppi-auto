@@ -51,13 +51,11 @@ public:
    static Poco::FastMutex m_mutex;
 
 public:
-   static int* m_immigrants;
+   static std::vector<char>* m_immigrants;
    static float* m_fitness;
 
    static std::queue<int> m_freeslots;
    static std::queue<int> m_ready;
-
-   static int m_genome_size;
 };
 
 #endif
