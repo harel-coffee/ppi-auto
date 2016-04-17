@@ -510,7 +510,7 @@ void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImm
 
    if( data.version )
    {
-      acc_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, &pee_receive_individual, antecedentes->genome, nImmigrants, index, &data.best_size, 0, 0.00001 );
+      acc_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, &pee_send_individual, &pee_receive_individual, antecedentes, nImmigrants, index, &data.best_size, 0, 0.00001 );
    }
    else
    {
@@ -728,7 +728,7 @@ void pee_evolve()
       // 17:
       pee_evaluate( &descendentes, &antecedentes, &nImmigrants );
 
-      pee_send_individual( &descendentes );
+      //pee_send_individual( &descendentes );
 
       // 18:
       swap( &antecedentes, &descendentes );

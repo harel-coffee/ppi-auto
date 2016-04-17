@@ -16,6 +16,7 @@
 #include "accelerator.h"
 #include "../server/server.h"
 #include "../util/CmdLineParser.h"
+#include "../util/Util.h"
 
 using namespace std;
 
@@ -417,7 +418,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 }
 
 // -----------------------------------------------------------------------------
-void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int (*function)(int*), int* immigrants, int* nImmigrants, int* index, int* best_size, int prediction_mode, int alpha )
+void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, void (*send)(Population*), int (*receive)(int*), Population* migrants, int* nImmigrants, int* index, int* best_size, int prediction_mode, int alpha )
 {
    //vector<cl::Event> events(4); 
    cl::Event event0; 
@@ -438,6 +439,11 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    data.queue.enqueueNDRangeKernel( data.kernel1, cl::NDRange(), cl::NDRange( data.global_size1 ), cl::NDRange( data.local_size1 ), NULL, &event0 );
    // ---------- end kernel execution
 
+   // substitui os três enqueueMapBuffer
+   // event4 começa depois que o evento0 terminar
+   // tem que criar uma segunda fila
+   // TODO: data.queuetransfer.enqueuReadBuffer( data.buffer_vector, CL_FALSE, 0, size_which_depends_on_the_strategy, tmp, event0, &event4);
+
    if ( !prediction_mode )
    {
       if( data.strategy == "PPCU" || data.strategy == "PP" ) 
@@ -449,11 +455,17 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    }
 
    data.queue.flush();
+   util::Timer t_kernel;
 
-   *nImmigrants = function( immigrants );
+
+   send( migrants );
+   *nImmigrants = receive( migrants->genome );
 
    // Wait until the kernel has finished
+   //t_kernel.reset();
    data.queue.finish();
+   cerr << t_kernel.elapsed() << endl;
+
 
 
    cl_ulong start, end;
@@ -472,9 +484,11 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    data.time_overhead += (end - start)/1.0E9;
 
 
+   // TODO: data.queuetransfer.finish();
    float *tmp;
    if ( prediction_mode )
    {
+      // TODO: vector = tmp (?) substituiu as duas linhas de baixo
       tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, data.nlin * sizeof( float ) );
       for( int i = 0; i < data.nlin; i++ ) {vector[i] = tmp[i];}
    }
@@ -497,6 +511,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          const unsigned num_work_groups = data.global_size1 / data.local_size1;
 
          // The line below maps the contents of 'data_buffer_vector' into 'tmp'.
+         // essa linha some
          tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, num_work_groups * nInd * sizeof( float ) );
          
          float sum;
@@ -529,6 +544,9 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          {
             tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ) );
             for( int i = 0; i < nInd; i++ ) { vector[i] = tmp[i] + alpha * size[i]; }
+            // substitui as duas linhas de cima
+            //for( int i = 0; i < nInd; i++ ) { tmp[i] += alpha * size[i]; }
+            //vector = tmp;
          }
       }
 
@@ -559,6 +577,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       data.queue.enqueueUnmapMemObject( data.buffer_pb, PB ); 
       data.queue.enqueueUnmapMemObject( data.buffer_pi, PI );
    }
+   //essa linha some
    data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp ); 
 }
 

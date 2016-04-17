@@ -155,6 +155,50 @@ inline unsigned NextPowerOf2( unsigned n )
 }
 
 // -----------------------------------------------------------------------------
+#include <ctime>
+#include <sys/time.h>
+
+/// Wall-clock timer (UNIX only)
+class Timer {
+   public:
+      Timer() {
+         restart();
+      }
+
+      double elapsed() {
+         gettimeofday( &clock, NULL );
+         return clock.tv_sec + clock.tv_usec/1.0E6 - start;
+      }
+
+      void restart() {
+         gettimeofday( &clock, NULL );
+         start = clock.tv_sec + clock.tv_usec/1.0E6;
+      }
+
+   private:
+      timeval clock;
+      double start;
+};
+
+/// CPU timer
+class CPUTimer {
+   public:
+      CPUTimer() { restart(); }
+
+      double elapsed() const {
+         return double( clock() - start ) / CLOCKS_PER_SEC;
+      }
+
+      void restart() { start = clock(); }
+
+   private:
+      clock_t start;
+};
+
+// -----------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------
 } // end namespace
 // -----------------------------------------------------------------------------
 

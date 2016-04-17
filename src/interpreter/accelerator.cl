@@ -210,13 +210,14 @@ best_individual( __global const float* vector, __global float* PB, __global int*
       barrier(CLK_LOCAL_MEM_FENCE);
       if( (lo_id < s) && (lo_id + s < lo_size) ) 
       { 
-         if( lo_best[lo_id] < lo_best[lo_id + s] )
+         if( lo_best[lo_id] > lo_best[lo_id + s] )
+         //if( lo_best[lo_id] < lo_best[lo_id + s] )
          {
-            lo_best[lo_id] = lo_best[lo_id]; 
-            lo_idx[lo_id]  = lo_idx[lo_id];
-         }
-         else
-         {
+         //   lo_best[lo_id] = lo_best[lo_id]; 
+         //   lo_idx[lo_id]  = lo_idx[lo_id];
+         //}
+         //else
+         //{
             lo_best[lo_id] = lo_best[lo_id + s]; 
             lo_idx[lo_id]  = lo_idx[lo_id + s];
          }
