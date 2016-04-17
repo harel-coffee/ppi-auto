@@ -16,16 +16,25 @@ char* Common::RcvMessage( int msg_size, std::vector<char>& buffer )
 {
    ExpandBuffer( msg_size, buffer );
 
-   int n = m_ss.receiveBytes( buffer.data(), msg_size );
+   /* The function receiveBytes only receives a dataframe at a time. Because of
+that, a sequence of calls to it must be made until the complete message is
+fully delivered. */
+   int n = 0, bytes = 0;
+   do {
+      bytes = m_ss.receiveBytes( buffer.data()+n, msg_size-n );
+      n += bytes;
+   } while (n<msg_size && bytes != 0);
 
-   /*
-   if( n != msg_size ) {
-      //poco_error( "Error receiving message!" );
-      return 0;
-   }
-   */
+   //int n = m_ss.receiveBytes( buffer.data(), msg_size );
 
-   assert( n == msg_size );
+   ///*
+   //if( n != msg_size ) {
+   //   //poco_error( "Error receiving message!" );
+   //   return 0;
+   //}
+   //*/
+
+   //assert( n == msg_size );
 
    return buffer.data();
 }
