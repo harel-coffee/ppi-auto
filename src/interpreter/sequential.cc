@@ -1,6 +1,8 @@
 #include <stdio.h> 
 #include <stdlib.h>
+#include <iostream>
 #include <cmath>    
+#include <string>   
 #include <limits>
 #include <queue>
 #include "sequential.h"
@@ -10,15 +12,16 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { unsigned size; float** inputs; int nlin; int ncol; } data;
+static struct t_data { std::string error; unsigned size; float** inputs; int nlin; int ncol; } data;
 
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void seq_interpret_init( const unsigned size, float** input, int nlin, int ncol ) 
+void seq_interpret_init( std::string error, const unsigned size, float** input, int nlin, int ncol ) 
 {
+   data.error = error;
    data.size = size;
    data.nlin = nlin;
    data.ncol = ncol;
@@ -49,6 +52,11 @@ void seq_interpret_init( const unsigned size, float** input, int nlin, int ncol 
 
 void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int prediction_mode, int alpha )
 {
+#define ERROR(X,Y) data.error
+//#define ERROR(X,Y) fabs((X)-(Y))
+
+   std::cerr << data.error << " " << ERROR(10,5) << std::endl;
+
    float stack[data.size]; 
    float sum; 
    int stack_top;
@@ -81,6 +89,7 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
             }
          }
          if( prediction_mode ) {vector[ponto] = stack[stack_top];}
+         //else {sum += ERROR(stack[stack_top], data.inputs[ponto][data.ncol-1]);}
          else {sum += fabs(stack[stack_top] - data.inputs[ponto][data.ncol-1]);}
       }
       if ( !prediction_mode )
