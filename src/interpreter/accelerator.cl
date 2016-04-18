@@ -35,7 +35,8 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
          }
          if( !prediction_mode )
          {
-            PE[0] += fabs( stack[stack_top] - inputs[n * ncol + (ncol - 1)] );
+            //PE[0] += fabs( stack[stack_top] - inputs[n * ncol + (ncol - 1)] );
+            PE[0] += ERROR( stack[stack_top], inputs[n * ncol + (ncol - 1)] );
          }
          else
          {
@@ -97,7 +98,8 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
          }
          if( !prediction_mode )
          {
-            PE[lo_id] = fabs( stack[stack_top] - inputs[(gr_id * lo_size + lo_id) + nlin * (ncol - 1)] );
+            //PE[lo_id] = fabs( stack[stack_top] - inputs[(gr_id * lo_size + lo_id) + nlin * (ncol - 1)] );
+            PE[lo_id] = ERROR( stack[stack_top], inputs[(gr_id * lo_size + lo_id) + nlin * (ncol - 1)] );
          }
          else
          {
@@ -159,7 +161,8 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
             }
             if( !prediction_mode )
             {
-               PE[lo_id] += fabs( stack[stack_top] - inputs[n + nlin * (ncol - 1)] );
+               //PE[lo_id] += fabs( stack[stack_top] - inputs[n + nlin * (ncol - 1)] );
+               PE[lo_id] += ERROR( stack[stack_top], inputs[n + nlin * (ncol - 1)] );
             }
             else
             {

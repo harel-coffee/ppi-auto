@@ -684,7 +684,7 @@ void pee_evolve()
          nImmigrants++;
       }
 
-      std::cerr << "nImmigrants[geration:" << geracao << "]: " << nImmigrants << std::endl;
+      //std::cerr << "nImmigrants[geration:" << geracao << "]: " << nImmigrants << std::endl;
 
       // 5
       for( int i = nImmigrants; i < data.population_size; i += 2 )

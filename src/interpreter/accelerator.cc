@@ -24,7 +24,7 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int max_size; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_kernel; double time_overhead; } data; };
+namespace { static struct t_data { int max_size; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string error; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_kernel; double time_overhead; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTION *********************** **/
@@ -124,11 +124,13 @@ int build_kernel( )
 
    cl::Program program( data.context, source );
 
-   char buildOptions[60];
-   sprintf( buildOptions, "-DMAX_PHENOTYPE_SIZE=%u -I.", data.max_size );  
+   std::stringstream buildOptions;
+   buildOptions << "-DMAX_PHENOTYPE_SIZE=" << data.max_size << " -I. -DERROR(X,Y)=" << data.error;
+
    vector<cl::Device> device; device.push_back( data.device );
    try {
-      program.build( device, buildOptions );
+      //program.build( device, buildOptions );
+      program.build( device, buildOptions.str().c_str() );
    }
    catch( cl::Error& e )
    {
@@ -351,8 +353,10 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    Opts.Int.Add( "-cl-d", "--device-id", -1, 0 );
    Opts.String.Add( "-type" );
    Opts.String.Add( "-strategy" );
+   Opts.String.Add( "-error", "--function-difference", "fabs((X)-(Y))" );
    Opts.Process();
    data.strategy = Opts.String.Get("-strategy");
+   data.error = Opts.String.Get("-error");
    data.max_size = size;
    data.nlin = nlin;
    data.population_size = population_size;
@@ -446,13 +450,13 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    util::Timer t_kernel;
 
 
-   send( migrants );
+   //send( migrants );
    *nImmigrants = receive( migrants->genome );
 
    // Wait until the kernel has finished
    //t_kernel.reset();
    data.queue.finish();
-   cerr << t_kernel.elapsed() << endl;
+   //cerr << t_kernel.elapsed() << endl;
 
 
 
