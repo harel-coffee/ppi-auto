@@ -363,7 +363,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    data.time_kernel = 0.0f;
    data.time_overhead = 0.0f;
 
-   int type = -1;
+   cl_device_type type = CL_DEVICE_TYPE_ALL;
    if( Opts.String.Found("-type") )
    {
       if( !strcmp(Opts.String.Get("-type").c_str(),"CPU") ) 
