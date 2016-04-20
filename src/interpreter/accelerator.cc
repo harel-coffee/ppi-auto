@@ -462,6 +462,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    event0.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    event0.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
    data.time_kernel += (end - start)/1.0E9;
+   cerr << "Kernel Time: " << (end - start)/1.0E9 << endl;
 
    event1.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    event1.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );

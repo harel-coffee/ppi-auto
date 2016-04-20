@@ -246,7 +246,6 @@ void pee_init( float** input, int nlin, int argc, char** argv )
       }
    }
 
-
    data.version = Opts.Bool.Get("-acc");
    if( data.version )
    {
@@ -335,9 +334,9 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
             case T_MIN:
                fprintf( out, "MIN " );
                break;
-            case T_MOD:
-               fprintf( out, "MOD " );
-               break;
+            //case T_MOD:
+            //   fprintf( out, "MOD " );
+            //   break;
             case T_ABS:
                fprintf( out, "ABS " );
                break;
