@@ -17,6 +17,7 @@
 #include <ctime>
 #include <string>   
 #include <sstream>
+#include <iostream> 
 #include "util/CmdLineParser.h"
 #include "interpreter/accelerator.h"
 #include "interpreter/sequential.h"
@@ -26,6 +27,7 @@
 #include "individual"
 #include "grammar"
 
+using namespace std;
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
@@ -194,7 +196,7 @@ void pee_init( float** input, int nlin, int argc, char** argv )
 
    data.initial_symbol = NT_INICIAL;
 
-   data.best_size = 10;
+   data.best_size = 1;
    data.best_individual.genome = NULL;
    data.best_individual.fitness = NULL;
 
@@ -518,7 +520,7 @@ void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImm
    else
    {
       seq_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, index, &data.best_size, 0, 0.00001 );
-      //*nImmigrants = pee_receive_individual( antecedentes->genome );
+      *nImmigrants = pee_receive_individual( antecedentes->genome );
    }
    //std::cout << data.best_size << std::endl;
 
@@ -675,9 +677,17 @@ void pee_evolve()
 
    int nImmigrants;
 
+   clock_t start1, end1;
+   start1 = clock();
    // 1 e 2:
    pee_generate_population( &antecedentes, &descendentes, &nImmigrants );
-    
+   end1 = clock();
+   cerr << "Generate Population Time: " << ((double)(end1 - start1))/((double)(CLOCKS_PER_SEC)) << endl;
+
+   double time_tournament = 0.;
+   double time_crossover  = 0.;
+   double time_mutation   = 0.;
+   
    // 3:
    for( int geracao = 1; geracao <= data.generations; ++geracao )
    {
@@ -693,13 +703,20 @@ void pee_evolve()
       // 5
       for( int i = nImmigrants; i < data.population_size; i += 2 )
       {
+
+         clock_t start2, end2;
+         start2 = clock();
          // 6:
          int idx_father = pee_tournament( antecedentes.fitness );
          int idx_mother = pee_tournament( antecedentes.fitness );
+         end2 = clock();
+         time_tournament += ((double)(end2 - start2))/((double)(CLOCKS_PER_SEC));
 
          // 7:
          if( random_number() < data.crossover_rate )
          {
+            clock_t start3, end3;
+            start3 = clock();
             // 8 e 9:
             if( i < ( data.population_size - 1 ) )
             {
@@ -709,6 +726,8 @@ void pee_evolve()
             {
                pee_crossover( antecedentes.genome + (idx_father * data.number_of_bits), antecedentes.genome + (idx_mother * data.number_of_bits), descendentes.genome + (i * data.number_of_bits), descendentes.genome + (i * data.number_of_bits));
             }
+            end3 = clock();
+            time_crossover += ((double)(end3 - start3))/((double)(CLOCKS_PER_SEC));
          } // 10
          else 
          {
@@ -720,16 +739,24 @@ void pee_evolve()
             }
          } // 10
 
+         clock_t start4, end4;
+         start4 = clock();
          // 11, 12, 13, 14 e 15:
          pee_mutation( descendentes.genome + (i * data.number_of_bits) );
          if( i < ( data.population_size - 1 ) )
          {
             pee_mutation( descendentes.genome + ((i + 1) * data.number_of_bits) );
          }
+         end4 = clock();
+         time_mutation += ((double)(end4 - start4))/((double)(CLOCKS_PER_SEC));
       } // 16
 
+      clock_t start0, end0;
+      start0 = clock();
       // 17:
       pee_evaluate( &descendentes, &antecedentes, &nImmigrants );
+      end0 = clock();
+      cerr << "Evaluate Time: " << ((double)(end0 - start0))/((double)(CLOCKS_PER_SEC)) << endl;
 
       //pee_send_individual( &descendentes );
 
@@ -748,6 +775,9 @@ void pee_evolve()
 
    end = clock();
    data.time_total = ((double)(end - start))/((double)(CLOCKS_PER_SEC));
+   cerr << "Tournament time: " << time_tournament << endl;
+   cerr << "Crossover time: " << time_crossover << endl;
+   cerr << "Mutation time: " << time_mutation << endl;
 }
 
 void pee_destroy()

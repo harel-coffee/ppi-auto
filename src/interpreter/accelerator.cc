@@ -363,6 +363,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    data.time_kernel = 0.0f;
    data.time_overhead = 0.0f;
 
+   //int type = -1;
    cl_device_type type = CL_DEVICE_TYPE_ALL;
    if( Opts.String.Found("-type") )
    {
@@ -541,6 +542,10 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          }
       }
 
+      clock_t start, end;
+      start = clock();
+
+
       const unsigned num_work_groups2 = data.global_size2 / data.local_size2;
 
       // The line below maps the contents of 'data_buffer_pb' and 'data_buffer_pi' into 'PB' and 'PI', respectively.
@@ -564,6 +569,9 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          q.pop();
       }
       //fprintf(stdout,"\n============================\n");
+
+      end = clock();
+      cerr << "Best Time: " << ((double)(end - start))/((double)(CLOCKS_PER_SEC)) << endl;
 
       data.queue.enqueueUnmapMemObject( data.buffer_pb, PB ); 
       data.queue.enqueueUnmapMemObject( data.buffer_pi, PI );
