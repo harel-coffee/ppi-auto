@@ -142,7 +142,7 @@ void pee_init( float** input, int nlin, int argc, char** argv )
 
    Opts.Int.Add( "-s", "--seed", 0, 0, std::numeric_limits<long>::max() );
 
-   Opts.Int.Add( "-ps", "--population-size", 1024, 5, std::numeric_limits<int>::max() );
+   Opts.Int.Add( "-ps", "--population-size", 1024, 1, std::numeric_limits<int>::max() );
    Opts.Int.Add( "-is", "--immigrants-size", 5, 1 );
    Opts.Float.Add( "-cp", "--crossover-probability", 0.95, 0.0, 1.0 );
    Opts.Float.Add( "-mp", "--mutation-probability", 0.0025, 0.0, 1.0 );
@@ -192,7 +192,7 @@ void pee_init( float** input, int nlin, int argc, char** argv )
       data.interval[1] = Opts.Float.Get("-max");
    }
 
-   data.initial_symbol = NT_IF_THEN_ELSE_INICIAL;
+   data.initial_symbol = NT_INICIAL;
 
    data.best_size = 10;
    data.best_individual.genome = NULL;
@@ -334,6 +334,9 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
                break;
             case T_MIN:
                fprintf( out, "MIN " );
+               break;
+            case T_MOD:
+               fprintf( out, "MOD " );
                break;
             case T_ABS:
                fprintf( out, "ABS " );
@@ -516,7 +519,7 @@ void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImm
    else
    {
       seq_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, index, &data.best_size, 0, 0.00001 );
-      *nImmigrants = pee_receive_individual( antecedentes->genome );
+      //*nImmigrants = pee_receive_individual( antecedentes->genome );
    }
    //std::cout << data.best_size << std::endl;
 

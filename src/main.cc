@@ -12,7 +12,7 @@
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
 /** ****************************************************************** **/
 
-int read( const std::string& dataset, float**& input, int ncol, int& nlin, int prediction )
+int read( const std::string& dataset, float**& input, int ncol, int& nlin )
 {
    char c;
    FILE *arqentra;
@@ -66,11 +66,10 @@ void destroy( float** input, int nlin )
 }
 
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
    CmdLine::Parser Opts( argc, argv );
 
-   Opts.Bool.Add( "-pred", "--prediction" );
    Opts.Int.Add( "-ncol", "--number_of_columns" );
    Opts.Int.Add( "-port", "--number_of_port" );
    Opts.String.Add( "-d", "--dataset" );
@@ -83,7 +82,7 @@ int main(int argc, char **argv)
    int nlin;
    float** input;
 
-   int error = read( Opts.String.Get("-d"), input, ncol, nlin, Opts.Bool.Get("-pred") );
+   int error = read( Opts.String.Get("-d"), input, ncol, nlin );
    if ( error ) {return error;}
 
    if( Opts.String.Found("-run") )

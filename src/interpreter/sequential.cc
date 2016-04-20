@@ -14,6 +14,8 @@
 
 static struct t_data { std::string error; unsigned size; float** inputs; int nlin; int ncol; } data;
 
+//#define ERROR(X,Y) data.error
+//#define ERROR(X,Y) fabs((X)-(Y))
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
@@ -52,10 +54,7 @@ void seq_interpret_init( std::string error, const unsigned size, float** input, 
 
 void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int prediction_mode, int alpha )
 {
-#define ERROR(X,Y) data.error
-//#define ERROR(X,Y) fabs((X)-(Y))
-
-   std::cerr << data.error << " " << ERROR(10,5) << std::endl;
+   //std::cerr << data.error << " " << ERROR(10,5) << std::endl;
 
    float stack[data.size]; 
    float sum; 
@@ -80,9 +79,11 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
                #include "core"
                case T_ATTRIBUTE:
                   stack[++stack_top] = data.inputs[ponto][(int)ephemeral[ind * data.size + i]];
+                  //if ( ponto == 1 ) {printf( "T_ATTRIBUTE: %d %f \n", stack_top, stack[stack_top]);}
                   break;
                case T_CONST:
                   stack[++stack_top] = ephemeral[ind * data.size + i];
+                  //if ( ponto == 1 ) {printf( "T_CONST: %d %f \n", stack_top, stack[stack_top]);}
                   break;
                default:
                   break;

@@ -30,7 +30,7 @@ namespace { static struct t_data { int nlin; Symbol* phenotype; float* ephemeral
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void pep_init( float** input, int nlin, int argc, char **argv ) 
+void pep_init( float** input, int nlin, int argc, char** argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
 

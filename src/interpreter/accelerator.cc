@@ -458,8 +458,6 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    data.queue.finish();
    //cerr << t_kernel.elapsed() << endl;
 
-
-
    cl_ulong start, end;
    event0.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    event0.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
