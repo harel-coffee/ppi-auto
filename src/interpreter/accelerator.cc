@@ -158,6 +158,7 @@ int opencl_init( int platform_id, int device_id, cl_device_type type )
 
    data.queue = cl::CommandQueue( data.context, data.device, CL_QUEUE_PROFILING_ENABLE );
 
+
    return 0;
 }
 
@@ -187,6 +188,9 @@ int build_kernel( )
 
    unsigned max_cu = data.device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
    unsigned max_local_size = fmin( data.device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), data.device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
+
+   std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << 
+     ", Compute units: " << max_cu << ", Local size: " << max_local_size <<  std::endl;
 
    if( data.strategy == "PP" )  // Population-parallel
    {
