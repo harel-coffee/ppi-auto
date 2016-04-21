@@ -27,12 +27,17 @@ t_rule BIN_OP_4 = { 1, {T_MEAN} };
 t_rule BIN_OP_5 = { 1, {T_MAX}  };
 t_rule BIN_OP_6 = { 1, {T_MIN}  };
 t_rule BIN_OP_7 = { 1, {T_MOD}  };
+t_rule BIN_OP_8 = { 1, {T_POW}  };
+t_rule BIN_OP_9 = { 1, {T_XOR}  };
 
 t_rule UN_OP_0 = { 1, {T_ABS}  };
 t_rule UN_OP_1 = { 1, {T_SQRT} };
 t_rule UN_OP_2 = { 1, {T_POW2} };
 t_rule UN_OP_3 = { 1, {T_POW3} };
-t_rule UN_OP_4 = { 1, {T_NEG}  };
+t_rule UN_OP_4 = { 1, {T_POW4} };
+t_rule UN_OP_5 = { 1, {T_POW5} };
+t_rule UN_OP_6 = { 1, {T_NEG}  };
+t_rule UN_OP_7 = { 1, {T_ROUND}  };
 
 t_rule ATRIBUTO_0  = { 1, {T_ATTR1}  };
 t_rule ATRIBUTO_1  = { 1, {T_ATTR2}  };
@@ -99,8 +104,8 @@ t_rule CONST_NUMERICO_10 = { 1, {T_9} };
 // Conjunto de regras
 t_rule* regras_INICIAL[]        = { &INICIAL_0 };
 t_rule* regras_RAND[]           = { &RAND_0, &RAND_1, &RAND_2, &RAND_3 };
-t_rule* regras_BIN_OP[]         = { &BIN_OP_0, &BIN_OP_1, &BIN_OP_2, &BIN_OP_3, &BIN_OP_4, &BIN_OP_5, &BIN_OP_6, &BIN_OP_7 };
-t_rule* regras_UN_OP[]          = { &UN_OP_0, &UN_OP_1, &UN_OP_2, &UN_OP_3, &UN_OP_4 };
+t_rule* regras_BIN_OP[]         = { &BIN_OP_0, &BIN_OP_1, &BIN_OP_2, &BIN_OP_3, &BIN_OP_4, &BIN_OP_5, &BIN_OP_6, &BIN_OP_7, &BIN_OP_8, &BIN_OP_9 };
+t_rule* regras_UN_OP[]          = { &UN_OP_0, &UN_OP_1, &UN_OP_2, &UN_OP_3, &UN_OP_4, &UN_OP_5, &UN_OP_6, &UN_OP_7 };
 t_rule* regras_ATRIBUTO[]       = { &ATRIBUTO_0, &ATRIBUTO_1, &ATRIBUTO_2, &ATRIBUTO_3, &ATRIBUTO_4, &ATRIBUTO_5, &ATRIBUTO_6, &ATRIBUTO_7, &ATRIBUTO_8, &ATRIBUTO_8, &ATRIBUTO_9, &ATRIBUTO_10, &ATRIBUTO_11, &ATRIBUTO_12, &ATRIBUTO_13, &ATRIBUTO_14, &ATRIBUTO_15, &ATRIBUTO_16, &ATRIBUTO_17, &ATRIBUTO_18, &ATRIBUTO_19, &ATRIBUTO_20, &ATRIBUTO_21, &ATRIBUTO_22, &ATRIBUTO_23, &ATRIBUTO_24, &ATRIBUTO_25, &ATRIBUTO_26, &ATRIBUTO_27, &ATRIBUTO_28, &ATRIBUTO_29, &ATRIBUTO_30, &ATRIBUTO_31, &ATRIBUTO_32, &ATRIBUTO_33, &ATRIBUTO_34, &ATRIBUTO_35, &ATRIBUTO_36, &ATRIBUTO_37, &ATRIBUTO_38, &ATRIBUTO_39, &ATRIBUTO_40, &ATRIBUTO_41, &ATRIBUTO_42, &ATRIBUTO_43, &ATRIBUTO_44, &ATRIBUTO_45, &ATRIBUTO_46, &ATRIBUTO_47, &ATRIBUTO_48 };
 
 t_rule* regras_CONST_NUMERICO[] = { &CONST_NUMERICO_0, &CONST_NUMERICO_1, &CONST_NUMERICO_2, &CONST_NUMERICO_3, &CONST_NUMERICO_4, &CONST_NUMERICO_5, &CONST_NUMERICO_6, &CONST_NUMERICO_7, &CONST_NUMERICO_8, &CONST_NUMERICO_9, &CONST_NUMERICO_10 };

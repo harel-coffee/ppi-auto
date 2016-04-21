@@ -304,17 +304,29 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
             case T_OR:
                fprintf( out, "OR " );
                break;
+            case T_XOR:
+               fprintf( out, "XOR " );
+               break;
             case T_NOT:
                fprintf( out, "NOT " );
                break;
             case T_GREATER:
                fprintf( out, "> " );
                break;
+            case T_GREATEREQUAL:
+               fprintf( out, ">= " );
+               break;
             case T_LESS:
                fprintf( out, "< " );
                break;
+            case T_LESSEQUAL:
+               fprintf( out, "<= " );
+               break;
             case T_EQUAL:
                fprintf( out, "= " );
+               break;
+            case T_NOTEQUAL:
+               fprintf( out, "!= " );
                break;
             case T_ADD:
                fprintf( out, "+ " );
@@ -340,6 +352,9 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
             case T_MOD:
                fprintf( out, "MOD " );
                break;
+            case T_POW:
+               fprintf( out, "POW " );
+               break;
             case T_ABS:
                fprintf( out, "ABS " );
                break;
@@ -352,8 +367,17 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
             case T_POW3:
                fprintf( out, "POW3 " );
                break;
+            case T_POW4:
+               fprintf( out, "POW4 " );
+               break;
+            case T_POW5:
+               fprintf( out, "POW5 " );
+               break;
             case T_NEG:
                fprintf( out, "NEG " );
+               break;
+            case T_ROUND:
+               fprintf( out, "ROUND " );
                break;
             case T_0:
                fprintf( out, "0 " );
