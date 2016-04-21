@@ -265,7 +265,10 @@ void pee_init( float** input, int nlin, int argc, char** argv )
 
 void pee_clone( Population* original, int idx_original, Population* copy, int idx_copy )
 {
-   for( int i = 0; i < data.number_of_bits; ++i ) copy->genome[idx_copy * data.number_of_bits + i] = original->genome[idx_original * data.number_of_bits + i];
+   const int* const org = original->genome + idx_original*data.number_of_bits;
+   int* cpy = copy->genome + idx_copy*data.number_of_bits;
+
+   for( int i = 0; i < data.number_of_bits; ++i ) cpy[i] = org[i];
 
    copy->fitness[idx_copy] = original->fitness[idx_original];
 }
@@ -531,8 +534,6 @@ int pee_receive_individual( int* immigrants )
 
 void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImmigrants )
 {
-   //int allele;
-   // TODO: Parallelize this loop!
 #pragma omp parallel for
    for( int i = 0; i < data.population_size; i++ )
    {
