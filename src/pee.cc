@@ -508,6 +508,7 @@ int pee_receive_individual( int* immigrants )
 void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImmigrants )
 {
    int allele;
+   // TODO: Parallelize this loop!
    for( int i = 0; i < data.population_size; i++ )
    {
       allele = 0;
@@ -732,6 +733,7 @@ void pee_evolve()
       //std::cerr << "nImmigrants[geration:" << geracao << "]: " << nImmigrants << std::endl;
 
       // 5
+      // TODO: Parallelize this loop!
       for( int i = nImmigrants; i < data.population_size; i += 2 )
       {
 
