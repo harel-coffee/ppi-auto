@@ -147,7 +147,7 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    Opts.Int.Add( "-ps", "--population-size", 1024, 1, std::numeric_limits<int>::max() );
    Opts.Int.Add( "-is", "--immigrants-size", 5, 1 );
    Opts.Float.Add( "-cp", "--crossover-probability", 0.95, 0.0, 1.0 );
-   Opts.Float.Add( "-mp", "--mutation-probability", 0.0025, 0.0, 1.0 );
+   Opts.Float.Add( "-mr", "--mutation-rate", 0.01, 0.0, 1.0 );
    Opts.Int.Add( "-ts", "--tournament-size", 3, 1, std::numeric_limits<int>::max() );
 
    Opts.Bool.Add( "-e", "--elitism" );
@@ -174,7 +174,7 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    data.population_size = Opts.Int.Get("-ps");
    data.immigrants_size = Opts.Int.Get("-is");
    data.crossover_rate = Opts.Float.Get("-cp");
-   data.mutation_rate = Opts.Float.Get("-mp");
+   data.mutation_rate = Opts.Float.Get("-mr");
    data.tournament_size = Opts.Int.Get("-ts");
 
    data.elitism = Opts.Bool.Get("-e");
@@ -610,8 +610,18 @@ void pee_crossover( const int* father, const int* mother, int* offspring1, int* 
 
 void pee_mutation( int* genome )
 {
-   for( int i = 0; i < data.number_of_bits; ++i )
-      if( random_number() < data.mutation_rate ) genome[i] = !genome[i];
+   /* First the number of bit positions that will be mutated is chosen
+    * (num_bits_mutated), based on 'mutation_rate', which defines the maximum
+    * fraction of the vector of bits that can be mutated at once. */
+   const int max_bits_mutated = ceil(data.mutation_rate * data.number_of_bits);
+   int num_bits_mutated = (int) (random_number() * (max_bits_mutated+1));
+
+   /* Then, each position is selected at random and its value is swapped. */
+   while( num_bits_mutated-- > 0 )
+   {
+      int bit = (int)(random_number() * data.number_of_bits);
+      genome[bit] = !genome[bit];
+   }
 }
 
 void pee_print_best( FILE* out, int print_mode ) 
