@@ -281,7 +281,7 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
   
    if( print_mode )
    {
-      fprintf( out, "%d\n", size );
+      fprintf( out, "{%d}\n", size );
       for( int i = 0; i < size; ++i )
          if( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )
             fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
@@ -290,7 +290,7 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
       fprintf( out, "\n" );
    } 
    else 
-      fprintf( out, "%d ", size );
+      fprintf( out, "{%d} ", size );
 
    for( int i = 0; i < size; ++i )
       switch( phenotype[i] )
@@ -419,10 +419,10 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
    if( print_mode )
    {
       fprintf( out, "\n" );
-      fprintf( out, "%.12f\n", individual->fitness[idx] );
+      fprintf( out, ":: %.12f\n", individual->fitness[idx] );
    }
    else
-      fprintf( out, " %.12f\n", individual->fitness[idx] );
+      fprintf( out, ":: %.12f\n", individual->fitness[idx] );
 }
 
 int pee_tournament( const float* fitness )
