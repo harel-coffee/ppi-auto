@@ -28,6 +28,8 @@
 #include "grammar"
 #include "util/Util.h"
 
+#define TWO_POINT_CROSSOVER 1
+
 using namespace std;
 
 /** ****************************************************************** **/
