@@ -534,8 +534,6 @@ int pee_receive_individual( int* immigrants )
 
 void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImmigrants )
 {
-   //int allele;
-   // TODO: Parallelize this loop!
 #pragma omp parallel for
    for( int i = 0; i < data.population_size; i++ )
    {
