@@ -26,6 +26,7 @@
 #include "client/client.h"
 #include "individual"
 #include "grammar"
+#include "util/Util.h"
 
 using namespace std;
 
@@ -665,8 +666,9 @@ void pee_evolve()
    20: return the best individual so far
    */
 
-   clock_t start, end;
-   start = clock();
+   // -----
+   util::Timer t_total;
+   // -----
 
    srand( data.seed );
 
@@ -687,12 +689,12 @@ void pee_evolve()
 
    int nImmigrants;
 
-   clock_t start1, end1;
-   start1 = clock();
+   // -----
+   util::Timer t_generate;
+   // -----
    // 1 e 2:
    pee_generate_population( &antecedentes, &descendentes, &nImmigrants );
-   end1 = clock();
-   cerr << "Generate Population Time: " << ((double)(end1 - start1))/((double)(CLOCKS_PER_SEC)) << endl;
+   cerr << "Generate Population Time: " <<  t_generate.elapsed() << endl;
 
    double time_tournament = 0.;
    double time_crossover  = 0.;
@@ -715,19 +717,20 @@ void pee_evolve()
       for( int i = nImmigrants; i < data.population_size; i += 2 )
       {
 
-         clock_t start2, end2;
-         start2 = clock();
+         // -----
+         util::Timer t_tournament;
+         // -----
          // 6:
          int idx_father = pee_tournament( antecedentes.fitness );
          int idx_mother = pee_tournament( antecedentes.fitness );
-         end2 = clock();
-         time_tournament += ((double)(end2 - start2))/((double)(CLOCKS_PER_SEC));
+         time_tournament += t_tournament.elapsed();
 
          // 7:
          if( random_number() < data.crossover_rate )
          {
-            clock_t start3, end3;
-            start3 = clock();
+            // -----
+            util::Timer t_crossover;
+            // -----
             // 8 e 9:
             if( i < ( data.population_size - 1 ) )
             {
@@ -737,41 +740,40 @@ void pee_evolve()
             {
                pee_crossover( antecedentes.genome + (idx_father * data.number_of_bits), antecedentes.genome + (idx_mother * data.number_of_bits), descendentes.genome + (i * data.number_of_bits), descendentes.genome + (i * data.number_of_bits));
             }
-            end3 = clock();
-            time_crossover += ((double)(end3 - start3))/((double)(CLOCKS_PER_SEC));
+            time_crossover += t_crossover.elapsed();
          } // 10
          else 
          {
-            clock_t start5, end5;
-            start5 = clock();
+            // -----
+            util::Timer t_clone;
+            // -----
             // 9:
             pee_clone( &antecedentes, idx_father, &descendentes, i );
             if( i < ( data.population_size - 1 ) )
             {
                pee_clone( &antecedentes, idx_mother, &descendentes, i + 1 );
             }
-            end5 = clock();
-            time_clone += ((double)(end5 - start5))/((double)(CLOCKS_PER_SEC));
+            time_clone += t_clone.elapsed();
          } // 10
 
-         clock_t start4, end4;
-         start4 = clock();
+         // -----
+         util::Timer t_mutation;
+         // -----
          // 11, 12, 13, 14 e 15:
          pee_mutation( descendentes.genome + (i * data.number_of_bits) );
          if( i < ( data.population_size - 1 ) )
          {
             pee_mutation( descendentes.genome + ((i + 1) * data.number_of_bits) );
          }
-         end4 = clock();
-         time_mutation += ((double)(end4 - start4))/((double)(CLOCKS_PER_SEC));
+         time_mutation += t_mutation.elapsed();
       } // 16
 
-      clock_t start0, end0;
-      start0 = clock();
+      // -----
+      util::Timer t_evaluate;
+      // -----
       // 17:
       pee_evaluate( &descendentes, &antecedentes, &nImmigrants );
-      end0 = clock();
-      cerr << "Evaluate Time: " << ((double)(end0 - start0))/((double)(CLOCKS_PER_SEC)) << endl;
+      cerr << "Evaluate Time: " << t_evaluate.elapsed() << endl;
 
       //pee_send_individual( &descendentes );
 
@@ -788,8 +790,7 @@ void pee_evolve()
    // Clean up
    delete[] antecedentes.genome, antecedentes.fitness, descendentes.genome, descendentes.fitness; 
 
-   end = clock();
-   data.time_total = ((double)(end - start))/((double)(CLOCKS_PER_SEC));
+   data.time_total = t_total.elapsed();
    cerr << "Tournament time: " << time_tournament << endl;
    cerr << "Crossover time: " << time_crossover << endl;
    cerr << "Mutation time: " << time_mutation << endl;
