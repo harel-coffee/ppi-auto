@@ -411,7 +411,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 }
 
 // -----------------------------------------------------------------------------
-void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, void (*send)(Population*), int (*receive)(int*), Population* migrants, int* nImmigrants, int* index, int* best_size, int prediction_mode, int alpha )
+void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, void (*send)(Population*), int (*receive)(int*), Population* migrants, int* nImmigrants, int* index, int* best_size, int prediction_mode, float alpha )
 {
    //vector<cl::Event> events(4); 
    cl::Event event0; 
