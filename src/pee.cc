@@ -687,6 +687,7 @@ void pee_evolve()
    double time_tournament = 0.;
    double time_crossover  = 0.;
    double time_mutation   = 0.;
+   double time_clone      = 0.;
    
    // 3:
    for( int geracao = 1; geracao <= data.generations; ++geracao )
@@ -731,12 +732,16 @@ void pee_evolve()
          } // 10
          else 
          {
+            clock_t start5, end5;
+            start5 = clock();
             // 9:
             pee_clone( &antecedentes, idx_father, &descendentes, i );
             if( i < ( data.population_size - 1 ) )
             {
                pee_clone( &antecedentes, idx_mother, &descendentes, i + 1 );
             }
+            end5 = clock();
+            time_clone += ((double)(end5 - start5))/((double)(CLOCKS_PER_SEC));
          } // 10
 
          clock_t start4, end4;
@@ -778,6 +783,7 @@ void pee_evolve()
    cerr << "Tournament time: " << time_tournament << endl;
    cerr << "Crossover time: " << time_crossover << endl;
    cerr << "Mutation time: " << time_mutation << endl;
+   cerr << "Clone time: " << time_clone << endl;
 }
 
 void pee_destroy()
