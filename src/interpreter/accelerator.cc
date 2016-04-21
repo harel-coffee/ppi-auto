@@ -31,7 +31,7 @@ namespace { static struct t_data { int max_size; int nlin; int population_size; 
 /** ****************************************************************** **/
 
 // -----------------------------------------------------------------------------
-int opencl_init( int platform_id, int device_id, int type )
+int opencl_init( int platform_id, int device_id, cl_device_type type )
 {
    vector<cl::Platform> platforms;
 
@@ -45,16 +45,24 @@ int opencl_init( int platform_id, int device_id, int type )
 
    Possible options:
 
+   INV = CL_INVALID_DEVICE_TYPE
+
         type  device  platform
 
-   1.   -1      X        X
-   2.   -1     -1        X     --> device = 0
-   3.   -1      X       -1     --> platform = 0
+   1.   INV     X        X
+   2.   INV    -1        X     --> device = 0
+   3.   INV     X       -1     --> platform = 0
    4.    X     -1        X     
    5.    X     -1       -1 
-   6.   -1     -1       -1     --> platform = last_platform; device = 0 
+   6.   INV    -1       -1     --> platform = last_platform; device = 0 
+   7.    X      X        X     --> reset type = CL_INVALID_DEVICE_TYPE 
 
    */
+
+   if( platform_id >= 0 && device_id >= 0 ) // option 7
+   {
+      type = CL_INVALID_DEVICE_TYPE; 
+   }
 
    if( platform_id < 0 && device_id >= 0 ) // option 3
    {
@@ -86,11 +94,50 @@ int opencl_init( int platform_id, int device_id, int type )
       int first_device = device_id >= 0 ? device_id : 0;
       data.device = devices[first_device];
 
-      if( type >= 0 && device_id < 0 ) // options 4 e 5
+      if( type != CL_INVALID_DEVICE_TYPE && device_id < 0 ) // options 4 e 5
       {
          for ( int n = 0; n < devices.size(); n++ )
          {
-            if ( devices[n].getInfo<CL_DEVICE_TYPE>() == type ) 
+           /*
+        
+           Possible options:
+        
+           int   bits      type
+
+            1    0001  --> default
+            2    0010  --> CPU
+            4    0100  --> GPU
+            8    1000  --> ACC
+
+            3    0011  --> CPU+default  --> 0010
+                                                 | (or)
+                                            0001
+                                           ------
+                                            0011
+
+            5   0101  --> GPU+default  --> 0100
+                                                 | (or)
+                                           0001
+                                          ------
+                                           0101
+
+
+            Examples:
+
+            if ( 0011 & 0010 ) return 0011 (CPU+default)
+                                           & (and)
+                                      0010 (type = CPU)
+                                     ------
+                                      0010 --> CPU
+
+            if ( 0011 & 0100 ) return 0011 (CPU+default)
+                                           & (and)
+                                      0100 (type = GPU)
+                                     ------
+                                      0000 
+           */
+
+            if ( devices[n].getInfo<CL_DEVICE_TYPE>() & type ) 
             {
                leave = true;
                data.device = devices[n];
@@ -101,7 +148,7 @@ int opencl_init( int platform_id, int device_id, int type )
       }
    }
 
-   if( type >= 0 && !leave )
+   if( type != CL_INVALID_DEVICE_TYPE && !leave )
    {
       fprintf(stderr, "Not a single compatible type found.\n");
       return 1;
@@ -363,8 +410,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    data.time_kernel = 0.0f;
    data.time_overhead = 0.0f;
 
-   //int type = -1;
-   cl_device_type type = CL_DEVICE_TYPE_ALL;
+   cl_device_type type = CL_INVALID_DEVICE_TYPE;
    if( Opts.String.Found("-type") )
    {
       if( !strcmp(Opts.String.Get("-type").c_str(),"CPU") ) 
