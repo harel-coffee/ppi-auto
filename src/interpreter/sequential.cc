@@ -76,7 +76,7 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          {
             switch( phenotype[ind * data.size + i] )
             {
-               #include "core"
+               #include "interpreter_core"
                case T_ATTRIBUTE:
                   stack[++stack_top] = data.inputs[ponto][(int)ephemeral[ind * data.size + i]];
                   //if ( ponto == 1 ) {printf( "T_ATTRIBUTE: %d %f \n", stack_top, stack[stack_top]);}
