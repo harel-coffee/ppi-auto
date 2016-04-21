@@ -531,11 +531,12 @@ int pee_receive_individual( int* immigrants )
 
 void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImmigrants )
 {
-   int allele;
+   //int allele;
    // TODO: Parallelize this loop!
+#pragma omp parallel for
    for( int i = 0; i < data.population_size; i++ )
    {
-      allele = 0;
+      int allele = 0;
       data.size[i] = decode( descendentes->genome + (i * data.number_of_bits), &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
    }
    
