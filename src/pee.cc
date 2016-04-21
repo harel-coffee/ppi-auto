@@ -281,7 +281,7 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
   
    if( print_mode )
    {
-      fprintf( out, "%d\n", size );
+      fprintf( out, "{%d}\n", size );
       for( int i = 0; i < size; ++i )
          if( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )
             fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
@@ -290,7 +290,7 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
       fprintf( out, "\n" );
    } 
    else 
-      fprintf( out, "%d ", size );
+      fprintf( out, "{%d} ", size );
 
    for( int i = 0; i < size; ++i )
       switch( phenotype[i] )
@@ -304,17 +304,29 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
             case T_OR:
                fprintf( out, "OR " );
                break;
+            case T_XOR:
+               fprintf( out, "XOR " );
+               break;
             case T_NOT:
                fprintf( out, "NOT " );
                break;
             case T_GREATER:
                fprintf( out, "> " );
                break;
+            case T_GREATEREQUAL:
+               fprintf( out, ">= " );
+               break;
             case T_LESS:
                fprintf( out, "< " );
                break;
+            case T_LESSEQUAL:
+               fprintf( out, "<= " );
+               break;
             case T_EQUAL:
                fprintf( out, "= " );
+               break;
+            case T_NOTEQUAL:
+               fprintf( out, "!= " );
                break;
             case T_ADD:
                fprintf( out, "+ " );
@@ -340,6 +352,9 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
             case T_MOD:
                fprintf( out, "MOD " );
                break;
+            case T_POW:
+               fprintf( out, "POW " );
+               break;
             case T_ABS:
                fprintf( out, "ABS " );
                break;
@@ -352,8 +367,17 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
             case T_POW3:
                fprintf( out, "POW3 " );
                break;
+            case T_POW4:
+               fprintf( out, "POW4 " );
+               break;
+            case T_POW5:
+               fprintf( out, "POW5 " );
+               break;
             case T_NEG:
                fprintf( out, "NEG " );
+               break;
+            case T_ROUND:
+               fprintf( out, "ROUND " );
                break;
             case T_0:
                fprintf( out, "0 " );
@@ -395,10 +419,10 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
    if( print_mode )
    {
       fprintf( out, "\n" );
-      fprintf( out, "%.12f\n", individual->fitness[idx] );
+      fprintf( out, ":: %.12f\n", individual->fitness[idx] );
    }
    else
-      fprintf( out, " %.12f\n", individual->fitness[idx] );
+      fprintf( out, ":: %.12f\n", individual->fitness[idx] );
 }
 
 int pee_tournament( const float* fitness )
@@ -507,11 +531,12 @@ int pee_receive_individual( int* immigrants )
 
 void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImmigrants )
 {
-   int allele;
+   //int allele;
    // TODO: Parallelize this loop!
+#pragma omp parallel for
    for( int i = 0; i < data.population_size; i++ )
    {
-      allele = 0;
+      int allele = 0;
       data.size[i] = decode( descendentes->genome + (i * data.number_of_bits), &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
    }
    

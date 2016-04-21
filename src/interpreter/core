@@ -9,6 +9,10 @@ case T_OR:
    stack[stack_top - 1] = ( (stack[stack_top] == 1.0f || stack[stack_top - 1] == 1.0f) ? 1.0f : 0.0f );
    --stack_top;
    break;
+case T_XOR:
+   stack[stack_top - 1] = ((stack[stack_top] <= 0.0f && stack[stack_top-1] > 0.0f) || (stack[stack_top] > 0.0f && stack[stack_top-1] <= 0.0f));
+   --stack_top;
+   break;
 case T_NOT:
    stack[stack_top] = !stack[stack_top];
    break;
@@ -16,12 +20,24 @@ case T_GREATER:
    stack[stack_top - 1] = ( (stack[stack_top] > stack[stack_top - 1]) ? 1.0f : 0.0f );
    --stack_top;
    break;
+case T_GREATEREQUAL:
+   stack[stack_top - 1] = ( (stack[stack_top] >= stack[stack_top - 1]) ? 1.0f : 0.0f );
+   --stack_top;
+   break;
 case T_LESS:
    stack[stack_top - 1] = ( (stack[stack_top] < stack[stack_top - 1]) ? 1.0f : 0.0f );
    --stack_top;
    break;
+case T_LESSEQUAL:
+   stack[stack_top - 1] = ( (stack[stack_top] <= stack[stack_top - 1]) ? 1.0f : 0.0f );
+   --stack_top;
+   break;
 case T_EQUAL:
    stack[stack_top - 1] = ( (stack[stack_top] == stack[stack_top - 1]) ? 1.0f : 0.0f );
+   --stack_top;
+   break;
+case T_NOTEQUAL:
+   stack[stack_top - 1] = ( (stack[stack_top] != stack[stack_top - 1]) ? 1.0f : 0.0f );
    --stack_top;
    break;
 case T_ADD:
@@ -56,6 +72,10 @@ case T_MOD:
    stack[stack_top - 1] = fmod(stack[stack_top], stack[stack_top - 1]);
    --stack_top;
    break;
+case T_POW:
+   stack[stack_top-1] = pow(stack[stack_top], stack[stack_top-1]);
+   --stack_top;
+   break;
 case T_ABS:
    stack[stack_top] = fabs(stack[stack_top]);
    break;
@@ -68,8 +88,17 @@ case T_POW2:
 case T_POW3:
    stack[stack_top] = stack[stack_top] * stack[stack_top] * stack[stack_top];
    break;
+case T_POW4:
+   stack[stack_top] = stack[stack_top] * stack[stack_top] * stack[stack_top] * stack[stack_top];
+   break;
+case T_POW5:
+   stack[stack_top] = stack[stack_top] * stack[stack_top] * stack[stack_top] * stack[stack_top] * stack[stack_top];
+   break;
 case T_NEG:
    stack[stack_top] = -stack[stack_top];
+   break;
+case T_ROUND:
+   stack[stack_top] = round(stack[stack_top]);
    break;
 case T_0:
    stack[++stack_top] = 0.0f;
