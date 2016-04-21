@@ -355,20 +355,38 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
             case T_NEG:
                fprintf( out, "NEG " );
                break;
-            case T_ATTRIBUTE:
-               fprintf( out, "ATTR-%d ", (int)ephemeral[i] );
+            case T_0:
+               fprintf( out, "0 " );
                break;
-            case T_1P:
+            case T_1:
                fprintf( out, "1 " );
                break;
-            case T_2P:
+            case T_2:
                fprintf( out, "2 " );
                break;
-            case T_3P:
+            case T_3:
                fprintf( out, "3 " );
                break;
-            case T_4P:
+            case T_4:
                fprintf( out, "4 " );
+               break;
+            case T_5:
+               fprintf( out, "5 " );
+               break;
+            case T_6:
+               fprintf( out, "6 " );
+               break;
+            case T_7:
+               fprintf( out, "7 " );
+               break;
+            case T_8:
+               fprintf( out, "8 " );
+               break;
+            case T_9:
+               fprintf( out, "9 " );
+               break;
+            case T_ATTRIBUTE:
+               fprintf( out, "ATTR-%d ", (int)ephemeral[i] );
                break;
             case T_CONST:
                fprintf( out, "%.12f ",  ephemeral[i] );

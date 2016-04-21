@@ -1,70 +1,56 @@
 case T_IF_THEN_ELSE:
    stack_top = ( (stack[stack_top] == 1.0f) ? stack_top - 1 : stack_top - 2 );
-//   if ( ponto == 1 ) {printf( "T_IF_THEN_ELSE: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_AND:
    stack[stack_top - 1] = ( (stack[stack_top] == 1.0f && stack[stack_top - 1] == 1.0f) ? 1.0f : 0.0f );
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_AND: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_OR:
    stack[stack_top - 1] = ( (stack[stack_top] == 1.0f || stack[stack_top - 1] == 1.0f) ? 1.0f : 0.0f );
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_OR: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_NOT:
    stack[stack_top] = !stack[stack_top];
-//   if ( ponto == 1 ) {printf( "T_NOT: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_GREATER:
    stack[stack_top - 1] = ( (stack[stack_top] > stack[stack_top - 1]) ? 1.0f : 0.0f );
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_GREATER: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_LESS:
    stack[stack_top - 1] = ( (stack[stack_top] < stack[stack_top - 1]) ? 1.0f : 0.0f );
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_LESS: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_EQUAL:
    stack[stack_top - 1] = ( (stack[stack_top] == stack[stack_top - 1]) ? 1.0f : 0.0f );
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_EQUAL: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_ADD:
    stack[stack_top - 1] = stack[stack_top] + stack[stack_top - 1];
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_ADD: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_SUB:
    stack[stack_top - 1] = stack[stack_top] - stack[stack_top - 1];
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_SUB: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_MULT:
    stack[stack_top - 1] = stack[stack_top] * stack[stack_top - 1];
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_MULT: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_DIV:
    stack[stack_top - 1] = stack[stack_top] / stack[stack_top - 1];
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_DIV: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_MEAN:
    stack[stack_top - 1] = (stack[stack_top] + stack[stack_top - 1]) / 2.0f;
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_MEAN: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_MAX:
    stack[stack_top - 1] = fmax(stack[stack_top], stack[stack_top - 1]);
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_MAX: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_MIN:
    stack[stack_top - 1] = fmin(stack[stack_top], stack[stack_top - 1]);
    --stack_top;
-//   if ( ponto == 1 ) {printf( "T_MIN: %d %f \n", stack_top, stack[stack_top]);}
    break;
 //case T_MOD:
 //   stack[stack_top - 1] = fmod(stack[stack_top], stack[stack_top - 1]);
@@ -73,37 +59,46 @@ case T_MIN:
 //   break;
 case T_ABS:
    stack[stack_top] = fabs(stack[stack_top]);
-//   if ( ponto == 1 ) {printf( "T_ABS: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_SQRT:
    stack[stack_top] = sqrt(stack[stack_top]);
-//   if ( ponto == 1 ) {printf( "T_SQRT: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_POW2:
    stack[stack_top] = stack[stack_top] * stack[stack_top];
-//   if ( ponto == 1 ) {printf( "T_POW2: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_POW3:
    stack[stack_top] = stack[stack_top] * stack[stack_top] * stack[stack_top];
-//   if ( ponto == 1 ) {printf( "T_POW3: %d %f \n", stack_top, stack[stack_top]);}
    break;
 case T_NEG:
    stack[stack_top] = -stack[stack_top];
-//   if ( ponto == 1 ) {printf( "T_NEG: %d %f \n", stack_top, stack[stack_top]);}
    break;
-case T_1P:
+case T_0:
+   stack[++stack_top] = 0.0f;
+   break;
+case T_1:
    stack[++stack_top] = 1.0f;
-//   if ( ponto == 1 ) {printf( "T_1P: %d %f \n", stack_top, stack[stack_top]);}
    break;
-case T_2P:
+case T_2:
    stack[++stack_top] = 2.0f;
-//   if ( ponto == 1 ) {printf( "T_2P: %d %f \n", stack_top, stack[stack_top]);}
    break;
-case T_3P:
+case T_3:
    stack[++stack_top] = 3.0f;
-//   if ( ponto == 1 ) {printf( "T_3P: %d %f \n", stack_top, stack[stack_top]);}
    break;
-case T_4P:
+case T_4:
    stack[++stack_top] = 4.0f;
-//   if ( ponto == 1 ) {printf( "T_4P: %d %f \n", stack_top, stack[stack_top]);}
+   break;
+case T_5:
+   stack[++stack_top] = 5.0f;
+   break;
+case T_6:
+   stack[++stack_top] = 6.0f;
+   break;
+case T_7:
+   stack[++stack_top] = 7.0f;
+   break;
+case T_8:
+   stack[++stack_top] = 8.0f;
+   break;
+case T_9:
+   stack[++stack_top] = 9.0f;
    break;
