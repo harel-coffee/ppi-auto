@@ -337,9 +337,9 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
             case T_MIN:
                fprintf( out, "MIN " );
                break;
-            //case T_MOD:
-            //   fprintf( out, "MOD " );
-            //   break;
+            case T_MOD:
+               fprintf( out, "MOD " );
+               break;
             case T_ABS:
                fprintf( out, "ABS " );
                break;

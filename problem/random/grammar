@@ -1,0 +1,116 @@
+#define MAX_QUANT_SIMBOLOS_POR_REGRA 3
+
+
+/** ****************************************************************** **/
+/** ***************************** TYPES ****************************** **/
+/** ****************************************************************** **/
+
+struct t_rule { unsigned quantity; Symbol symbols[MAX_QUANT_SIMBOLOS_POR_REGRA]; };
+
+
+/** ****************************************************************** **/
+/** ***************************** RULES ****************************** **/
+/** ****************************************************************** **/
+
+t_rule INICIAL_0 = { 1, {NT_RAND} };
+
+t_rule RAND_0 = { 1, {NT_ATRIBUTO}                 };
+t_rule RAND_1 = { 1, {NT_CONST_NUMERICO}           };
+t_rule RAND_2 = { 2, {NT_UN_OP, NT_RAND}           };
+t_rule RAND_3 = { 3, {NT_BIN_OP, NT_RAND, NT_RAND} };
+
+t_rule BIN_OP_0 = { 1, {T_ADD}  };
+t_rule BIN_OP_1 = { 1, {T_SUB}  };
+t_rule BIN_OP_2 = { 1, {T_MULT} };
+t_rule BIN_OP_3 = { 1, {T_DIV}  };
+t_rule BIN_OP_4 = { 1, {T_MEAN} };
+t_rule BIN_OP_5 = { 1, {T_MAX}  };
+t_rule BIN_OP_6 = { 1, {T_MIN}  };
+t_rule BIN_OP_7 = { 1, {T_MOD}  };
+
+t_rule UN_OP_0 = { 1, {T_ABS}  };
+t_rule UN_OP_1 = { 1, {T_SQRT} };
+t_rule UN_OP_2 = { 1, {T_POW2} };
+t_rule UN_OP_3 = { 1, {T_POW3} };
+t_rule UN_OP_4 = { 1, {T_NEG}  };
+
+t_rule ATRIBUTO_0  = { 1, {T_ATTR1}  };
+t_rule ATRIBUTO_1  = { 1, {T_ATTR2}  };
+t_rule ATRIBUTO_2  = { 1, {T_ATTR3}  };
+t_rule ATRIBUTO_3  = { 1, {T_ATTR4}  };
+t_rule ATRIBUTO_4  = { 1, {T_ATTR5}  };
+t_rule ATRIBUTO_5  = { 1, {T_ATTR6}  };
+t_rule ATRIBUTO_6  = { 1, {T_ATTR7}  };
+t_rule ATRIBUTO_7  = { 1, {T_ATTR8}  };
+t_rule ATRIBUTO_8  = { 1, {T_ATTR9}  };
+t_rule ATRIBUTO_9  = { 1, {T_ATTR10}  };
+t_rule ATRIBUTO_10  = { 1, {T_ATTR11}  };
+t_rule ATRIBUTO_11  = { 1, {T_ATTR12}  };
+t_rule ATRIBUTO_12  = { 1, {T_ATTR13}  };
+t_rule ATRIBUTO_13  = { 1, {T_ATTR14}  };
+t_rule ATRIBUTO_14  = { 1, {T_ATTR15}  };
+t_rule ATRIBUTO_15  = { 1, {T_ATTR16}  };
+t_rule ATRIBUTO_16  = { 1, {T_ATTR17}  };
+t_rule ATRIBUTO_17  = { 1, {T_ATTR18}  };
+t_rule ATRIBUTO_18  = { 1, {T_ATTR19}  };
+t_rule ATRIBUTO_19  = { 1, {T_ATTR20}  };
+t_rule ATRIBUTO_20  = { 1, {T_ATTR21}  };
+t_rule ATRIBUTO_21  = { 1, {T_ATTR22}  };
+t_rule ATRIBUTO_22  = { 1, {T_ATTR23}  };
+t_rule ATRIBUTO_23  = { 1, {T_ATTR24}  };
+t_rule ATRIBUTO_24  = { 1, {T_ATTR25}  };
+t_rule ATRIBUTO_25  = { 1, {T_ATTR26}  };
+t_rule ATRIBUTO_26  = { 1, {T_ATTR27}  };
+t_rule ATRIBUTO_27  = { 1, {T_ATTR28}  };
+t_rule ATRIBUTO_28  = { 1, {T_ATTR29}  };
+t_rule ATRIBUTO_29  = { 1, {T_ATTR30}  };
+t_rule ATRIBUTO_30  = { 1, {T_ATTR31}  };
+t_rule ATRIBUTO_31  = { 1, {T_ATTR32}  };
+t_rule ATRIBUTO_32  = { 1, {T_ATTR33}  };
+t_rule ATRIBUTO_33  = { 1, {T_ATTR34}  };
+t_rule ATRIBUTO_34  = { 1, {T_ATTR35}  };
+t_rule ATRIBUTO_35  = { 1, {T_ATTR36}  };
+t_rule ATRIBUTO_36  = { 1, {T_ATTR37}  };
+t_rule ATRIBUTO_37  = { 1, {T_ATTR38}  };
+t_rule ATRIBUTO_38  = { 1, {T_ATTR39}  };
+t_rule ATRIBUTO_39  = { 1, {T_ATTR40}  };
+t_rule ATRIBUTO_40  = { 1, {T_ATTR41}  };
+t_rule ATRIBUTO_41  = { 1, {T_ATTR42}  };
+t_rule ATRIBUTO_42  = { 1, {T_ATTR43}  };
+t_rule ATRIBUTO_43  = { 1, {T_ATTR44}  };
+t_rule ATRIBUTO_44  = { 1, {T_ATTR45}  };
+t_rule ATRIBUTO_45  = { 1, {T_ATTR46}  };
+t_rule ATRIBUTO_46  = { 1, {T_ATTR47}  };
+t_rule ATRIBUTO_47  = { 1, {T_ATTR48}  };
+t_rule ATRIBUTO_48  = { 1, {T_ATTR49}  };
+
+t_rule CONST_NUMERICO_0 = { 1, {T_CONST} };
+t_rule CONST_NUMERICO_1 = { 1, {T_0} };
+t_rule CONST_NUMERICO_2 = { 1, {T_1} };
+t_rule CONST_NUMERICO_3 = { 1, {T_2} };
+t_rule CONST_NUMERICO_4 = { 1, {T_3} };
+t_rule CONST_NUMERICO_5 = { 1, {T_4} };
+t_rule CONST_NUMERICO_6 = { 1, {T_5} };
+t_rule CONST_NUMERICO_7 = { 1, {T_6} };
+t_rule CONST_NUMERICO_8 = { 1, {T_7} };
+t_rule CONST_NUMERICO_9 = { 1, {T_8} };
+t_rule CONST_NUMERICO_10 = { 1, {T_9} };
+
+// Conjunto de regras
+t_rule* regras_INICIAL[]        = { &INICIAL_0 };
+t_rule* regras_RAND[]           = { &RAND_0, &RAND_1, &RAND_2, &RAND_3 };
+t_rule* regras_BIN_OP[]         = { &BIN_OP_0, &BIN_OP_1, &BIN_OP_2, &BIN_OP_3, &BIN_OP_4, &BIN_OP_5, &BIN_OP_6, &BIN_OP_7 };
+t_rule* regras_UN_OP[]          = { &UN_OP_0, &UN_OP_1, &UN_OP_2, &UN_OP_3, &UN_OP_4 };
+t_rule* regras_ATRIBUTO[]       = { &ATRIBUTO_0, &ATRIBUTO_1, &ATRIBUTO_2, &ATRIBUTO_3, &ATRIBUTO_4, &ATRIBUTO_5, &ATRIBUTO_6, &ATRIBUTO_7, &ATRIBUTO_8, &ATRIBUTO_8, &ATRIBUTO_9, &ATRIBUTO_10, &ATRIBUTO_11, &ATRIBUTO_12, &ATRIBUTO_13, &ATRIBUTO_14, &ATRIBUTO_15, &ATRIBUTO_16, &ATRIBUTO_17, &ATRIBUTO_18, &ATRIBUTO_19, &ATRIBUTO_20, &ATRIBUTO_21, &ATRIBUTO_22, &ATRIBUTO_23, &ATRIBUTO_24, &ATRIBUTO_25, &ATRIBUTO_26, &ATRIBUTO_27, &ATRIBUTO_28, &ATRIBUTO_29, &ATRIBUTO_30, &ATRIBUTO_31, &ATRIBUTO_32, &ATRIBUTO_33, &ATRIBUTO_34, &ATRIBUTO_35, &ATRIBUTO_36, &ATRIBUTO_37, &ATRIBUTO_38, &ATRIBUTO_39, &ATRIBUTO_40, &ATRIBUTO_41, &ATRIBUTO_42, &ATRIBUTO_43, &ATRIBUTO_44, &ATRIBUTO_45, &ATRIBUTO_46, &ATRIBUTO_47, &ATRIBUTO_48 };
+
+t_rule* regras_CONST_NUMERICO[] = { &CONST_NUMERICO_0, &CONST_NUMERICO_1, &CONST_NUMERICO_2, &CONST_NUMERICO_3, &CONST_NUMERICO_4, &CONST_NUMERICO_5, &CONST_NUMERICO_6, &CONST_NUMERICO_7, &CONST_NUMERICO_8, &CONST_NUMERICO_9, &CONST_NUMERICO_10 };
+
+t_rule** gramatica[] = { regras_INICIAL, regras_RAND, regras_BIN_OP, regras_UN_OP, regras_ATRIBUTO, regras_CONST_NUMERICO };
+
+unsigned  tamanhos[] = { sizeof(regras_INICIAL)        / sizeof(t_rule*),
+                         sizeof(regras_RAND)           / sizeof(t_rule*),
+                         sizeof(regras_BIN_OP)         / sizeof(t_rule*),
+                         sizeof(regras_UN_OP)          / sizeof(t_rule*),
+                         sizeof(regras_ATRIBUTO)       / sizeof(t_rule*),
+                         sizeof(regras_CONST_NUMERICO) / sizeof(t_rule*), };
+

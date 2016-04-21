@@ -52,11 +52,10 @@ case T_MIN:
    stack[stack_top - 1] = fmin(stack[stack_top], stack[stack_top - 1]);
    --stack_top;
    break;
-//case T_MOD:
-//   stack[stack_top - 1] = fmod(stack[stack_top], stack[stack_top - 1]);
-//   --stack_top;
-//   if ( ponto == 1 ) {printf( "T_MOD: %d %f \n", stack_top, stack[stack_top]);}
-//   break;
+case T_MOD:
+   stack[stack_top - 1] = fmod(stack[stack_top], stack[stack_top - 1]);
+   --stack_top;
+   break;
 case T_ABS:
    stack[stack_top] = fabs(stack[stack_top]);
    break;
