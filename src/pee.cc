@@ -28,6 +28,14 @@
 #include "grammar"
 #include "util/Util.h"
 
+/*
+ * The parameter ALPHA is the complexity penalization factor. Each individual
+ * will have its error augmented by ALPHA*size, where size is the number of
+ * operators and operands. ALPHA is usually very small, just enough to favor
+ * those that have similar (same) error but are less complex than another.
+ */
+#define ALPHA 0.000001
+
 #define TWO_POINT_CROSSOVER 1
 
 using namespace std;
@@ -424,10 +432,10 @@ void pee_individual_print( const Population* individual, int idx, FILE* out, int
    if( print_mode )
    {
       fprintf( out, "\n" );
-      fprintf( out, ":: %.12f\n", individual->fitness[idx] );
+      fprintf( out, ":: %.12f\n", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
    }
    else
-      fprintf( out, ":: %.12f\n", individual->fitness[idx] );
+      fprintf( out, ":: %.12f\n", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
 }
 
 int pee_tournament( const float* fitness )
@@ -563,11 +571,11 @@ void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImm
 
    if( data.version )
    {
-      acc_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, &pee_send_individual, &pee_receive_individual, antecedentes, nImmigrants, index, &data.best_size, 0, 0.00001 );
+      acc_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, &pee_send_individual, &pee_receive_individual, antecedentes, nImmigrants, index, &data.best_size, 0, ALPHA );
    }
    else
    {
-      seq_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, index, &data.best_size, 0, 0.00001 );
+      seq_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, index, &data.best_size, 0, ALPHA );
       *nImmigrants = pee_receive_individual( antecedentes->genome );
    }
    //std::cout << data.best_size << std::endl;
