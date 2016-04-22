@@ -758,7 +758,7 @@ void pee_evolve()
          nImmigrants++;
       }
 
-      //std::cerr << "nImmigrants[geration:" << geracao << "]: " << nImmigrants << std::endl;
+      std::cerr << "nImmigrants[geration:" << geracao << "]: " << nImmigrants << std::endl;
 
       // 5
       // TODO: Parallelize this loop!

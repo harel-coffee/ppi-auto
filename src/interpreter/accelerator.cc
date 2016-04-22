@@ -501,7 +501,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    util::Timer t_kernel;
 
 
-   //send( migrants );
+   send( migrants );
    *nImmigrants = receive( migrants->genome );
 
    // Wait until the kernel has finished
