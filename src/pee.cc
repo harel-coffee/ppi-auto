@@ -52,7 +52,7 @@ struct Peer {
   float frequency;
 };
 
-namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int verbose; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; std::vector<Peer> peers; Pool* pool; } data; };
+namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int verbose; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -171,6 +171,9 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    Opts.Float.Add( "-max", "--max-constant", 300 );
 
    Opts.String.Add( "-peers", "--address_of_island" );
+ 
+   /* Maximum allowed number of generations without improvement [default = disabled] */
+   Opts.Int.Add( "-st", "--stagnation-tolerance", numeric_limits<unsigned long>::max(), 0 );
 
    // processing the command-line
    Opts.Process();
@@ -271,6 +274,9 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    {
       seq_interpret_init( Opts.String.Get("-error"), data.max_size_phenotype, input, nlin, Opts.Int.Get("-ncol") );
    }
+
+   data.stagnation_tolerance = Opts.Int.Get( "-st" );
+
 }
 
 void pee_clone( Population* original, int idx_original, Population* copy, int idx_copy )
@@ -542,7 +548,7 @@ int pee_receive_individual( int* immigrants )
    return nImmigrants;
 }
 
-void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImmigrants )
+unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, int* nImmigrants )
 {
 #pragma omp parallel for
    for( int i = 0; i < data.population_size; i++ )
@@ -598,13 +604,21 @@ void pee_evaluate( Population* descendentes, Population* antecedentes, int* nImm
    //   pee_individual_print( &population[index], stdout, 0 );
    //}
 
+   static unsigned long stagnation = 0;
    for( int i = 0; i < data.best_size; i++ )
    {
       if( descendentes->fitness[index[i]] < data.best_individual.fitness[i] )
       {
+         stagnation = 0;
          pee_clone( descendentes, index[i], &data.best_individual, i );
       }
+      else
+      {
+         ++stagnation;
+      }
    }
+
+   return stagnation;
 }
 
 void pee_generate_population( Population* antecedentes, Population* descendentes, int* nImmigrants )
@@ -828,7 +842,8 @@ void pee_evolve()
       util::Timer t_evaluate;
       // -----
       // 17:
-      pee_evaluate( &descendentes, &antecedentes, &nImmigrants );
+      if (pee_evaluate( &descendentes, &antecedentes, &nImmigrants ) > data.stagnation_tolerance) geracao = data.generations;
+
       cerr << "Evaluate Time: " << t_evaluate.elapsed() << endl;
 
       //pee_send_individual( &descendentes );
