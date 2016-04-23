@@ -27,6 +27,11 @@
 #include "individual"
 #include "grammar"
 #include "util/Util.h"
+#include "util/Random.h"
+
+// Definition of the Random Number Generator to be used (see util/Random.h)
+#define RNG XorShift128Plus
+//#define RNG Random
 
 /*
  * The parameter ALPHA is the complexity penalization factor. Each individual
@@ -60,7 +65,9 @@ namespace { struct t_data { Symbol initial_symbol; Population best_individual; i
 
 #define swap(i, j) {Population t = *i; *i = *j; *j = t;}
 
-double random_number() {return (double)rand() / ((double)RAND_MAX + 1.0f);} // [0.0, 1.0)
+//double random_number() {return (double)rand() / ((double)RAND_MAX + 1.0f);} // [0.0, 1.0)
+double random_number() { return RNG::Real(); };
+
 
 t_rule* decode_rule( const int* genome, int* const allele, Symbol cabeca )
 {
@@ -710,6 +717,9 @@ void pee_print_time()
 
 void pee_evolve()
 {
+   /* Initialize the RNG seed */
+   RNG::Seed(data.seed);
+
    /*
       Pseudo-code for evolve:
 
