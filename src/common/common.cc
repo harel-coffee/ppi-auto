@@ -8,6 +8,7 @@ Logger& Common::m_logger( Logger::get( "logger" ) );
 void Common::SndMessage( const void* buffer, int msg_size )
 {
    int n = m_ss.sendBytes( buffer, msg_size );
+   //std::cerr << "SndMessage " << n << std::endl;
    assert( n == msg_size );
 }
 
@@ -34,7 +35,8 @@ fully delivered. */
    //}
    //*/
 
-   //assert( n == msg_size );
+   //std::cerr << "RcvMessage " << n << std::endl;
+   assert( n == msg_size );
 
    return buffer.data();
 }
@@ -59,6 +61,7 @@ void Common::SndHeader( char command, int msg_size )
    // Send the header through the open stream:
    int n = m_ss.sendBytes( header, 10 );
 
+   //std::cerr << "SndHeader " << n << std::endl;
    assert( n == 10 );
 }
 
@@ -73,6 +76,8 @@ char Common::RcvHeader( int& msg_size )
    {
       char header[11]; header[10] = '\0';
       int n = m_ss.receiveBytes( header, 10 );
+
+      //std::cerr << "RcvHeader " << n << std::endl;
       assert( n == 10 );
 
       //std::cerr << header << std::endl;
