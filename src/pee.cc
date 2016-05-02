@@ -493,16 +493,13 @@ void pee_send_individual( Population* population )
          delete data.pool->clients[i], data.pool->ss[i];
          data.pool->ss[i] = new StreamSocket();
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str() );
+         if( data.pool->starts[i] ) { data.pool->threads[i]->join(); }
          data.pool->threads[i]->start( *(data.pool->clients[i]) );
+         if( !data.pool->starts[i] ) { data.pool->starts[i] = true; }
 
          std::cerr << "Sending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
          //std::cerr << results.str() << std::endl;
       }
-   }
-
-   for( int i = 0; i < data.peers.size(); i++ )
-   {
-      data.pool->threads[i]->join();
    }
 }
 
