@@ -24,7 +24,7 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int max_size; int maxlocalsize; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string error; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_send; double time_receive; double time_kernel1; double time_kernel2; double time_kernels; double time_overhead; } data; };
+namespace { static struct t_data { int max_size; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string error; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_send; double time_receive; double time_kernel1; double time_kernel2; double time_kernels; double time_overhead; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTION *********************** **/
@@ -163,7 +163,7 @@ int opencl_init( int platform_id, int device_id, cl_device_type type )
 }
 
 // -----------------------------------------------------------------------------
-int build_kernel( )
+int build_kernel( int maxlocalsize )
 {
    ifstream file("accelerator.cl");
    string kernel_str( istreambuf_iterator<char>(file), ( istreambuf_iterator<char>()) );
@@ -187,20 +187,21 @@ int build_kernel( )
    }
 
    unsigned max_cu = data.device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-
-   //It is necessary to respect the local memory size. 
-   //Depending on the maximum local size, there will not be enough space to allocate the local variables. 
-   //The local size depends on the maximum local size.
    unsigned max_local_size;
-   if( data.maxlocalsize > 0 )
+   if( maxlocalsize > 0 )
    {
-      max_local_size = data.maxlocalsize;
+      max_local_size = maxlocalsize;
    }
-   else
+   else 
    {
       max_local_size = fmin( data.device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), data.device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
+   
+      //It is necessary to respect the local memory size. 
+      //Depending on the maximum local size, there will not be enough space to allocate the local variables. 
+      //The local size depends on the maximum local size. 
+      //The division by 8: 2 local vectors in best_individual kernel * 4 bytes
+      max_local_size = fmin( max_local_size, data.device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>() / 8 );
    }
-
 
    if( data.strategy == "PP" )  // Population-parallel
    {
@@ -232,7 +233,7 @@ int build_kernel( )
             {
                data.local_size1 = max_local_size;
             }
-            data.local_size1 = 128;
+            //data.local_size1 = 128;
             // One individual per work-group
             data.global_size1 = data.population_size * data.local_size1;
             data.kernel1 = cl::Kernel( program, "evaluate_ppcu" );
@@ -424,7 +425,6 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    data.max_size = size;
    data.nlin = nlin;
    data.population_size = population_size;
-   data.maxlocalsize = Opts.Int.Get("-maxlocalsize");
    data.time_send     = 0.0f;
    data.time_receive  = 0.0f;
    data.time_kernel1  = 0.0f;
@@ -459,7 +459,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       return 1;
    }
 
-   if ( build_kernel() )
+   if ( build_kernel( Opts.Int.Get("-maxlocalsize") ) )
    {
       fprintf(stderr,"Error in build the kernel.\n");
       return 1;
