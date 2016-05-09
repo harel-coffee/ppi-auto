@@ -1,0 +1,5 @@
+S = <exp> <exp>
+P = <exp>   ::= <exp> <op> <exp> | <preop> <exp> | <var>
+    <op>    ::=  + | -
+    <preop> ::= sqrt | sin | cos
+    <var>   ::= attr1
