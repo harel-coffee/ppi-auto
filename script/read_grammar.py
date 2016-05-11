@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-from pylab import *
-
-import random
 import numpy as np
 
 def interpreter(terminal):
