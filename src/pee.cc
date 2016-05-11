@@ -55,7 +55,7 @@ struct Peer {
   float frequency;
 };
 
-namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int verbose; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; } data; };
+namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int verbose; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; double time_evaluate; double time_crossover; double time_mutation; double time_clone; double time_tournament; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -471,6 +471,7 @@ int pee_tournament( const float* fitness )
 
 void pee_send_individual( Population* population )
 {
+   //std::cerr << data.peers.size() << std::endl;
    for( int i = 0; i < data.peers.size(); i++ )
    { 
       if( random_number() < data.peers[i].frequency )
@@ -490,7 +491,9 @@ void pee_send_individual( Population* population )
          delete data.pool->clients[i], data.pool->ss[i];
          data.pool->ss[i] = new StreamSocket();
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str() );
-         data.pool->threads[i]->start( *( data.pool->clients[i] ) );
+         if( data.pool->starts[i] ) { data.pool->threads[i]->join(); }
+         data.pool->threads[i]->start( *(data.pool->clients[i]) );
+         if( !data.pool->starts[i] ) { data.pool->starts[i] = true; }
 
          std::cerr << "Sending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
          //std::cerr << results.str() << std::endl;
@@ -711,7 +714,7 @@ void pee_print_time()
    {
       acc_print_time();
    }
-   printf("time_total: %lf\n", data.time_total);
+   cerr << "time_evaluate: " << data.time_evaluate << ", time_crossover: " << data.time_crossover << ", time_mutation: " << data.time_mutation << ", time_clone: " << data.time_clone << ", time_tournament: " << data.time_tournament << ", time_total: " << data.time_total << "\n" << endl;
 }
 
 void pee_evolve()
@@ -771,13 +774,15 @@ void pee_evolve()
    util::Timer t_generate;
    // -----
    // 1 e 2:
+   cerr << "\nGeracao[0]  ";
    pee_generate_population( &antecedentes, &descendentes, &nImmigrants );
-   cerr << "Generate Population Time: " <<  t_generate.elapsed() << endl;
+   cerr << ", time_generate[fixo]: " <<  t_generate.elapsed() << endl;
 
-   double time_tournament = 0.;
-   double time_crossover  = 0.;
-   double time_mutation   = 0.;
-   double time_clone      = 0.;
+   data.time_evaluate   = 0.0f;
+   data.time_crossover  = 0.0f;
+   data.time_mutation   = 0.0f;
+   data.time_clone      = 0.0f;
+   data.time_tournament = 0.0f;
    
    // 3:
    for( int geracao = 1; geracao <= data.generations; ++geracao )
@@ -785,24 +790,27 @@ void pee_evolve()
       // 4:
       if( data.elitism ) 
       {
+         // -----
+         util::Timer t_clone;
+         // -----
          pee_clone( &data.best_individual, 0, &descendentes, 0 );
+         data.time_clone += t_clone.elapsed();
          nImmigrants++;
       }
 
-      std::cerr << "nImmigrants[geration:" << geracao << "]: " << nImmigrants << std::endl;
+      std::cerr << "nImmigrants[generation: " << geracao << "]: " << nImmigrants << std::endl;
 
       // 5
       // TODO: Parallelize this loop!
       for( int i = nImmigrants; i < data.population_size; i += 2 )
       {
-
          // -----
          util::Timer t_tournament;
          // -----
          // 6:
          int idx_father = pee_tournament( antecedentes.fitness );
          int idx_mother = pee_tournament( antecedentes.fitness );
-         time_tournament += t_tournament.elapsed();
+         data.time_tournament += t_tournament.elapsed();
 
          // 7:
          if( random_number() < data.crossover_rate )
@@ -819,7 +827,7 @@ void pee_evolve()
             {
                pee_crossover( antecedentes.genome + (idx_father * data.number_of_bits), antecedentes.genome + (idx_mother * data.number_of_bits), descendentes.genome + (i * data.number_of_bits), descendentes.genome + (i * data.number_of_bits));
             }
-            time_crossover += t_crossover.elapsed();
+            data.time_crossover += t_crossover.elapsed();
          } // 10
          else 
          {
@@ -832,7 +840,7 @@ void pee_evolve()
             {
                pee_clone( &antecedentes, idx_mother, &descendentes, i + 1 );
             }
-            time_clone += t_clone.elapsed();
+            data.time_clone += t_clone.elapsed();
          } // 10
 
          // -----
@@ -844,18 +852,18 @@ void pee_evolve()
          {
             pee_mutation( descendentes.genome + ((i + 1) * data.number_of_bits) );
          }
-         time_mutation += t_mutation.elapsed();
+         data.time_mutation += t_mutation.elapsed();
       } // 16
 
       // -----
       util::Timer t_evaluate;
       // -----
       // 17:
+      cerr << "\nGeracao[" << geracao << "]  ";
       if (pee_evaluate( &descendentes, &antecedentes, &nImmigrants ) > data.stagnation_tolerance) geracao = data.generations;
-
-      cerr << "Evaluate Time: " << t_evaluate.elapsed() << endl;
-
-      //pee_send_individual( &descendentes );
+      double time = t_evaluate.elapsed(); 
+      cerr << ", time_evaluate: " << time << endl;
+      data.time_evaluate += time;
 
       // 18:
       swap( &antecedentes, &descendentes );
@@ -871,10 +879,6 @@ void pee_evolve()
    delete[] antecedentes.genome, antecedentes.fitness, descendentes.genome, descendentes.fitness; 
 
    data.time_total = t_total.elapsed();
-   cerr << "Tournament time: " << time_tournament << endl;
-   cerr << "Crossover time: " << time_crossover << endl;
-   cerr << "Mutation time: " << time_mutation << endl;
-   cerr << "Clone time: " << time_clone << endl;
 }
 
 void pee_destroy()

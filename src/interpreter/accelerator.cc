@@ -24,7 +24,7 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int max_size; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string error; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_kernel; double time_overhead; } data; };
+namespace { static struct t_data { int max_size; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string error; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_send; double time_receive; double time_kernel1; double time_kernel2; double time_kernels; double time_overhead; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTION *********************** **/
@@ -163,7 +163,7 @@ int opencl_init( int platform_id, int device_id, cl_device_type type )
 }
 
 // -----------------------------------------------------------------------------
-int build_kernel( )
+int build_kernel( int maxlocalsize )
 {
    ifstream file("accelerator.cl");
    string kernel_str( istreambuf_iterator<char>(file), ( istreambuf_iterator<char>()) );
@@ -187,10 +187,21 @@ int build_kernel( )
    }
 
    unsigned max_cu = data.device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-   unsigned max_local_size = fmin( data.device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), data.device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
-
-   std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << 
-     ", Compute units: " << max_cu << ", Local size: " << max_local_size <<  std::endl;
+   unsigned max_local_size;
+   if( maxlocalsize > 0 )
+   {
+      max_local_size = maxlocalsize;
+   }
+   else 
+   {
+      max_local_size = fmin( data.device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), data.device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
+   
+      //It is necessary to respect the local memory size. 
+      //Depending on the maximum local size, there will not be enough space to allocate the local variables. 
+      //The local size depends on the maximum local size. 
+      //The division by 8: 2 local vectors in best_individual kernel * 4 bytes
+      max_local_size = fmin( max_local_size, data.device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>() / 8 );
+   }
 
    if( data.strategy == "PP" )  // Population-parallel
    {
@@ -222,6 +233,7 @@ int build_kernel( )
             {
                data.local_size1 = max_local_size;
             }
+            //data.local_size1 = 128;
             // One individual per work-group
             data.global_size1 = data.population_size * data.local_size1;
             data.kernel1 = cl::Kernel( program, "evaluate_ppcu" );
@@ -240,9 +252,9 @@ int build_kernel( )
    data.global_size2 = (unsigned) ( ceil( data.population_size/(float) data.local_size2 ) * data.local_size2 );
    data.kernel2 = cl::Kernel( program, "best_individual" );
 
-
-   //std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
-   //std::cout << "\nLocal size: " << data.local_size1 << ", Global size: " << data.global_size1 << ", Work groups: " << data.global_size1/data.local_size1 << "\n" << std::endl;
+   std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
+   std::cout << "\nLocal size: " << data.local_size1 << ", Global size: " << data.global_size1 << ", Work groups: " << data.global_size1/data.local_size1 << std::endl;
+   std::cout << "\nLocal size: " << data.local_size2 << ", Global size: " << data.global_size2 << ", Work groups: " << data.global_size2/data.local_size2 << std::endl;
 
    return 0;
 }
@@ -325,6 +337,7 @@ void create_buffers( float** input, int ncol, int prediction_mode )
    event.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    event.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
    data.time_overhead += (end - start)/1.0E9;
+   cerr << "\ntime_overhead[fixo]: " << (end - start)/1.0E9 << endl;
 
    //inputs = (float*) data.queue.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_READ, 0, data.nlin * ncol * sizeof( float ) );
    //for( int i = 0; i < data.nlin * ncol; i++ )
@@ -402,6 +415,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    Opts.Int.Add( "-ncol", "--number-of-columns" );
    Opts.Int.Add( "-cl-p", "--platform-id", -1, 0 );
    Opts.Int.Add( "-cl-d", "--device-id", -1, 0 );
+   Opts.Int.Add( "-maxlocalsize", "--maximum-local-size", -1 );
    Opts.String.Add( "-type" );
    Opts.String.Add( "-strategy" );
    Opts.String.Add( "-error", "--function-difference", "fabs((X)-(Y))" );
@@ -411,7 +425,11 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    data.max_size = size;
    data.nlin = nlin;
    data.population_size = population_size;
-   data.time_kernel = 0.0f;
+   data.time_send     = 0.0f;
+   data.time_receive  = 0.0f;
+   data.time_kernel1  = 0.0f;
+   data.time_kernel2  = 0.0f;
+   data.time_kernels  = 0.0f;
    data.time_overhead = 0.0f;
 
    cl_device_type type = CL_INVALID_DEVICE_TYPE;
@@ -441,7 +459,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       return 1;
    }
 
-   if ( build_kernel() )
+   if ( build_kernel( Opts.Int.Get("-maxlocalsize") ) )
    {
       fprintf(stderr,"Error in build the kernel.\n");
       return 1;
@@ -463,24 +481,28 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 // -----------------------------------------------------------------------------
 void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, void (*send)(Population*), int (*receive)(int*), Population* migrants, int* nImmigrants, int* index, int* best_size, int prediction_mode, float alpha )
 {
-   //vector<cl::Event> events(4); 
-   cl::Event event0; 
-   cl::Event event1; 
-   cl::Event event2; 
-   cl::Event event3; 
+   std::vector<cl::Event> events(5); 
 
-   data.queue.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, data.max_size * nInd * sizeof( Symbol ), phenotype, NULL, &event1 );
-   data.queue.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, data.max_size * nInd * sizeof( float ), ephemeral, NULL, &event2 ); 
-   data.queue.enqueueWriteBuffer( data.buffer_size, CL_TRUE, 0, nInd * sizeof( int ), size, NULL, &event3 ); 
+   data.queue.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, data.max_size * nInd * sizeof( Symbol ), phenotype, NULL, &events[0] );
+   data.queue.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, data.max_size * nInd * sizeof( float ), ephemeral, NULL, &events[1] ); 
+   data.queue.enqueueWriteBuffer( data.buffer_size, CL_TRUE, 0, nInd * sizeof( int ), size, NULL, &events[2] ); 
 
    if( data.strategy == "FP" ) 
    {
       data.kernel1.setArg( 9, nInd );
    }
 
-   // ---------- begin kernel execution
-   data.queue.enqueueNDRangeKernel( data.kernel1, cl::NDRange(), cl::NDRange( data.global_size1 ), cl::NDRange( data.local_size1 ), NULL, &event0 );
-   // ---------- end kernel execution
+   //std::cerr << "Global size: " << data.global_size1 << " Local size: " << data.local_size1 << " Work group: " << data.global_size1/data.local_size1 << std::endl;
+   try {
+      // ---------- begin kernel execution
+      data.queue.enqueueNDRangeKernel( data.kernel1, cl::NDRange(), cl::NDRange( data.global_size1 ), cl::NDRange( data.local_size1 ), NULL, &events[3] );
+      // ---------- end kernel execution
+   }
+   catch( cl::Error& e )
+   {
+      cerr << "\nERROR(kernel1): " << e.what() << " ( " << e.err() << " )\n";
+      throw;
+   }
 
    // substitui os três enqueueMapBuffer
    // event4 começa depois que o evento0 terminar
@@ -491,39 +513,42 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    {
       if( data.strategy == "PPCU" || data.strategy == "PP" ) 
       {
-         // ---------- begin kernel execution
-         data.queue.enqueueNDRangeKernel( data.kernel2, cl::NDRange(), cl::NDRange( data.global_size2 ), cl::NDRange( data.local_size2 ) );
-         // ---------- end kernel execution
+         //std::cerr << "Global size: " << data.global_size2 << " Local size: " << data.local_size2 << " Work group: " << data.global_size2/data.local_size2 << std::endl;
+         try 
+         {
+            // ---------- begin kernel execution
+            data.queue.enqueueNDRangeKernel( data.kernel2, cl::NDRange(), cl::NDRange( data.global_size2 ), cl::NDRange( data.local_size2 ), NULL, &events[4] );
+            // ---------- end kernel execution
+         }
+         catch( cl::Error& e )
+         {
+            cerr << "\nERROR(kernel2): " << e.what() << " ( " << e.err() << " )\n";
+            throw;
+         }
       }
    }
 
    data.queue.flush();
-   util::Timer t_kernel;
+   util::Timer t_time; //TODO: Onde colocar essa linha?
+   double time;
 
-
+   util::Timer t_send;
    send( migrants );
+   time = t_send.elapsed();
+   cerr << "time_send: " << time;
+   data.time_send += time;
+
+   util::Timer t_receive;
    *nImmigrants = receive( migrants->genome );
+   time = t_receive.elapsed();
+   cerr << ", time_receive: " << time;
+   data.time_receive += time;
 
    // Wait until the kernel has finished
-   //t_kernel.reset();
    data.queue.finish();
-   //cerr << t_kernel.elapsed() << endl;
-
-   cl_ulong start, end;
-   event0.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-   event0.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_kernel += (end - start)/1.0E9;
-   cerr << "Kernel Time: " << (end - start)/1.0E9 << endl;
-
-   event1.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-   event1.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_overhead += (end - start)/1.0E9;
-   event2.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-   event2.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_overhead += (end - start)/1.0E9;
-   event3.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-   event3.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_overhead += (end - start)/1.0E9;
+   time = t_time.elapsed();
+   cerr << ", time_kernels(send+receive): " << time;
+   data.time_kernels += time;
 
 
    // TODO: data.queuetransfer.finish();
@@ -573,10 +598,19 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 
          data.queue.enqueueWriteBuffer( data.buffer_error, CL_TRUE, 0, data.population_size * sizeof( float ), vector );
 
-         // ---------- begin kernel execution
-         data.queue.enqueueNDRangeKernel( data.kernel2, cl::NDRange(), cl::NDRange( data.global_size2 ), cl::NDRange( data.local_size2 ) );
-         // ---------- end kernel execution
-
+         //std::cerr << "Global size: " << data.global_size2 << " Local size: " << data.local_size2 << " Work group: " << data.global_size2/data.local_size2 << std::endl;
+         try
+         {
+            // ---------- begin kernel execution
+            data.queue.enqueueNDRangeKernel( data.kernel2, cl::NDRange(), cl::NDRange( data.global_size2 ), cl::NDRange( data.local_size2 ), NULL, &events[4] );
+            // ---------- end kernel execution
+         }
+         catch( cl::Error& e )
+         {
+            cerr << "\nERROR(kernel2): " << e.what() << " ( " << e.err() << " )\n";
+            throw;
+         }
+ 
          // Wait until the kernel has finished
          data.queue.finish();
       }
@@ -591,10 +625,6 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
             //vector = tmp;
          }
       }
-
-      clock_t start, end;
-      start = clock();
-
 
       const unsigned num_work_groups2 = data.global_size2 / data.local_size2;
 
@@ -620,18 +650,41 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       }
       //fprintf(stdout,"\n============================\n");
 
-      end = clock();
-      cerr << "Best Time: " << ((double)(end - start))/((double)(CLOCKS_PER_SEC)) << endl;
-
       data.queue.enqueueUnmapMemObject( data.buffer_pb, PB ); 
       data.queue.enqueueUnmapMemObject( data.buffer_pi, PI );
    }
    //essa linha some
    data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp ); 
+
+   cl_ulong start, end;
+   events[0].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   events[0].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_overhead += (end - start)/1.0E9;
+   time = (end - start)/1.0E9;
+   events[1].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   events[1].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_overhead += (end - start)/1.0E9; 
+   time += (end - start)/1.0E9;
+   events[2].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   events[2].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_overhead += (end - start)/1.0E9; 
+   time += (end - start)/1.0E9;
+   
+   events[3].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   events[3].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_kernel1 += (end - start)/1.0E9;
+   cerr << ", time_kernel[1]: " << (end - start)/1.0E9;
+
+   events[4].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   events[4].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_kernel2 += (end - start)/1.0E9;
+   cerr << ", time_kernel[2]: " << (end - start)/1.0E9;
+   
+   cerr << ", time_overhead: " << time;
 }
 
 // -----------------------------------------------------------------------------
 void acc_print_time()
 {
-   printf("time_overhead: %lf, time_kernel: %lf, ", data.time_overhead, data.time_kernel);
+   printf("\ntime_send: %lf, time_receive: %lf, time_kernels(send+receive): %lf, time_kernel[1]: %lf, time_kernel[2]: %lf, time_overhead: %lf, ", data.time_send, data.time_receive, data.time_kernels, data.time_kernel1, data.time_kernel2, data.time_overhead);
 }

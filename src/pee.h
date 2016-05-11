@@ -45,11 +45,12 @@ void pee_destroy();
 class Pool {
 public:
 
-   Pool( unsigned size ): threads( size ), ss( size, NULL), clients( size, NULL ) 
+   Pool( unsigned size ): threads( size ), ss( size, NULL), clients( size, NULL ), starts( size ) 
    {
       for( int i = 0; i < threads.size(); i++ )
       {
          threads[i] = new Poco::Thread();
+         starts[i] = false;
       }
    }
  
@@ -68,6 +69,7 @@ public:
    std::vector<Poco::Thread*> threads;
    std::vector<StreamSocket*> ss;
    std::vector<Client*> clients;
+   std::vector<bool> starts;
 };
 /******************************************************************************/
 

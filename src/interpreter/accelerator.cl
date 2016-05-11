@@ -1,3 +1,5 @@
+//#pragma OPENCL EXTENSION cl_amd_printf: enable
+//#pragma OPENCL EXTENSION cl_intel_printf : enable
 #include "symbol"
 
 __kernel void
