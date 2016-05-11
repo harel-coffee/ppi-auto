@@ -41,8 +41,6 @@
  */
 #define ALPHA 0.000001
 
-#define TWO_POINT_CROSSOVER 1
-
 using namespace std;
 
 /** ****************************************************************** **/
@@ -642,47 +640,48 @@ void pee_generate_population( Population* antecedentes, Population* descendentes
 
 void pee_crossover( const int* father, const int* mother, int* offspring1, int* offspring2 )
 {
-#ifdef TWO_POINT_CROSSOVER
-   // Cruzamento de dois pontos
-   int pontos[2];
-
-   // Cortar apenas nas bordas dos genes
-   pontos[0] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
-   pontos[1] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
-
-   int tmp;
-   if( pontos[0] > pontos[1] ) { tmp = pontos[0]; pontos[0] = pontos[1]; pontos[1] = tmp; }
-
-   for( int i = 0; i < pontos[0]; ++i )
+   if (RNG::Probability(2./3.))
    {
-      offspring1[i] = father[i];
-      offspring2[i] = mother[i];
+      // Cruzamento de dois pontos
+      int pontos[2];
+   
+      // Cortar apenas nas bordas dos genes
+      pontos[0] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
+      pontos[1] = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
+   
+      int tmp;
+      if( pontos[0] > pontos[1] ) { tmp = pontos[0]; pontos[0] = pontos[1]; pontos[1] = tmp; }
+   
+      for( int i = 0; i < pontos[0]; ++i )
+      {
+         offspring1[i] = father[i];
+         offspring2[i] = mother[i];
+      }
+      for( int i = pontos[0]; i < pontos[1]; ++i )
+      {
+         offspring1[i] = mother[i];
+         offspring2[i] = father[i];
+      }
+      for( int i = pontos[1]; i < data.number_of_bits; ++i )
+      {
+         offspring1[i] = father[i];
+         offspring2[i] = mother[i];
+      }
+   } else {
+      // Cruzamento de um ponto
+      int pontoDeCruzamento = (int)(random_number() * data.number_of_bits);
+   
+      for( int i = 0; i < pontoDeCruzamento; ++i )
+      {
+         offspring1[i] = father[i];
+         offspring2[i] = mother[i];
+      }
+      for( int i = pontoDeCruzamento; i < data.number_of_bits; ++i )
+      {
+         offspring1[i] = mother[i];
+         offspring2[i] = father[i];
+      }
    }
-   for( int i = pontos[0]; i < pontos[1]; ++i )
-   {
-      offspring1[i] = mother[i];
-      offspring2[i] = father[i];
-   }
-   for( int i = pontos[1]; i < data.number_of_bits; ++i )
-   {
-      offspring1[i] = father[i];
-      offspring2[i] = mother[i];
-   }
-#else
-   // Cruzamento de um ponto
-   int pontoDeCruzamento = (int)(random_number() * data.number_of_bits);
-
-   for( int i = 0; i < pontoDeCruzamento; ++i )
-   {
-      offspring1[i] = father[i];
-      offspring2[i] = mother[i];
-   }
-   for( int i = pontoDeCruzamento; i < data.number_of_bits; ++i )
-   {
-      offspring1[i] = mother[i];
-      offspring2[i] = father[i];
-   }
-#endif
 }
 
 void pee_mutation( int* genome )
