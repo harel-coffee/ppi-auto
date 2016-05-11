@@ -6,8 +6,8 @@ void Client::SndIndividual()
    //std::cerr << "SndIndividual (ainda não conectado)" << std::endl;
    if( Connect() )
    {
-      SndHeader( 'I', m_results.size() );
-      SndMessage( m_results.data(), m_results.size() );
+      if (SndHeader( 'I', m_results.size() ))
+         SndMessage( m_results.data(), m_results.size() );
 
       Disconnect();
    }

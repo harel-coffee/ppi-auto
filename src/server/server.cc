@@ -37,9 +37,13 @@ void Server::run()
                       m_freeslots.pop();
                    }
 
-                   // Receive the message
+                   /* Receive the message ("individual"). Note that if a
+                    * problem occurs while receiving the message, the array
+                    * m_immigrants[slot] will contain a truncated message
+                    * ("junk"). This is not a serious problem because it will
+                    * act if the individual had undergone a mutation. */
                    RcvMessage( msg_size, m_immigrants[slot] );
-                   
+
                    {
                       Poco::FastMutex::ScopedLock lock( m_mutex );
 
