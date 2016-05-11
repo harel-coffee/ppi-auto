@@ -2,9 +2,11 @@
 #include <stdio.h> 
 #include <cmath>    
 #include "util/CmdLineParser.h"
+#include "util/Exception.h"
 #include "pee.h"
 #include "pep.h"
 #include "server/server.h"
+#include "Poco/Exception.h"
 
 //TODO fazer comentários; passar para inglês
 
@@ -68,49 +70,71 @@ void destroy( float** input, int nlin )
 
 int main(int argc, char** argv)
 {
-   CmdLine::Parser Opts( argc, argv );
+   try {
+      CmdLine::Parser Opts( argc, argv );
 
-   Opts.Int.Add( "-ncol", "--number_of_columns" );
-   Opts.Int.Add( "-port", "--number_of_port" );
-   Opts.String.Add( "-d", "--dataset" );
-   Opts.String.Add( "-run", "--program_file" );
+      Opts.Int.Add( "-ncol", "--number_of_columns" );
+      Opts.Int.Add( "-port", "--number_of_port" );
+      Opts.String.Add( "-d", "--dataset" );
+      Opts.String.Add( "-run", "--program_file" );
 
-   Opts.Process();
+      Opts.Process();
 
-   int ncol = Opts.Int.Get("-ncol");   
-   
-   int nlin;
-   float** input;
+      int ncol = Opts.Int.Get("-ncol");   
 
-   int error = read( Opts.String.Get("-d"), input, ncol, nlin );
-   if ( error ) {return error;}
+      int nlin;
+      float** input;
 
-   if( Opts.String.Found("-run") )
-   {
-      pep_init( input, nlin, argc, argv );
-      pep_interpret();
-      pep_print( stdout );
-      pep_destroy();
+      int error = read( Opts.String.Get("-d"), input, ncol, nlin );
+      if ( error ) {return error;}
+
+      if( Opts.String.Found("-run") )
+      {
+         pep_init( input, nlin, argc, argv );
+         pep_interpret();
+         pep_print( stdout );
+         pep_destroy();
+      }
+      else
+      {
+         ServerSocket svs(SocketAddress("0.0.0.0", Opts.Int.Get("-port")));
+         TCPServerParams* pParams = new TCPServerParams;
+         //pParams->setMaxThreads(4);
+         //pParams->setMaxQueued(4);
+         //pParams->setThreadIdleTime(1000);
+         TCPServer srv(new TCPServerConnectionFactoryImpl<Server>(), svs, pParams);
+         srv.start();
+         //sleep(100);
+
+         pee_init( input, nlin, argc, argv );
+         pee_evolve();
+         //pee_print_best( stdout, 1 );
+         pee_print_time();
+         pee_destroy();
+      }
+
+      destroy(input, nlin);
    }
-   else
-   {
-      ServerSocket svs(SocketAddress("0.0.0.0", Opts.Int.Get("-port")));
-      TCPServerParams* pParams = new TCPServerParams;
-      //pParams->setMaxThreads(4);
-      //pParams->setMaxQueued(4);
-      //pParams->setThreadIdleTime(1000);
-      TCPServer srv(new TCPServerConnectionFactoryImpl<Server>(), svs, pParams);
-      srv.start();
-      //sleep(100);
-
-      pee_init( input, nlin, argc, argv );
-      pee_evolve();
-      //pee_print_best( stdout, 1 );
-      pee_print_time();
-      pee_destroy();
+   catch( const CmdLine::E_Exception& e ) {
+      std::cerr << e;
+      return 1;
    }
-  
-   destroy(input, nlin);
+   catch( const Exception& e ) {
+      std::cerr << e;
+      return 2;
+   }
+   catch( const Poco::Exception& e ) {
+      std::cerr << '\n' << "> Error: " << e.displayText() << " [@ Poco]\n";
+      return 4;
+   }
+   catch( const std::exception& e ) {
+      std::cerr << '\n' << "> Error: " << e.what() << std::endl;
+      return 8;
+   }
+   catch( ... ) {
+      std::cerr << '\n' << "> Error: " << "An unknown error occurred." << std::endl;
+      return 16;
+   }
 
    return 0;
 }
