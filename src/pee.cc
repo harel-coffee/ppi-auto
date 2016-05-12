@@ -484,9 +484,8 @@ void pee_send_individual( Population* population )
 
          std::stringstream results; //results.str(std::string());
          results <<  population->fitness[idx] << " ";
-         for( int j = 0; j < data.number_of_bits-1; j++ )
-            results <<  population->genome[idx * data.number_of_bits + j] << " ";
-         results <<  population->genome[idx * data.number_of_bits + data.number_of_bits];
+         for( int j = 0; j < data.number_of_bits; j++ )
+            results <<  population->genome[idx * data.number_of_bits + j];
 
          delete data.pool->clients[i], data.pool->ss[i];
          data.pool->ss[i] = new StreamSocket();
@@ -534,13 +533,16 @@ int pee_receive_individual( int* immigrants )
 
       //fprintf(stdout,"Receiving[slot=%d]: ",slot);
 
-      /* FIXME:
-         Existe um caso que precisa ser tratado:
-          - quando o tamanho do array apontado por 'tmp' é *menor* do que 'data.number_of_bits' -> neste caso só se pode copiar a quantidade de chars que existem em 'tmp' (é preciso verificar pelo caracter fim de linha, isto é, '\0').
-      */
-      for( int i = 0, j = 0; i < data.number_of_bits; i++, j += 2 )
+      /* It is possible that the number of char bits in 'tmp' is smaller than
+       * 'number_of_bits', for instance when the parameter '-nb' of an external
+       * island is smaller than the '-nb' of the current island. The line below
+       * handles this case (it also takes into account the offset). */
+      int chars_to_convert = std::min((int) data.number_of_bits, (int) Server::m_immigrants[slot].size() - offset - 1);
+      //std::cerr << "\n[" << offset << ", " << Server::m_immigrants[slot].size() << ", " << chars_to_convert << ", " << data.number_of_bits << "]\n";
+      for( int i = 0; i < chars_to_convert; i++ )
+      // TODO? for( int i = 0; i < chars_to_convert && tmp[i] != '\0'; i++ )
       {
-         immigrants[nImmigrants * data.number_of_bits + i] = tmp[j] - '0';
+         immigrants[nImmigrants * data.number_of_bits + i] = tmp[i] - '0';
          //fprintf(stdout,"%d ",immigrants[nImmigrants * data.number_of_bits + i]);
       }
       nImmigrants++;
