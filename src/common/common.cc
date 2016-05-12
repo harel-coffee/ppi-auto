@@ -5,11 +5,20 @@ Logger& Common::m_logger( Logger::get( "logger" ) );
 
 
 /******************************************************************************/
-void Common::SndMessage( const void* buffer, int msg_size )
+bool Common::SndMessage( const void* buffer, int msg_size )
 {
-   int n = m_ss.sendBytes( buffer, msg_size );
-   //std::cerr << "SndMessage " << n << std::endl;
-   assert( n == msg_size );
+   try {
+      int n = m_ss.sendBytes( buffer, msg_size );
+      //std::cerr << "SndMessage " << n << std::endl;
+      if (n != msg_size) throw Poco::Exception("Could not send the whole message");
+   }
+   catch (Poco::Exception& exc) {
+      std::cerr << "Connection: " << exc.displayText() << std::endl;
+
+      return false;
+   }
+
+   return true;
 }
 
 /******************************************************************************/

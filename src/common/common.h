@@ -46,7 +46,7 @@ public:
                            AutoPtr<ConsoleChannel>(new ConsoleChannel))) );
    }
 
-   void SndMessage( const void* buffer, int msg_size );
+   bool SndMessage( const void* buffer, int msg_size );
    bool SndHeader( char command, int msg_size = 0 );
    char RcvHeader( int& msg_size );
 
