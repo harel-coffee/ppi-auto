@@ -1,6 +1,30 @@
 #!/usr/bin/env python
 
+#Running: 
+#          python script/read_grammar.py -i problem/random/grammar_bnf
+#
+
+import sys, getopt
+
 import numpy as np
+
+
+def main(argv):
+   try:
+      opts, args = getopt.getopt(argv,"hi:",["help", "ifile="])
+   except getopt.GetoptError:
+      print 'test.py -i <inputfile>'
+      sys.exit(2)
+   for opt, arg in opts:
+      if opt in ("-h", "--help"):
+         print 'test.py -i <inputfile>'
+         sys.exit()
+      elif opt in ("-i", "--ifile"):
+         inputfile = arg
+         return inputfile
+      else:
+         return None
+
 
 def interpreter(terminal):
       if terminal == ">":
@@ -27,11 +51,17 @@ def interpreter(terminal):
          return None
 
 
-name = "../problem/teste/grammar_bnf1"
+if __name__ == "__main__":
+   inputfile = main(sys.argv[1:])
+if inputfile is None:
+   print 'test.py -i <inputfile>'
+   exit();
+
+
 try:
-   f = open(name,"r")
+   f = open(inputfile,"r")
 except IOError:
-   print "Could not open file " + name + "!"
+   print "Could not open file " + inputfile + "!"
 lines = f.readlines()
 f.close()
  
@@ -180,16 +210,16 @@ text4 = ''.join(text4)
 text5 = ''.join(text5)
 text6 = ''.join(text6)
 
-f = open("../problem/teste/grammar", 'w')
+f = open("src/grammar", 'w')
 f.write("#define MAX_QUANT_SIMBOLOS_POR_REGRA " + str(maxrule) + "\n\nstruct t_rule { unsigned quantity; Symbol symbols[MAX_QUANT_SIMBOLOS_POR_REGRA]; };\n\n" + text0 + text1 + text2 + text3)
 f.close()
 
-f = open("../problem/teste/symbol", 'w')
-#f.write("#ifndef __SYMBOL_H\n#define __SYMBOL_H\n\n#define TERMINAL_MIN 10000\n#define ATTRIBUTE_MIN 20000\n\ntypedef enum { " + text4 + text5 + text6 + " } Symbol;\n#endif")
-f.write("#ifndef __SYMBOL_H\n#define __SYMBOL_H\n\n#define TERMINAL_MIN 10000\n#define ATTRIBUTE_MIN 20000\n\ntypedef enum { " + text4 + "T_IF_THEN_ELSE = TERMINAL_MIN, T_AND, T_OR, T_XOR, T_NOT, T_GREATER, T_GREATEREQUAL, T_LESS, T_LESSEQUAL, T_EQUAL, T_NOTEQUAL, T_ADD, T_SUB, T_MULT, T_DIV, T_MEAN, T_MAX, T_MIN, T_MOD, T_POW, T_ABS, T_SQRT, T_POW2, T_POW3, T_POW4, T_POW5, T_NEG, T_ROUND, T_CONST, T_0, T_1, T_2, T_3, T_4, T_5, T_6, T_7, T_8, T_9, T_ATTRIBUTE, T_ATTR1 = ATTRIBUTE_MIN, T_ATTR2, T_ATTR3, T_ATTR4, T_ATTR5, T_ATTR6, T_ATTR7, T_ATTR8, T_ATTR9, T_ATTR10, T_ATTR11, T_ATTR12, T_ATTR13, T_ATTR14, T_ATTR15, T_ATTR16, T_ATTR17, T_ATTR18, T_ATTR19, T_ATTR20, T_ATTR21, T_ATTR22, T_ATTR23, T_ATTR24, T_ATTR25, T_ATTR26, T_ATTR27, T_ATTR28, T_ATTR29, T_ATTR30, T_ATTR31, T_ATTR32, T_ATTR33, T_ATTR34, T_ATTR35, T_ATTR36, T_ATTR37, T_ATTR38, T_ATTR39, T_ATTR40, T_ATTR41, T_ATTR42, T_ATTR43, T_ATTR44, T_ATTR45, T_ATTR46, T_ATTR47, T_ATTR48, T_ATTR49 } Symbol;\n#endif")
+f = open("src/symbol", 'w')
+f.write("#ifndef __SYMBOL_H\n#define __SYMBOL_H\n\n#define TERMINAL_MIN 10000\n#define ATTRIBUTE_MIN 20000\n\ntypedef enum { " + text4 + text5 + text6 + " } Symbol;\n#endif")
+#f.write("#ifndef __SYMBOL_H\n#define __SYMBOL_H\n\n#define TERMINAL_MIN 10000\n#define ATTRIBUTE_MIN 20000\n\ntypedef enum { " + text4 + "T_IF_THEN_ELSE = TERMINAL_MIN, T_AND, T_OR, T_XOR, T_NOT, T_GREATER, T_GREATEREQUAL, T_LESS, T_LESSEQUAL, T_EQUAL, T_NOTEQUAL, T_ADD, T_SUB, T_MULT, T_DIV, T_MEAN, T_MAX, T_MIN, T_MOD, T_POW, T_ABS, T_SQRT, T_POW2, T_POW3, T_POW4, T_POW5, T_NEG, T_ROUND, T_CONST, T_0, T_1, T_2, T_3, T_4, T_5, T_6, T_7, T_8, T_9, T_ATTRIBUTE, T_ATTR1 = ATTRIBUTE_MIN, T_ATTR2, T_ATTR3, T_ATTR4, T_ATTR5, T_ATTR6, T_ATTR7, T_ATTR8, T_ATTR9, T_ATTR10, T_ATTR11, T_ATTR12, T_ATTR13, T_ATTR14, T_ATTR15, T_ATTR16, T_ATTR17, T_ATTR18, T_ATTR19, T_ATTR20, T_ATTR21, T_ATTR22, T_ATTR23, T_ATTR24, T_ATTR25, T_ATTR26, T_ATTR27, T_ATTR28, T_ATTR29, T_ATTR30, T_ATTR31, T_ATTR32, T_ATTR33, T_ATTR34, T_ATTR35, T_ATTR36, T_ATTR37, T_ATTR38, T_ATTR39, T_ATTR40, T_ATTR41, T_ATTR42, T_ATTR43, T_ATTR44, T_ATTR45, T_ATTR46, T_ATTR47, T_ATTR48, T_ATTR49 } Symbol;\n#endif")
 f.close()
 
-name = "../problem/interpreter_core"
+name = "problem/interpreter_core"
 try:
    f = open(name,"r")
 except IOError:
@@ -206,11 +236,11 @@ for i in range(0,len(index)):
    terminais.append(lines[index[i]].split('case ')[1].split(':')[0])
    if lines[index[i]].split('case ')[1].split(':')[0] in lst:
       if i+1 > len(index)-1:
-         core += lines[index[i]:len(lines)-1]
+         core += lines[index[i]:len(lines)]
       else:
-         core += lines[index[i]:index[i+1]-1]
+         core += lines[index[i]:index[i+1]]
 
-f = open("../problem/teste/interpreter_core", 'w')
+f = open("src/interpreter/interpreter_core", 'w')
 f.write(''.join(core))
 f.close()
 
@@ -222,5 +252,39 @@ lst = [i for i in lst if not "TERMINAL_MIN" in i]
 missing = [i for i in lst if not i in terminais]
 for i in range(0,len(missing)):
    if missing[i] != "T_CONST":
-      print "Faltando terminal: ", missing[i]
+      print "Missing terminal:", missing[i], "\nPlease check the interpreter_core file"
      
+name = "problem/pee_individual_print_function"
+try:
+   f = open(name,"r")
+except IOError:
+   print "Could not open file " + name + "!"
+lines = f.readlines()
+f.close()
+
+lst = list(text5.split())
+lst = [s.replace(',', '') for s in lst]
+
+print_function = []; terminais = [];
+index = [i for i, j in enumerate(lines) if 'case' in j]
+for i in range(0,len(index)):
+   terminais.append(lines[index[i]].split('case ')[1].split(':')[0])
+   if lines[index[i]].split('case ')[1].split(':')[0] in lst:
+      if i+1 > len(index)-1:
+         print_function += lines[index[i]:len(lines)]
+      else:
+         print_function += lines[index[i]:index[i+1]]
+
+f = open("src/pee_individual_print_function", 'w')
+f.write("void pee_individual_print( const Population* individual, int idx, FILE* out, int print_mode )\n{\nSymbol phenotype[data.max_size_phenotype];\nfloat ephemeral[data.max_size_phenotype];\n\nint allele = 0;\nint size = decode( individual->genome + (idx * data.number_of_bits), &allele, phenotype, ephemeral, 0, data.initial_symbol );\nif( !size ) { return; }\n\nif( print_mode )\n{\nfprintf( out, \"{%d}\\n\", size );\nfor( int i = 0; i < size; ++i )\nif( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )\nfprintf( out, \"%d %.12f \", phenotype[i], ephemeral[i] );\nelse\nfprintf( out, \"%d \", phenotype[i] );\nfprintf( out, \"\\n\" );\n}\nelse\nfprintf( out, \"{%d} \", size );\n\nfor( int i = 0; i < size; ++i )\nswitch( phenotype[i] )\n{\n" + ''.join(print_function) + "case T_ATTRIBUTE:\nfprintf( out, \"ATTR-%d \", (int)ephemeral[i] );\nbreak;\n}\nif( print_mode )\n{\nfprintf( out, \"\\n\" );\nfprintf( out, \":: %.12f\\n\", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity\n}\nelse\nfprintf( out, \":: %.12f\\n\", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity\n}")
+f.close()
+
+#lst -> contem os terminais fornecidos pela gramatica bnf
+#terminais -> contem os terminais tratados no algoritmo (interpreter_core)
+lst = [i for i in lst if not "=" in i]
+lst = [i for i in lst if not "TERMINAL_MIN" in i]
+#Imprime os terminais contidos em lst, mas que nao estao em terminais
+missing = [i for i in lst if not i in terminais]
+for i in range(0,len(missing)):
+   print "Missing terminal:", missing[i], "\nPlease check the pee_individual_print file"
+ 

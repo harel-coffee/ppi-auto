@@ -173,7 +173,6 @@ int build_kernel( int maxlocalsize, int prediction_mode )
    cl::Program program( data.context, source );
 
    std::stringstream buildOptions;
-
    if( prediction_mode ) 
    {
       buildOptions << "-DMAX_PHENOTYPE_SIZE=" << data.max_size << " -I. -DERROR(X,Y)=" << data.error;
