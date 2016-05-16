@@ -39,7 +39,7 @@
  * operators and operands. ALPHA is usually very small, just enough to favor
  * those that have similar (same) error but are less complex than another.
  */
-#define ALPHA 0.000001
+#define ALPHA 0.000000
 
 using namespace std;
 
@@ -471,6 +471,13 @@ int pee_tournament( const float* fitness )
 
 void pee_send_individual( Population* population )
 {
+   static bool firstcall = true;
+   if( firstcall )
+   {
+      firstcall = false;
+      return;
+   }
+
    //std::cerr << data.peers.size() << std::endl;
    for( int i = 0; i < data.peers.size(); i++ )
    { 
@@ -487,6 +494,11 @@ void pee_send_individual( Population* population )
          for( int j = 0; j < data.number_of_bits; j++ )
             results <<  population->genome[idx * data.number_of_bits + j];
 
+         //std::stringstream results; 
+         //results <<  data.best_individual.fitness[0] << " ";
+         //for( int j = 0; j < data.number_of_bits; j++ )
+         //   results <<  data.best_individual.genome[j];
+
          delete data.pool->clients[i], data.pool->ss[i];
          data.pool->ss[i] = new StreamSocket();
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str() );
@@ -494,7 +506,8 @@ void pee_send_individual( Population* population )
          data.pool->threads[i]->start( *(data.pool->clients[i]) );
          if( !data.pool->starts[i] ) { data.pool->starts[i] = true; }
 
-         std::cerr << "Sending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
+         //std::cerr << "\nSending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << data.best_individual.fitness[0] << std::endl;
+         std::cerr << "\nSending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
          //std::cerr << results.str() << std::endl;
       }
    }
@@ -518,7 +531,14 @@ int pee_receive_individual( int* immigrants )
       sscanf( tmp, "%f%n", &Server::m_fitness[slot], &offset );
       tmp += offset + 1; 
       
-      //std::cerr << "Receiving[slot=" << slot << "]: " << tmp << std::endl;
+      //std::cerr << "\nReceive::Receiving[slot=" << slot << "]: " << Server::m_immigrants[slot].data() << std::endl;
+      std::cerr << "\nReceive::Receiving[slot=" << slot << "]: " << Server::m_fitness[slot] << std::endl;
+
+      //if( Server::m_fitness[slot] < data.best_individual.fitness[0] )
+      //{
+      //   std::cerr << "\nReceiving[slot=" << slot << "]: " << Server::m_fitness[slot] << " " << data.best_individual.fitness[0] << std::endl; 
+      //   sleep(5);
+      //}
 
       //tmp += offset;
       //fprintf(stdout,"Receiving[slot=%d]: ",slot);
@@ -539,11 +559,12 @@ int pee_receive_individual( int* immigrants )
        * handles this case (it also takes into account the offset). */
       int chars_to_convert = std::min((int) data.number_of_bits, (int) Server::m_immigrants[slot].size() - offset - 1);
       //std::cerr << "\n[" << offset << ", " << Server::m_immigrants[slot].size() << ", " << chars_to_convert << ", " << data.number_of_bits << "]\n";
+      //fprintf(stdout,"Importante::slot[%d]:: ",slot);
       for( int i = 0; i < chars_to_convert; i++ )
       // TODO? for( int i = 0; i < chars_to_convert && tmp[i] != '\0'; i++ )
       {
          immigrants[nImmigrants * data.number_of_bits + i] = tmp[i] - '0';
-         //fprintf(stdout,"%d ",immigrants[nImmigrants * data.number_of_bits + i]);
+         //fprintf(stdout,"%d",immigrants[nImmigrants * data.number_of_bits + i]);
       }
       nImmigrants++;
       //fprintf(stdout,"\n");
@@ -597,13 +618,13 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
    //std::cout << data.best_size << std::endl;
 
    //bool flag = false;
-   //for( int i = 0; i < nInd; i++ )
+   //for( int i = 0; i < data.population_size; i++ )
    //{
-   //   //if( population[i].fitness < data.best_individual.fitness )
-   //   //{
-   //   //   flag = true;
-   //   //   pee_clone( &population[i], &data.best_individual );
-   //   //}
+   //   if( antecedentes->fitness[i] < data.best_individual.fitness[0] )
+   //   {
+   //      cerr << antecedentes->fitness[i] << endl;
+   //      flag = true;
+   //   }
    //}
    
    //if( flag )
@@ -621,6 +642,8 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
       {
          stagnation = 0;
          pee_clone( descendentes, index[i], &data.best_individual, i );
+         //printf( "IMPORTANTE::[%d]:: %.12f\n", index[i], data.best_individual.fitness[i] ); 
+         //sleep(5);
       }
       else
       {
@@ -716,7 +739,7 @@ void pee_print_time()
    {
       acc_print_time();
    }
-   cerr << "time_evaluate: " << data.time_evaluate << ", time_crossover: " << data.time_crossover << ", time_mutation: " << data.time_mutation << ", time_clone: " << data.time_clone << ", time_tournament: " << data.time_tournament << ", time_total: " << data.time_total << "\n" << endl;
+   //cerr << "time_evaluate: " << data.time_evaluate << ", time_crossover: " << data.time_crossover << ", time_mutation: " << data.time_mutation << ", time_clone: " << data.time_clone << ", time_tournament: " << data.time_tournament << ", time_total: " << data.time_total << "\n" << endl;
 }
 
 void pee_evolve()
@@ -776,9 +799,9 @@ void pee_evolve()
    util::Timer t_generate;
    // -----
    // 1 e 2:
-   cerr << "\nGeracao[0]  ";
+   //cerr << "\nGeracao[0]  ";
    pee_generate_population( &antecedentes, &descendentes, &nImmigrants );
-   cerr << ", time_generate[fixo]: " <<  t_generate.elapsed() << endl;
+   //cerr << ", time_generate[fixo]: " <<  t_generate.elapsed() << endl;
 
    data.time_evaluate   = 0.0f;
    data.time_crossover  = 0.0f;
@@ -795,12 +818,12 @@ void pee_evolve()
          // -----
          util::Timer t_clone;
          // -----
-         pee_clone( &data.best_individual, 0, &descendentes, 0 );
+         pee_clone( &data.best_individual, 0, &descendentes, nImmigrants );
          data.time_clone += t_clone.elapsed();
          nImmigrants++;
       }
 
-      std::cerr << "nImmigrants[generation: " << geracao << "]: " << nImmigrants << std::endl;
+      //std::cerr << "\nnImmigrants[generation: " << geracao << "]: " << nImmigrants << std::endl;
 
       // 5
       // TODO: Parallelize this loop!
@@ -861,10 +884,10 @@ void pee_evolve()
       util::Timer t_evaluate;
       // -----
       // 17:
-      cerr << "\nGeracao[" << geracao << "]  ";
+      //cerr << "\nGeracao[" << geracao << "]  ";
       if (pee_evaluate( &descendentes, &antecedentes, &nImmigrants ) > data.stagnation_tolerance) geracao = data.generations;
       double time = t_evaluate.elapsed(); 
-      cerr << ", time_evaluate: " << time << endl;
+      //cerr << ", time_evaluate: " << time << endl;
       data.time_evaluate += time;
 
       // 18:
@@ -872,7 +895,7 @@ void pee_evolve()
 
       if( data.verbose ) 
       {
-         printf("[%d] ", geracao);
+         printf("\n[%d] ", geracao);
          pee_individual_print( &data.best_individual, 0, stdout, 0 );
       }
    } // 19

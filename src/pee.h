@@ -50,6 +50,7 @@ public:
       for( int i = 0; i < threads.size(); i++ )
       {
          threads[i] = new Poco::Thread();
+         if( threads[i]->isRunning() ) { std::cerr << "Is running..." << std::endl; }
          starts[i] = false;
       }
    }
