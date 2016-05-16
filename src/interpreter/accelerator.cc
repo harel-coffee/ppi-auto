@@ -412,7 +412,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 {
    CmdLine::Parser Opts( argc, argv );
 
-   Opts.Int.Add( "-ncol", "--number-of-columns" );
+   Opts.Int.Add( "-ncol", "--number-of-columns", -1 );
    Opts.Int.Add( "-cl-p", "--platform-id", -1, 0 );
    Opts.Int.Add( "-cl-d", "--device-id", -1, 0 );
    Opts.Int.Add( "-maxlocalsize", "--maximum-local-size", -1 );
@@ -451,6 +451,12 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
             return 1;
          }
       }
+   }
+
+   if( Opts.Int.Get("-ncol") < 0 )
+   {
+      fprintf(stderr, "Missing number of columns of dataset.\n");
+      return 1;
    }
 
    if ( opencl_init( Opts.Int.Get("-cl-p"), Opts.Int.Get("-cl-d"), type ) )
