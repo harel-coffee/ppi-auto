@@ -9,6 +9,7 @@
 #include "Poco/Net/ServerSocket.h"
 #include "Poco/Net/SocketAddress.h"
 #include "Poco/Thread.h"
+
 #include <queue>
 
 using Poco::Net::TCPServer;
@@ -22,10 +23,6 @@ using Poco::Net::SocketAddress;
 using Poco::Thread;
 
 #include "../common/common.h"
-#include "../individual"
-
-void server_init( int argc, char** argv );
-
 
 class Server: public TCPServerConnection, public Common {
 public:
@@ -34,6 +31,11 @@ public:
    Server( const StreamSocket& s ): TCPServerConnection(s), Common( socket() ) {}
 
    void run();
+
+   //~Server()
+   //{
+   //   delete[] m_immigrants, m_fitness;
+   //}
 
 public:
    /* A 'static variable' will always be shared among all threads.
@@ -49,11 +51,11 @@ public:
    static Poco::FastMutex m_mutex;
 
 public:
-   static std::queue<Individual> m_individuals;
+   static std::vector<char>* m_immigrants;
+   static float* m_fitness;
 
-
+   static std::queue<int> m_freeslots;
+   static std::queue<int> m_ready;
 };
-
-
 
 #endif

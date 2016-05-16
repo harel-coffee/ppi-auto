@@ -4,26 +4,12 @@
 /******************************************************************************/
 /** Definition of the static variables **/
 Poco::FastMutex Server::m_mutex;
-std::queue<Individual> Server::m_individuals;
 
+std::vector<char>* Server::m_immigrants = NULL;
+float* Server::m_fitness = NULL;
 
-/** ****************************************************************** **/
-/** ***************************** TYPES ****************************** **/
-/** ****************************************************************** **/
-
-static struct t_data { int genome_size; int size; } data;
-
-
-void server_init( int argc, char** argv ) 
-{
-   CmdLine::Parser Opts( argc, argv );
-
-   Opts.Int.Add( "-nb", "--number-of-bits", 2000, 16 );
-   Opts.Process();
-   data.genome_size = Opts.Int.Get("-nb");
-
-   data.size = 10;
-}
+std::queue<int> Server::m_freeslots;
+std::queue<int> Server::m_ready;
 
 
 /******************************************************************************/
@@ -34,63 +20,41 @@ void server_init( int argc, char** argv )
 **/
 void Server::run()
 {
-   bool RET = false;
-
-   Individual individual;
-   individual.genome = new int[data.genome_size];
-
    char command; int msg_size;
    command = RcvHeader( msg_size );
 
+   int slot;
+
    switch( command ) {
       case 'I': {
-                   RET = true;
+                   while( m_freeslots.empty() ) { Thread::sleep(1000); }
 
-                   // Receive the message
-                   char* buffer = RcvMessage( msg_size );
-                   int offset;
-
-                   sscanf( buffer, "%f%n", &individual.fitness, &offset );
-                   buffer += offset;
-                   for( int i = 0; i < data.genome_size-1; i++ )
                    {
-                      sscanf( buffer, "%d%n", &individual.genome[i], &offset );
-                      buffer += offset;
-                   }
-                   sscanf( buffer, "%d", &individual.genome[data.genome_size-1] );
-               }
-                break;
+                      Poco::FastMutex::ScopedLock lock( m_mutex );
 
+                      if( m_freeslots.empty() ) { return; }
+                      slot = m_freeslots.front();
+                      m_freeslots.pop();
+                   }
+
+                   /* Receive the message ("individual"). Note that if a
+                    * problem occurs while receiving the message, the array
+                    * m_immigrants[slot] will contain a truncated message
+                    * ("junk"). This is not a serious problem because it will
+                    * act as if the individual had undergone a mutation. */
+                   RcvMessage( msg_size, m_immigrants[slot] );
+
+                   {
+                      Poco::FastMutex::ScopedLock lock( m_mutex );
+
+                      m_ready.push(slot);
+                   }
+
+                   //std::cerr << "Server::Receiving[slot=" << slot << "]: " << m_immigrants[slot].data() << std::endl;
+                }
+                break;
       default:
                 poco_fatal( m_logger, "Unrecognized command!" );
                 return;
    }
-
-   {
-      Poco::FastMutex::ScopedLock lock( m_mutex );
-      if( RET )
-      {
-         while( m_individuals.size() > data.size ) 
-         {
-            Individual out = m_individuals.front();
-            delete[] out.genome;
-            m_individuals.pop();
-         }
-         m_individuals.push( individual );
-
-         //printf("Individual:\n");
-         //printf("%f ", individual.fitness);
-         //for( int i = 0; i < data.genome_size; i++ )
-         //   printf("%d ", individual.genome[i]);
-         //printf("\n");
-
-         //printf("Queue:\n");
-         //printf("%f ", m_individuals.front().fitness);
-         //for( int i = 0; i < data.genome_size; i++ )
-         //   printf("%d ", m_individuals.front().genome[i]);
-         //printf("\n");
- 
-         //Thread::sleep(10000);
-      }
-   } // The mutex will be released (unlocked) at this point
 }

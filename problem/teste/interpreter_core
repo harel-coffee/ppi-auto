@@ -1,80 +1,94 @@
 case T_IF_THEN_ELSE:
    stack_top = ( (stack[stack_top] == 1.0f) ? stack_top - 1 : stack_top - 2 );
-   break;
 case T_AND:
    stack[stack_top - 1] = ( (stack[stack_top] == 1.0f && stack[stack_top - 1] == 1.0f) ? 1.0f : 0.0f );
    --stack_top;
-   break;
 case T_OR:
    stack[stack_top - 1] = ( (stack[stack_top] == 1.0f || stack[stack_top - 1] == 1.0f) ? 1.0f : 0.0f );
    --stack_top;
-   break;
+case T_XOR:
+   stack[stack_top - 1] = ((stack[stack_top] <= 0.0f && stack[stack_top-1] > 0.0f) || (stack[stack_top] > 0.0f && stack[stack_top-1] <= 0.0f));
+   --stack_top;
 case T_NOT:
    stack[stack_top] = !stack[stack_top];
-   break;
 case T_GREATER:
+   stack[stack_top - 1] = ( (stack[stack_top] > stack[stack_top - 1]) ? 1.0f : 0.0f );
    --stack_top;
-   break;
+case T_GREATEREQUAL:
+   stack[stack_top - 1] = ( (stack[stack_top] >= stack[stack_top - 1]) ? 1.0f : 0.0f );
+   --stack_top;
 case T_LESS:
    stack[stack_top - 1] = ( (stack[stack_top] < stack[stack_top - 1]) ? 1.0f : 0.0f );
    --stack_top;
-   break;
+case T_LESSEQUAL:
+   stack[stack_top - 1] = ( (stack[stack_top] <= stack[stack_top - 1]) ? 1.0f : 0.0f );
+   --stack_top;
 case T_EQUAL:
    stack[stack_top - 1] = ( (stack[stack_top] == stack[stack_top - 1]) ? 1.0f : 0.0f );
    --stack_top;
-   break;
+case T_NOTEQUAL:
+   stack[stack_top - 1] = ( (stack[stack_top] != stack[stack_top - 1]) ? 1.0f : 0.0f );
+   --stack_top;
 case T_ADD:
    stack[stack_top - 1] = stack[stack_top] + stack[stack_top - 1];
    --stack_top;
-   break;
 case T_SUB:
    stack[stack_top - 1] = stack[stack_top] - stack[stack_top - 1];
    --stack_top;
-   break;
 case T_MULT:
    stack[stack_top - 1] = stack[stack_top] * stack[stack_top - 1];
    --stack_top;
-   break;
 case T_DIV:
    stack[stack_top - 1] = stack[stack_top] / stack[stack_top - 1];
    --stack_top;
-   break;
 case T_MEAN:
    stack[stack_top - 1] = (stack[stack_top] + stack[stack_top - 1]) / 2.0f;
    --stack_top;
-   break;
 case T_MAX:
    stack[stack_top - 1] = fmax(stack[stack_top], stack[stack_top - 1]);
    --stack_top;
-   break;
 case T_MIN:
    stack[stack_top - 1] = fmin(stack[stack_top], stack[stack_top - 1]);
    --stack_top;
-   break;
+case T_MOD:
+   stack[stack_top - 1] = fmod(stack[stack_top], stack[stack_top - 1]);
+   --stack_top;
+case T_POW:
+   stack[stack_top-1] = pow(stack[stack_top], stack[stack_top-1]);
+   --stack_top;
 case T_ABS:
    stack[stack_top] = fabs(stack[stack_top]);
-   break;
 case T_SQRT:
    stack[stack_top] = sqrt(stack[stack_top]);
-   break;
 case T_POW2:
    stack[stack_top] = stack[stack_top] * stack[stack_top];
-   break;
 case T_POW3:
    stack[stack_top] = stack[stack_top] * stack[stack_top] * stack[stack_top];
-   break;
+case T_POW4:
+   stack[stack_top] = stack[stack_top] * stack[stack_top] * stack[stack_top] * stack[stack_top];
+case T_POW5:
+   stack[stack_top] = stack[stack_top] * stack[stack_top] * stack[stack_top] * stack[stack_top] * stack[stack_top];
 case T_NEG:
    stack[stack_top] = -stack[stack_top];
-   break;
-case T_1P:
+case T_ROUND:
+   stack[stack_top] = round(stack[stack_top]);
+case T_0:
+   stack[++stack_top] = 0.0f;
+case T_1:
    stack[++stack_top] = 1.0f;
-   break;
-case T_2P:
+case T_2:
    stack[++stack_top] = 2.0f;
-   break;
-case T_3P:
+case T_3:
    stack[++stack_top] = 3.0f;
-   break;
-case T_4P:
+case T_4:
    stack[++stack_top] = 4.0f;
-   break;
+case T_5:
+   stack[++stack_top] = 5.0f;
+case T_6:
+   stack[++stack_top] = 6.0f;
+case T_7:
+   stack[++stack_top] = 7.0f;
+case T_8:
+   stack[++stack_top] = 8.0f;
+case T_9:
+   stack[++stack_top] = 9.0f;

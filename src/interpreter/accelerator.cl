@@ -1,3 +1,5 @@
+//#pragma OPENCL EXTENSION cl_amd_printf: enable
+//#pragma OPENCL EXTENSION cl_intel_printf : enable
 #include "symbol"
 
 __kernel void
@@ -22,7 +24,7 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
          {
             switch( phenotype[gl_id * MAX_PHENOTYPE_SIZE + i] )
             {
-               #include "core"
+               #include "interpreter_core"
                case T_ATTRIBUTE:
                   stack[++stack_top] = inputs[n * ncol + (int)ephemeral[gl_id * MAX_PHENOTYPE_SIZE + i]];
                   break;
@@ -35,7 +37,8 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
          }
          if( !prediction_mode )
          {
-            PE[0] += fabs( stack[stack_top] - inputs[n * ncol + (ncol - 1)] );
+            //PE[0] += fabs( stack[stack_top] - inputs[n * ncol + (ncol - 1)] );
+            PE[0] += ERROR( stack[stack_top], inputs[n * ncol + (ncol - 1)] );
          }
          else
          {
@@ -84,7 +87,7 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
          {
             switch( phenotype[ind * MAX_PHENOTYPE_SIZE + i] )
             {
-               #include "core"
+               #include "interpreter_core"
                case T_ATTRIBUTE:
                   stack[++stack_top] = inputs[(gr_id * lo_size + lo_id) + nlin * (int)ephemeral[ind * MAX_PHENOTYPE_SIZE + i]];
                   break;
@@ -97,7 +100,8 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
          }
          if( !prediction_mode )
          {
-            PE[lo_id] = fabs( stack[stack_top] - inputs[(gr_id * lo_size + lo_id) + nlin * (ncol - 1)] );
+            //PE[lo_id] = fabs( stack[stack_top] - inputs[(gr_id * lo_size + lo_id) + nlin * (ncol - 1)] );
+            PE[lo_id] = ERROR( stack[stack_top], inputs[(gr_id * lo_size + lo_id) + nlin * (ncol - 1)] );
          }
          else
          {
@@ -146,7 +150,7 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
             {
                switch( phenotype[gr_id * MAX_PHENOTYPE_SIZE + i] )
                {
-                  #include "core"
+                  #include "interpreter_core"
                   case T_ATTRIBUTE:
                      stack[++stack_top] = inputs[n + nlin * (int)ephemeral[gr_id * MAX_PHENOTYPE_SIZE + i]];
                      break;
@@ -159,7 +163,8 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
             }
             if( !prediction_mode )
             {
-               PE[lo_id] += fabs( stack[stack_top] - inputs[n + nlin * (ncol - 1)] );
+               //PE[lo_id] += fabs( stack[stack_top] - inputs[n + nlin * (ncol - 1)] );
+               PE[lo_id] += ERROR( stack[stack_top], inputs[n + nlin * (ncol - 1)] );
             }
             else
             {
@@ -210,13 +215,14 @@ best_individual( __global const float* vector, __global float* PB, __global int*
       barrier(CLK_LOCAL_MEM_FENCE);
       if( (lo_id < s) && (lo_id + s < lo_size) ) 
       { 
-         if( lo_best[lo_id] < lo_best[lo_id + s] )
+         if( lo_best[lo_id] > lo_best[lo_id + s] )
+         //if( lo_best[lo_id] < lo_best[lo_id + s] )
          {
-            lo_best[lo_id] = lo_best[lo_id]; 
-            lo_idx[lo_id]  = lo_idx[lo_id];
-         }
-         else
-         {
+         //   lo_best[lo_id] = lo_best[lo_id]; 
+         //   lo_idx[lo_id]  = lo_idx[lo_id];
+         //}
+         //else
+         //{
             lo_best[lo_id] = lo_best[lo_id + s]; 
             lo_idx[lo_id]  = lo_idx[lo_id + s];
          }

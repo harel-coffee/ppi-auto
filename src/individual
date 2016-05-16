@@ -5,7 +5,7 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-struct Individual { int* genome; float fitness; };
+struct Population { int* genome; float* fitness; };
 
 #endif
 

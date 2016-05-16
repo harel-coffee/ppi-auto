@@ -4,6 +4,7 @@
 #define accelerator_h
 
 #include "../symbol"
+#include "../individual"
 
 /** Funcoes exportadas **/
 /** ************************************************************************************************** **/
@@ -11,14 +12,14 @@
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned population_size, float** input, float** model, float* obs, int nlin, int prediction_mode );
+int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned population_size, float** input, int nlin, int prediction_mode );
 
 /** ************************************************************************************************** **/
 /** ************************************** Function interpret **************************************** **/
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int* index, int nInd, int prediction_mode );
+void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, void (*send)(Population*), int (*receive)(int*), Population* migrants, int* nImmigrants, int* index, int* best_size, int prediction_mode, float alpha );
 
 /** ************************************************************************************************** **/
 /** ************************************** Function print_time *************************************** **/

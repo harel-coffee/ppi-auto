@@ -30,15 +30,15 @@ namespace { static struct t_data { int nlin; Symbol* phenotype; float* ephemeral
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void pep_init( float** input, float** model, float* obs, int nlin, int argc, char **argv ) 
+void pep_init( float** input, int nlin, int argc, char** argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
 
    Opts.String.Add( "-run", "--program_file" );
    Opts.Bool.Add( "-acc" );
    Opts.Bool.Add( "-pred", "--prediction" );
-   Opts.Int.Add( "-ni", "--number_of_inputs" );
-   Opts.Int.Add( "-nm", "--number_of_models" );
+   Opts.String.Add( "-error", "--function-difference", "fabs((X)-(Y))" );
+   Opts.Int.Add( "-ncol", "--number_of_columns" );
    Opts.Process();
    const char* file = Opts.String.Get("-run").c_str();
 
@@ -77,14 +77,14 @@ void pep_init( float** input, float** model, float* obs, int nlin, int argc, cha
 
    if( data.version )
    {
-      if( acc_interpret_init( argc, argv, data.size[0], 1, input, model, obs, nlin, data.prediction ) )
+      if( acc_interpret_init( argc, argv, data.size[0], 1, input, nlin, data.prediction ) )
       {
          fprintf(stderr,"Error in initialization phase.\n");
       }
    }
    else
    {
-      seq_interpret_init( data.size[0], input, model, obs, nlin, Opts.Int.Get("-ni"), Opts.Int.Get("-nm") );
+      seq_interpret_init( Opts.String.Get("-error"), data.size[0], input, nlin, Opts.Int.Get("-ncol") );
    }
 }
 
@@ -95,11 +95,11 @@ void pep_interpret()
       data.vector = new float[data.nlin];
       if( data.version )
       {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, NULL, 1, 1 );
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0 );
       }
       else
       {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, NULL, 1, 1 );
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, 1, 0 );
       }
    }
    else
@@ -107,11 +107,11 @@ void pep_interpret()
       data.vector = new float[1];
       if( data.version )
       {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, NULL, 1, 0 );
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 );
       }
       else
       {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, NULL, 1, 0 );
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, 0, 0 );
       }
    }
 }

@@ -11,14 +11,14 @@
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void seq_interpret_init( const unsigned size, float** input, float** model, float* obs, int nlin, int ninput, int nmodel );
+void seq_interpret_init( std::string error, const unsigned size, float** input, int nlin, int ncol );
 
 /** ************************************************************************************************** **/
 /** ************************************** Function interpret **************************************** **/
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int* index, int nInd, int prediction_mode );
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int prediction_mode, float alpha );
 
 /** ************************************************************************************************** **/
 /** ********************************** Function interpret_destroy ************************************ **/
