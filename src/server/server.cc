@@ -41,7 +41,7 @@ void Server::run()
                     * problem occurs while receiving the message, the array
                     * m_immigrants[slot] will contain a truncated message
                     * ("junk"). This is not a serious problem because it will
-                    * act if the individual had undergone a mutation. */
+                    * act as if the individual had undergone a mutation. */
                    RcvMessage( msg_size, m_immigrants[slot] );
 
                    {

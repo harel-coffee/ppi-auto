@@ -776,9 +776,9 @@ void pee_evolve()
    util::Timer t_generate;
    // -----
    // 1 e 2:
-   cerr << "\nGeracao[0]  ";
+   cerr << "\nGeneration[0]  ";
    pee_generate_population( &antecedentes, &descendentes, &nImmigrants );
-   cerr << ", time_generate[fixo]: " <<  t_generate.elapsed() << endl;
+   cerr << ", time_generate: " <<  t_generate.elapsed() << endl;
 
    data.time_evaluate   = 0.0f;
    data.time_crossover  = 0.0f;
@@ -861,7 +861,7 @@ void pee_evolve()
       util::Timer t_evaluate;
       // -----
       // 17:
-      cerr << "\nGeracao[" << geracao << "]  ";
+      cerr << "\nGeneration[" << geracao << "]  ";
       if (pee_evaluate( &descendentes, &antecedentes, &nImmigrants ) > data.stagnation_tolerance) geracao = data.generations;
       double time = t_evaluate.elapsed(); 
       cerr << ", time_evaluate: " << time << endl;
