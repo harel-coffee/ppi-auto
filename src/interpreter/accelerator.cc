@@ -24,7 +24,7 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int max_size; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string error; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_send; double time_receive; double time_kernel1; double time_kernel2; double time_kernels; double time_overhead; } data; };
+namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string error; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_send; double time_receive; double time_kernel1; double time_kernel2; double time_kernels; double time_overhead; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTION *********************** **/
@@ -163,7 +163,7 @@ int opencl_init( int platform_id, int device_id, cl_device_type type )
 }
 
 // -----------------------------------------------------------------------------
-int build_kernel( int maxlocalsize )
+int build_kernel( int maxlocalsize, int prediction_mode )
 {
    ifstream file("accelerator.cl");
    string kernel_str( istreambuf_iterator<char>(file), ( istreambuf_iterator<char>()) );
@@ -173,7 +173,32 @@ int build_kernel( int maxlocalsize )
    cl::Program program( data.context, source );
 
    std::stringstream buildOptions;
-   buildOptions << "-DMAX_PHENOTYPE_SIZE=" << data.max_size << " -I. -DERROR(X,Y)=" << data.error;
+
+   if( prediction_mode ) 
+   {
+      buildOptions << "-DMAX_PHENOTYPE_SIZE=" << data.max_size << " -I. -DERROR(X,Y)=" << data.error;
+   }
+   else
+   {
+      /*
+         In practice we don't need 'max_stack_size' to be equal to 'data.max_size',
+         we can lower this and then save memory on the device. The formula below gives us
+         the upper bound for stack use:
+
+         /                           |            MTS             | \
+         stack size = max|  1, MTS - |  ------------------------  |  |
+         |                           |       /               \    |  |
+         |                           |   min| arity max, MTS  |   |  |
+         \                           |_      \               /   _| /
+
+         where MTS is data.max_size().
+       */
+      unsigned max_stack_size = std::max( 1U, (unsigned)( data.max_size -
+               std::floor(data.max_size /
+                  (float) std::min( data.max_arity, data.max_size ) ) ) );
+
+      buildOptions << "-DMAX_PHENOTYPE_SIZE=" << max_stack_size << " -I. -DERROR(X,Y)=" << data.error;
+   }
 
    vector<cl::Device> device; device.push_back( data.device );
    try {
@@ -408,7 +433,7 @@ void create_buffers( float** input, int ncol, int prediction_mode )
 /** ****************************************************************** **/
 
 // -----------------------------------------------------------------------------
-int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned population_size, float** input, int nlin, int prediction_mode )
+int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned max_arity, const unsigned population_size, float** input, int nlin, int prediction_mode )
 {
    CmdLine::Parser Opts( argc, argv );
 
@@ -423,6 +448,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    data.strategy = Opts.String.Get("-strategy");
    data.error = Opts.String.Get("-error");
    data.max_size = size;
+   data.max_arity = max_arity;
    data.nlin = nlin;
    data.population_size = population_size;
    data.time_send     = 0.0f;
@@ -465,7 +491,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       return 1;
    }
 
-   if ( build_kernel( Opts.Int.Get("-maxlocalsize") ) )
+   if ( build_kernel( Opts.Int.Get("-maxlocalsize"), prediction_mode ) )
    {
       fprintf(stderr,"Error in build the kernel.\n");
       return 1;
