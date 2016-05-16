@@ -884,11 +884,7 @@ void pee_evolve()
       util::Timer t_evaluate;
       // -----
       // 17:
-<<<<<<< HEAD
-      cerr << "\nGeneration[" << geracao << "]  ";
-=======
-      //cerr << "\nGeracao[" << geracao << "]  ";
->>>>>>> 83244dd91ac98036dff9f75d85936e178b54f65d
+      //cerr << "\nGeneration[" << geracao << "]  ";
       if (pee_evaluate( &descendentes, &antecedentes, &nImmigrants ) > data.stagnation_tolerance) geracao = data.generations;
       double time = t_evaluate.elapsed(); 
       //cerr << ", time_evaluate: " << time << endl;
