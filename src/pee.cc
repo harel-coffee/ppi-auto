@@ -39,7 +39,7 @@
  * operators and operands. ALPHA is usually very small, just enough to favor
  * those that have similar (same) error but are less complex than another.
  */
-#define ALPHA 0.000000
+#define ALPHA 0.000001
 
 using namespace std;
 
