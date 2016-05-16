@@ -50,7 +50,7 @@ void Server::run()
                       m_ready.push(slot);
                    }
 
-                   //std::cerr << "Receiving[slot=" << slot << "]: " << m_immigrants[slot].data() << std::endl;
+                   //std::cerr << "Server::Receiving[slot=" << slot << "]: " << m_immigrants[slot].data() << std::endl;
                 }
                 break;
       default:

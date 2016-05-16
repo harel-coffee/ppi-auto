@@ -337,7 +337,7 @@ void create_buffers( float** input, int ncol, int prediction_mode )
    event.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    event.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
    data.time_overhead += (end - start)/1.0E9;
-   cerr << "\ntime_overhead[fixo]: " << (end - start)/1.0E9 << endl;
+   //cerr << "\ntime_overhead[fixo]: " << (end - start)/1.0E9 << endl;
 
    //inputs = (float*) data.queue.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_READ, 0, data.nlin * ncol * sizeof( float ) );
    //for( int i = 0; i < data.nlin * ncol; i++ )
@@ -535,19 +535,19 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    util::Timer t_send;
    send( migrants );
    time = t_send.elapsed();
-   cerr << "time_send: " << time;
+   //cerr << "time_send: " << time;
    data.time_send += time;
 
    util::Timer t_receive;
    *nImmigrants = receive( migrants->genome );
    time = t_receive.elapsed();
-   cerr << ", time_receive: " << time;
+   //cerr << ", time_receive: " << time;
    data.time_receive += time;
 
    // Wait until the kernel has finished
    data.queue.finish();
    time = t_time.elapsed();
-   cerr << ", time_kernels(send+receive): " << time;
+   //cerr << ", time_kernels(send+receive): " << time;
    data.time_kernels += time;
 
 
@@ -673,14 +673,14 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    events[3].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    events[3].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
    data.time_kernel1 += (end - start)/1.0E9;
-   cerr << ", time_kernel[1]: " << (end - start)/1.0E9;
+   //cerr << ", time_kernel[1]: " << (end - start)/1.0E9;
 
    events[4].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    events[4].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
    data.time_kernel2 += (end - start)/1.0E9;
-   cerr << ", time_kernel[2]: " << (end - start)/1.0E9;
+   //cerr << ", time_kernel[2]: " << (end - start)/1.0E9;
    
-   cerr << ", time_overhead: " << time;
+   //cerr << ", time_overhead: " << time;
 }
 
 // -----------------------------------------------------------------------------
