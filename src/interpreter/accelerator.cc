@@ -165,17 +165,10 @@ int opencl_init( int platform_id, int device_id, cl_device_type type )
 // -----------------------------------------------------------------------------
 int build_kernel( int maxlocalsize, int prediction_mode )
 {
-   ifstream file("accelerator.cl");
-   string kernel_str( istreambuf_iterator<char>(file), ( istreambuf_iterator<char>()) );
-
-   cl::Program::Sources source( 1, make_pair( kernel_str.c_str(), kernel_str.size() ) );
-
-   cl::Program program( data.context, source );
-
-   std::stringstream buildOptions;
+   unsigned max_stack_size;
    if( prediction_mode ) 
    {
-      buildOptions << "-DMAX_PHENOTYPE_SIZE=" << data.max_size << " -I. -DERROR(X,Y)=" << data.error;
+      max_stack_size = data.max_size;
    }
    else
    {
@@ -192,17 +185,26 @@ int build_kernel( int maxlocalsize, int prediction_mode )
 
          where MTS is data.max_size().
        */
-      unsigned max_stack_size = std::max( 1U, (unsigned)( data.max_size -
+      max_stack_size = std::max( 1U, (unsigned)( data.max_size -
                std::floor(data.max_size /
                   (float) std::min( data.max_arity, data.max_size ) ) ) );
-
-      buildOptions << "-DMAX_PHENOTYPE_SIZE=" << max_stack_size << " -I. -DERROR(X,Y)=" << data.error;
    }
+
+   ifstream file("accelerator.cl");
+   string kernel_str( istreambuf_iterator<char>(file), ( istreambuf_iterator<char>()) );
+
+   string program_str = 
+      "#define MAX_PHENOTYPE_SIZE " + util::ToString( max_stack_size ) + "\n" +
+      "#define ERROR(X,Y) " + util::ToString( data.error ) + "\n"
+      + kernel_str;
+
+   cl::Program::Sources source( 1, make_pair( program_str.c_str(), program_str.size() ) );
+   
+   cl::Program program( data.context, source );
 
    vector<cl::Device> device; device.push_back( data.device );
    try {
-      //program.build( device, buildOptions );
-      program.build( device, buildOptions.str().c_str() );
+      program.build( device );
    }
    catch( cl::Error& e )
    {
