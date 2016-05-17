@@ -16,21 +16,39 @@ using Poco::Thread;
 /******************************************************************************/
 class Client: public Common, public Poco::Runnable {
 public:
-   Client( StreamSocket& s, const char* server, const std::string& results ):
-      Common( s ), m_server( server ), m_results( results ) {}
+   Client( StreamSocket& s, const char* server, const std::string& results, int *isrunning ):
+      Common( s ), m_server( server ), m_results( results ), m_isrunning(isrunning) {}
 
    int  Connect();
    void Disconnect();
    void SndIndividual();
 
-   void run()
+   virtual void run()
    {
-      SndIndividual();
+      /*
+      if (*m_isrunning)
+      {
+         std::cerr << "Thread is already running!\n";
+         return;
+      }
+      */
+
+      *m_isrunning = 1;
+      //std::cerr << "\n[*m_isrunning = 1: (" << *m_isrunning << ")]\n";
+      try {
+         SndIndividual();
+      } catch (Poco::Exception& exc) {
+         *m_isrunning = 0;
+         //std::cerr << "\n[Poco::Exception: *m_isrunning = 0: (" << *m_isrunning << ")]\n";
+      }
+      *m_isrunning = 0;
+      //std::cerr << "\n[*m_isrunning = 0: (" << *m_isrunning << ")]\n";
    }
 
 private:
    const char* m_server;
    const std::string m_results;
+   int *m_isrunning;
 };
 /******************************************************************************/
 #endif
