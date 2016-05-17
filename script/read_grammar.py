@@ -13,11 +13,11 @@ def main(argv):
    try:
       opts, args = getopt.getopt(argv,"hi:",["help", "ifile="])
    except getopt.GetoptError:
-      print 'test.py -i <inputfile>'
+      print 'read_grammar.py -i <inputfile>'
       sys.exit(2)
    for opt, arg in opts:
       if opt in ("-h", "--help"):
-         print 'test.py -i <inputfile>'
+         print 'read_grammar.py -i <inputfile>'
          sys.exit()
       elif opt in ("-i", "--ifile"):
          inputfile = arg
@@ -54,7 +54,7 @@ def interpreter(terminal):
 if __name__ == "__main__":
    inputfile = main(sys.argv[1:])
 if inputfile is None:
-   print 'test.py -i <inputfile>'
+   print 'read_grammar.py -i <inputfile>'
    exit();
 
 
