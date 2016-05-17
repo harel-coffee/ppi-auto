@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+#Running: 
+#          python script/run.py -i problem/random/data.csv -is script/islandfile.txt -port 8080 -ns 4 -cl-d 0 -cl-p 0
+#
+
 import os
 import sys
 import random
@@ -58,8 +62,11 @@ ncol = len(lines[1].split(','))
 
 
 text = [];
-text.append("./main -v -e -acc -strategy PPCU -d " + inputfile + " -ncol " + str(ncol) + " -port " + port + " -peers \"" + ''.join(peers) + "\"" + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,15)) + " -g " + str(2**random.randint(6,17)) + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.5)) + " -ts " + str(random.randint(3,15)) + " -nb " + str(random.randint(16,2000)) + " -is " + str(random.randint(3,8)))
+if peers:
+   text.append("./main -v -e -acc -strategy PPCU -d ../" + inputfile + " -ncol " + str(ncol) + " -port " + port + " -peers \"" + ''.join(peers) + "\"" + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,15)) + " -g " + str(2**random.randint(6,17)) + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.5)) + " -ts " + str(random.randint(3,15)) + " -nb " + str(random.randint(16,2000)) + " -is " + str(random.randint(3,8)))
+else:
+   text.append("./main -v -e -acc -strategy PPCU -d ../" + inputfile + " -ncol " + str(ncol) + " -port " + port + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,15)) + " -g " + str(2**random.randint(6,17)) + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.5)) + " -ts " + str(random.randint(3,15)) + " -nb " + str(random.randint(16,2000)) + " -is " + str(random.randint(3,8)))
 
 print "\n" + ''.join(text) + "\n"
-os.system("cd ../build; make;" + ''.join(text) + ";cd -;")
+os.system("cd build; make;" + ''.join(text) + ";cd -;")
 
