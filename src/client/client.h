@@ -25,13 +25,11 @@ public:
 
    virtual void run()
    {
-      /*
       if (*m_isrunning)
       {
          std::cerr << "Thread is already running!\n";
          return;
       }
-      */
 
       *m_isrunning = 1;
       //std::cerr << "\n[*m_isrunning = 1: (" << *m_isrunning << ")]\n";
@@ -39,7 +37,7 @@ public:
          SndIndividual();
       } catch (Poco::Exception& exc) {
          *m_isrunning = 0;
-         //std::cerr << "\n[Poco::Exception: *m_isrunning = 0: (" << *m_isrunning << ")]\n";
+         std::cerr << "SndIndividual(): " << exc.displayText() << std::endl;
       }
       *m_isrunning = 0;
       //std::cerr << "\n[*m_isrunning = 0: (" << *m_isrunning << ")]\n";
