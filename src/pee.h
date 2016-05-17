@@ -4,6 +4,7 @@
 #define pee_h
 
 #include "client/client.h"
+#include "Poco/ThreadPool.h"
 
 /** Funcoes exportadas **/
 /** ****************************************************************************************** **/
@@ -82,6 +83,7 @@ public:
    std::vector<Client*> clients;
    //std::vector<bool> starts;
    int * isrunning;
+   Poco::ThreadPool threadpool;
 };
 /******************************************************************************/
 

@@ -52,8 +52,8 @@ Pool::Pool( unsigned size ): ss( size, NULL), clients( size, NULL )
       /* Expands defaultPool() if the available number of threads is less than
        * the number of peers, otherwise the exception "No thread available" is
        * thrown. */
-   if (Poco::ThreadPool::defaultPool().available() < size)
-      Poco::ThreadPool::defaultPool().addCapacity(size - Poco::ThreadPool::defaultPool().available());
+   if (threadpool.available() < size)
+      threadpool.addCapacity(size - threadpool.available());
 
       isrunning = new int[size];
       for( unsigned i = 0; i < size; i++ ) isrunning[i] = 0;
@@ -499,27 +499,27 @@ void pee_send_individual( Population* population )
          //if( !(data.pool->threads[i] == NULL) && data.pool->threads[i]->isRunning() ) continue;
          if( data.pool->isrunning[i] ) continue;
 
-         if (!Poco::ThreadPool::defaultPool().available())
+         if (!data.pool->threadpool.available())
          {
             std::cerr << "No more thread available in Poco::ThreadPool::defaultPool\n";
 
             /* Force a collect */
-            Poco::ThreadPool::defaultPool().collect();
+            data.pool->threadpool.collect();
 
-            if (!Poco::ThreadPool::defaultPool().available())
+            if (!data.pool->threadpool.available())
             {
                /* Try to increase the capacity of defaultPool */
                try {
-                  Poco::ThreadPool::defaultPool().addCapacity(1);
+                  data.pool->threadpool.addCapacity(1);
                } catch (Poco::Exception& exc) {
                   std::cerr << "ThreadPool: " << exc.displayText() << std::endl;
                }
             }
 
             /* If we still don't have enough threads, just skip! */
-            if (!Poco::ThreadPool::defaultPool().available()) continue;
+            if (!data.pool->threadpool.available()) continue;
          }
-         std::cerr << "Poco::ThreadPool::defaultPool: available " << Poco::ThreadPool::defaultPool().available() << " | allocaded: " << Poco::ThreadPool::defaultPool().allocated() << "\n";
+         std::cerr << "Poco::ThreadPool::defaultPool: available " << data.pool->threadpool.available() << " | allocaded: " << data.pool->threadpool.allocated() << "\n";
 
          const int idx = pee_tournament( population->fitness );
 
@@ -536,7 +536,7 @@ void pee_send_individual( Population* population )
          delete data.pool->clients[i], data.pool->ss[i];
          data.pool->ss[i] = new StreamSocket();
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str(), &(data.pool->isrunning[i]) );
-         Poco::ThreadPool::defaultPool().start( *(data.pool->clients[i]) );
+         data.pool->threadpool.start( *(data.pool->clients[i]) );
 
          //std::cerr << "\nSending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << data.best_individual.fitness[0] << std::endl;
          std::cerr << "\nSending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
