@@ -3,14 +3,17 @@
 /******************************************************************************/
 void Client::SndIndividual()
 {
-   //std::cerr << "SndIndividual (ainda não conectado)" << std::endl;
+   //std::cerr << "SndIndividual: trying to connect...\n";
    if( Connect() )
    {
+      //std::cerr << "SndIndividual: connected!\n";
       if (SndHeader( 'I', m_results.size() ))
          SndMessage( m_results.data(), m_results.size() );
+      else std::cerr << "SndIndividual: error in SndHeader!\n";
 
       Disconnect();
    }
+   //else std::cerr << "SndIndividual: could not connect!\n";
 }
 
 /******************************************************************************/
@@ -29,7 +32,7 @@ int Client::Connect()
       connect = true;
 
    } catch (...) {
-      //std::cerr << "Connection failed! Is the server running?\n" ;
+      std::cerr << "Connection failed! Is the server running?\n" ;
       poco_error( m_logger, "Connection failed! Is the server running?" );
    }
    //std::cerr << "Connect: " << connect << std::endl;
@@ -39,5 +42,10 @@ int Client::Connect()
 /******************************************************************************/
 void Client::Disconnect()
 {
-   m_ss.close();
+   //m_ss.close();
+   try {
+      m_ss.shutdown();
+   } catch (...) {
+      std::cerr << "Closing failed: connection already closed" << std::endl;
+   }
 }

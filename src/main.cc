@@ -80,6 +80,8 @@ int main(int argc, char** argv)
 
       Opts.Process();
 
+      Common::SetupLogger( "information" );
+
       int ncol = Opts.Int.Get("-ncol");   
 
       int nlin;
