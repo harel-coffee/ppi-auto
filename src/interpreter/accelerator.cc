@@ -204,7 +204,7 @@ int build_kernel( int maxlocalsize, int prediction_mode )
 
    vector<cl::Device> device; device.push_back( data.device );
    try {
-      program.build( device );
+      program.build( device, " -I. " );
    }
    catch( cl::Error& e )
    {
