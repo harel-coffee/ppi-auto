@@ -7,6 +7,8 @@ Logger& Common::m_logger( Logger::get( "logger" ) );
 /******************************************************************************/
 bool Common::SndMessage( const void* buffer, int msg_size )
 {
+   // FIXME: Implement a loop as in RcvMessage because it is not guaranteed
+   // that the whole message will be sent at once.
    try {
       int n = m_ss.sendBytes( buffer, msg_size );
       //std::cerr << "SndMessage " << n << std::endl;
