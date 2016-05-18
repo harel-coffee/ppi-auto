@@ -156,6 +156,8 @@ int decode( const int* genome, int* const allele, Symbol* phenotype, float* ephe
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
+#include "pee_individual_print_function"
+
 void pee_init( float** input, int nlin, int argc, char** argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
@@ -282,7 +284,7 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    data.version = Opts.Bool.Get("-acc");
    if( data.version )
    {
-      if( acc_interpret_init( argc, argv, data.max_size_phenotype, data.population_size, input, nlin, 0 ) )
+      if( acc_interpret_init( argc, argv, data.max_size_phenotype, MAX_QUANT_SIMBOLOS_POR_REGRA, data.population_size, input, nlin, 0 ) )
       {
          fprintf(stderr,"Error in initialization phase.\n");
       }
@@ -306,160 +308,160 @@ void pee_clone( Population* original, int idx_original, Population* copy, int id
    copy->fitness[idx_copy] = original->fitness[idx_original];
 }
 
-void pee_individual_print( const Population* individual, int idx, FILE* out, int print_mode )
-{
-   Symbol phenotype[data.max_size_phenotype];
-   float ephemeral[data.max_size_phenotype];
-
-   int allele = 0;
-   int size = decode( individual->genome + (idx * data.number_of_bits), &allele, phenotype, ephemeral, 0, data.initial_symbol );
-   if( !size ) { return; }
-  
-   if( print_mode )
-   {
-      fprintf( out, "{%d}\n", size );
-      for( int i = 0; i < size; ++i )
-         if( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )
-            fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
-         else
-            fprintf( out, "%d ", phenotype[i] );
-      fprintf( out, "\n" );
-   } 
-   else 
-      fprintf( out, "{%d} ", size );
-
-   for( int i = 0; i < size; ++i )
-      switch( phenotype[i] )
-      {
-            case T_IF_THEN_ELSE:
-               fprintf( out, "IF-THEN-ELSE " );
-               break;
-            case T_AND:
-               fprintf( out, "AND " );
-               break;
-            case T_OR:
-               fprintf( out, "OR " );
-               break;
-            case T_XOR:
-               fprintf( out, "XOR " );
-               break;
-            case T_NOT:
-               fprintf( out, "NOT " );
-               break;
-            case T_GREATER:
-               fprintf( out, "> " );
-               break;
-            case T_GREATEREQUAL:
-               fprintf( out, ">= " );
-               break;
-            case T_LESS:
-               fprintf( out, "< " );
-               break;
-            case T_LESSEQUAL:
-               fprintf( out, "<= " );
-               break;
-            case T_EQUAL:
-               fprintf( out, "= " );
-               break;
-            case T_NOTEQUAL:
-               fprintf( out, "!= " );
-               break;
-            case T_ADD:
-               fprintf( out, "+ " );
-               break;
-            case T_SUB:
-               fprintf( out, "- " );
-               break;
-            case T_MULT:
-               fprintf( out, "* " );
-               break;
-            case T_DIV:
-               fprintf( out, "/ " );
-               break;
-            case T_MEAN:
-               fprintf( out, "MEAN " );
-               break;
-            case T_MAX:
-               fprintf( out, "MAX " );
-               break;
-            case T_MIN:
-               fprintf( out, "MIN " );
-               break;
-            case T_MOD:
-               fprintf( out, "MOD " );
-               break;
-            case T_POW:
-               fprintf( out, "POW " );
-               break;
-            case T_ABS:
-               fprintf( out, "ABS " );
-               break;
-            case T_SQRT:
-               fprintf( out, "SQRT " );
-               break;
-            case T_POW2:
-               fprintf( out, "POW2 " );
-               break;
-            case T_POW3:
-               fprintf( out, "POW3 " );
-               break;
-            case T_POW4:
-               fprintf( out, "POW4 " );
-               break;
-            case T_POW5:
-               fprintf( out, "POW5 " );
-               break;
-            case T_NEG:
-               fprintf( out, "NEG " );
-               break;
-            case T_ROUND:
-               fprintf( out, "ROUND " );
-               break;
-            case T_0:
-               fprintf( out, "0 " );
-               break;
-            case T_1:
-               fprintf( out, "1 " );
-               break;
-            case T_2:
-               fprintf( out, "2 " );
-               break;
-            case T_3:
-               fprintf( out, "3 " );
-               break;
-            case T_4:
-               fprintf( out, "4 " );
-               break;
-            case T_5:
-               fprintf( out, "5 " );
-               break;
-            case T_6:
-               fprintf( out, "6 " );
-               break;
-            case T_7:
-               fprintf( out, "7 " );
-               break;
-            case T_8:
-               fprintf( out, "8 " );
-               break;
-            case T_9:
-               fprintf( out, "9 " );
-               break;
-            case T_ATTRIBUTE:
-               fprintf( out, "ATTR-%d ", (int)ephemeral[i] );
-               break;
-            case T_CONST:
-               fprintf( out, "%.12f ",  ephemeral[i] );
-               break;
-      } 
-   if( print_mode )
-   {
-      fprintf( out, "\n" );
-      fprintf( out, ":: %.12f\n", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
-   }
-   else
-      fprintf( out, ":: %.12f\n", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
-}
+//void pee_individual_print( const Population* individual, int idx, FILE* out, int print_mode )
+//{
+//   Symbol phenotype[data.max_size_phenotype];
+//   float ephemeral[data.max_size_phenotype];
+//
+//   int allele = 0;
+//   int size = decode( individual->genome + (idx * data.number_of_bits), &allele, phenotype, ephemeral, 0, data.initial_symbol );
+//   if( !size ) { return; }
+//  
+//   if( print_mode )
+//   {
+//      fprintf( out, "{%d}\n", size );
+//      for( int i = 0; i < size; ++i )
+//         if( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )
+//            fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
+//         else
+//            fprintf( out, "%d ", phenotype[i] );
+//      fprintf( out, "\n" );
+//   } 
+//   else 
+//      fprintf( out, "{%d} ", size );
+//
+//   for( int i = 0; i < size; ++i )
+//      switch( phenotype[i] )
+//      {
+//            case T_IF_THEN_ELSE:
+//               fprintf( out, "IF-THEN-ELSE " );
+//               break;
+//            case T_AND:
+//               fprintf( out, "AND " );
+//               break;
+//            case T_OR:
+//               fprintf( out, "OR " );
+//               break;
+//            case T_XOR:
+//               fprintf( out, "XOR " );
+//               break;
+//            case T_NOT:
+//               fprintf( out, "NOT " );
+//               break;
+//            case T_GREATER:
+//               fprintf( out, "> " );
+//               break;
+//            case T_GREATEREQUAL:
+//               fprintf( out, ">= " );
+//               break;
+//            case T_LESS:
+//               fprintf( out, "< " );
+//               break;
+//            case T_LESSEQUAL:
+//               fprintf( out, "<= " );
+//               break;
+//            case T_EQUAL:
+//               fprintf( out, "= " );
+//               break;
+//            case T_NOTEQUAL:
+//               fprintf( out, "!= " );
+//               break;
+//            case T_ADD:
+//               fprintf( out, "+ " );
+//               break;
+//            case T_SUB:
+//               fprintf( out, "- " );
+//               break;
+//            case T_MULT:
+//               fprintf( out, "* " );
+//               break;
+//            case T_DIV:
+//               fprintf( out, "/ " );
+//               break;
+//            case T_MEAN:
+//               fprintf( out, "MEAN " );
+//               break;
+//            case T_MAX:
+//               fprintf( out, "MAX " );
+//               break;
+//            case T_MIN:
+//               fprintf( out, "MIN " );
+//               break;
+//            case T_MOD:
+//               fprintf( out, "MOD " );
+//               break;
+//            case T_POW:
+//               fprintf( out, "POW " );
+//               break;
+//            case T_ABS:
+//               fprintf( out, "ABS " );
+//               break;
+//            case T_SQRT:
+//               fprintf( out, "SQRT " );
+//               break;
+//            case T_POW2:
+//               fprintf( out, "POW2 " );
+//               break;
+//            case T_POW3:
+//               fprintf( out, "POW3 " );
+//               break;
+//            case T_POW4:
+//               fprintf( out, "POW4 " );
+//               break;
+//            case T_POW5:
+//               fprintf( out, "POW5 " );
+//               break;
+//            case T_NEG:
+//               fprintf( out, "NEG " );
+//               break;
+//            case T_ROUND:
+//               fprintf( out, "ROUND " );
+//               break;
+//            case T_0:
+//               fprintf( out, "0 " );
+//               break;
+//            case T_1:
+//               fprintf( out, "1 " );
+//               break;
+//            case T_2:
+//               fprintf( out, "2 " );
+//               break;
+//            case T_3:
+//               fprintf( out, "3 " );
+//               break;
+//            case T_4:
+//               fprintf( out, "4 " );
+//               break;
+//            case T_5:
+//               fprintf( out, "5 " );
+//               break;
+//            case T_6:
+//               fprintf( out, "6 " );
+//               break;
+//            case T_7:
+//               fprintf( out, "7 " );
+//               break;
+//            case T_8:
+//               fprintf( out, "8 " );
+//               break;
+//            case T_9:
+//               fprintf( out, "9 " );
+//               break;
+//            case T_ATTRIBUTE:
+//               fprintf( out, "ATTR-%d ", (int)ephemeral[i] );
+//               break;
+//            case T_CONST:
+//               fprintf( out, "%.12f ",  ephemeral[i] );
+//               break;
+//      } 
+//   if( print_mode )
+//   {
+//      fprintf( out, "\n" );
+//      fprintf( out, ":: %.12f\n", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
+//   }
+//   else
+//      fprintf( out, ":: %.12f\n", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
+//}
 
 int pee_tournament( const float* fitness )
 {

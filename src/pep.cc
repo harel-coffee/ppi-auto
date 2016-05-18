@@ -77,7 +77,7 @@ void pep_init( float** input, int nlin, int argc, char** argv )
 
    if( data.version )
    {
-      if( acc_interpret_init( argc, argv, data.size[0], 1, input, nlin, data.prediction ) )
+      if( acc_interpret_init( argc, argv, data.size[0], -1, 1, input, nlin, data.prediction ) )
       {
          fprintf(stderr,"Error in initialization phase.\n");
       }
