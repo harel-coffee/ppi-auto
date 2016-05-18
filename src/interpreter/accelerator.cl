@@ -3,7 +3,7 @@
 __kernel void
 evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, __local float* PE, int nlin, int ncol, int prediction_mode )
 {
-   float stack[MAX_PHENOTYPE_SIZE];
+   float stack[MAX_STACK_SIZE];
    int stack_top;
 
    int gl_id = get_global_id(0);
@@ -56,7 +56,7 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
 __kernel void
 evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, __local float* PE, int nlin, int ncol, int prediction_mode, int nInd )
 {
-   float stack[MAX_PHENOTYPE_SIZE];
+   float stack[MAX_STACK_SIZE];
    int stack_top;
 
    int lo_id = get_local_id(0);
@@ -121,7 +121,7 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
 __kernel void
 evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, __local float* PE, int nlin, int ncol, int prediction_mode )
 {
-   float stack[MAX_PHENOTYPE_SIZE];
+   float stack[MAX_STACK_SIZE];
    int stack_top;
 
    int lo_id = get_local_id(0);

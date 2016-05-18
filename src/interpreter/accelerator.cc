@@ -194,9 +194,11 @@ int build_kernel( int maxlocalsize, int prediction_mode )
    string kernel_str( istreambuf_iterator<char>(file), ( istreambuf_iterator<char>()) );
 
    string program_str = 
-      "#define MAX_PHENOTYPE_SIZE " + util::ToString( max_stack_size ) + "\n" +
+      "#define MAX_STACK_SIZE " + util::ToString( max_stack_size ) + "\n" +
+      "#define MAX_PHENOTYPE_SIZE " + util::ToString( data.max_size ) + "\n" +
       "#define ERROR(X,Y) " + util::ToString( data.error ) + "\n"
       + kernel_str;
+   //cerr << program_str << endl;
 
    cl::Program::Sources source( 1, make_pair( program_str.c_str(), program_str.size() ) );
    
