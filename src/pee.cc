@@ -722,11 +722,67 @@ void pee_mutation( int* genome )
    const int max_bits_mutated = ceil(data.mutation_rate * data.number_of_bits);
    int num_bits_mutated = (int) (random_number() * (max_bits_mutated+1));
 
-   /* Then, each position is selected at random and its value is swapped. */
-   while( num_bits_mutated-- > 0 )
+   if (num_bits_mutated == 0) return; // lucky guy, no mutation for him...
+
+   if (RNG::Probability(2./3.)) // Bit (allele) mutation
    {
-      int bit = (int)(random_number() * data.number_of_bits);
-      genome[bit] = !genome[bit];
+      /* Then, each position is selected at random and its value is swapped. */
+      while( num_bits_mutated-- > 0 )
+      {
+         int bit = (int)(random_number() * data.number_of_bits);
+         genome[bit] = !genome[bit];
+      }
+   } else { // Shrink mutation
+      /* An illustrative example of how this mutation works (it is very useful
+         for simplifying solutions):
+
+            Original genome:
+
+                               ,> end
+               [AAA|AAA|###|###|BBB|BBB|BBB]
+                       L start
+
+
+            Mutated:
+
+                               ,> end
+               [AAA|AAA|BBB|BBB|BBB|   |   ]
+                       L start
+       */
+
+      /* This mutation works on entire genes, not single bits. Because of that,
+         first we need to convert num_bits_mutated to a multiple of
+         bits_per_gene (the next multiple of bits_per_gene). This equation does
+         exactly this:
+      */
+
+      int number_of_bits_to_shrink = int((num_bits_mutated+(data.bits_per_gene-1))/data.bits_per_gene)*data.bits_per_gene;
+
+      /* Now we randomly choose the starting gene (again, this operates only on
+         multiple of bits_per_gene): */
+      int start = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
+
+      /* What if 'number_of_bits + gene_position' is greater than the size of
+         the genome? We need to handle this situation: */
+      int end = std::min(int(start+number_of_bits_to_shrink), int(data.number_of_bits));
+      //number_of_bits_to_shrink = end-start;
+
+      //std::cerr << "[" << number_of_bits_to_shrink << ": " << start << ", " << end << "]\n";
+      // FIXME: replace sizeof(int) by GENOME_TYPE (or something similar) when it is implemented!
+      /*
+      std::cerr << "[" << start << ": " << (end) << ", " << (data.number_of_bits-end) << "]\n";
+      for(int i=0; i<data.number_of_bits; ++i)
+         std::cerr << genome[i];
+      std::cerr << std::endl;
+      */
+      //memmove(genome+start*sizeof(int), genome+(end)*sizeof(int), (data.number_of_bits-end)*sizeof(int));
+      for(int i=0; i<data.number_of_bits-end; ++i)
+         genome[i+start] = genome[i+end];
+      /*
+      for(int i=0; i<data.number_of_bits; ++i)
+         std::cerr << genome[i];
+      std::cerr << std::endl;
+      */
    }
 }
 
