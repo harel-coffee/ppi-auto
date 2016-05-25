@@ -724,15 +724,23 @@ void pee_mutation( int* genome )
 
    if (num_bits_mutated == 0) return; // lucky guy, no mutation for him...
 
-   if (RNG::Probability(0.75)) // Bit (allele) mutation
+   if (RNG::Probability(0.75))
    {
+      //////////////////////////////////////////////////////////////////////////
+      // Bit (allele) mutation
+      //////////////////////////////////////////////////////////////////////////
+
       /* Then, each position is selected at random and its value is swapped. */
       while( num_bits_mutated-- > 0 )
       {
          int bit = (int)(random_number() * data.number_of_bits);
          genome[bit] = !genome[bit];
       }
-   } else { // Shrink mutation
+   } else {
+      //////////////////////////////////////////////////////////////////////////
+      // Shrink mutation
+      //////////////////////////////////////////////////////////////////////////
+
       /* An illustrative example of how this mutation works (it is very useful
          for simplifying solutions):
 
@@ -752,12 +760,12 @@ void pee_mutation( int* genome )
 
       /* This mutation works on entire genes, not single bits. Because of that,
          first we need to convert num_bits_mutated to a multiple of
-         bits_per_gene (the next multiple of bits_per_gene). This equation does
-         exactly this:
+         bits_per_gene (the next multiple of bits_per_gene). This equation
+         below does exactly this. Note that the maximum number of bits to
+         shrink is limited proportionally by 'mutation_rate'.
       */
 
       int number_of_bits_to_shrink = int((num_bits_mutated+(data.bits_per_gene-1))/data.bits_per_gene)*data.bits_per_gene;
-      //int number_of_bits_to_shrink = RNG::Int(data.number_of_bits);
 
       /* Now we randomly choose the starting gene (again, this operates only on
          multiple of bits_per_gene): */
@@ -766,25 +774,10 @@ void pee_mutation( int* genome )
       /* What if 'number_of_bits + gene_position' is greater than the size of
          the genome? We need to handle this situation: */
       int end = std::min(int(start+number_of_bits_to_shrink), int(data.number_of_bits));
-      //number_of_bits_to_shrink = end-start;
-
-      //std::cerr << "[" << number_of_bits_to_shrink << ": " << start << ", " << end << "]\n";
-      /*
-      std::cerr << "[" << start << ": " << (end) << ", " << (data.number_of_bits-end) << "]\n";
-      for(int i=0; i<data.number_of_bits; ++i)
-         std::cerr << genome[i];
-      std::cerr << std::endl;
-      */
 
       // Using memmove (overlapping) instead of a for-loop for efficiency
       // FIXME: replace sizeof(int) by GENOME_TYPE (or something similar) when it is implemented!
       memmove(&genome[start], &genome[end], (data.number_of_bits-end)*sizeof(int));
-
-      /*
-      for(int i=0; i<data.number_of_bits; ++i)
-         std::cerr << genome[i];
-      std::cerr << std::endl;
-      */
    }
 }
 
