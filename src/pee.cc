@@ -503,7 +503,7 @@ void pee_send_individual( Population* population )
 
          if (!data.pool->threadpool.available())
          {
-            std::cerr << "No more thread available in Poco::ThreadPool::defaultPool\n";
+            std::cerr << "No more thread available in threadpool\n";
 
             /* Force a collect */
             data.pool->threadpool.collect();
@@ -521,7 +521,7 @@ void pee_send_individual( Population* population )
             /* If we still don't have enough threads, just skip! */
             if (!data.pool->threadpool.available()) continue;
          }
-         std::cerr << "Poco::ThreadPool::defaultPool: available " << data.pool->threadpool.available() << " | allocaded: " << data.pool->threadpool.allocated() << "\n";
+         std::cerr << "Poco::ThreadPool: available " << data.pool->threadpool.available() << " | allocated: " << data.pool->threadpool.allocated() << "\n";
 
          const int idx = pee_tournament( population->fitness );
 
@@ -535,6 +535,18 @@ void pee_send_individual( Population* population )
          //for( int j = 0; j < data.number_of_bits; j++ )
          //   results <<  data.best_individual.genome[j];
 
+#if 0
+   try {
+      if (data.pool->ss[i]) data.pool->ss[i]->close();
+   } catch (...) {
+      std::cerr << "[send] Closing failed: connection already closed" << std::endl;
+   }
+   try {
+      if (data.pool->ss[i]) data.pool->ss[i]->shutdown();
+   } catch (...) {
+      std::cerr << "[send] Shutdown failed: connection already closed" << std::endl;
+   }
+#endif
          delete data.pool->clients[i], data.pool->ss[i];
          data.pool->ss[i] = new StreamSocket();
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str(), &(data.pool->isrunning[i]) );
