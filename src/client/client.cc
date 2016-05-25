@@ -6,10 +6,16 @@ void Client::SndIndividual()
    //std::cerr << "SndIndividual: trying to connect...\n";
    if( Connect() )
    {
-      //std::cerr << "SndIndividual: connected!\n";
-      if (SndHeader( 'I', m_results.size() ))
-         SndMessage( m_results.data(), m_results.size() );
-      else std::cerr << "SndIndividual: error in SndHeader!\n";
+      try {
+         //std::cerr << "SndIndividual: connected!\n";
+         if (SndHeader( 'I', m_results.size() ))
+            SndMessage( m_results.data(), m_results.size() );
+         else std::cerr << "SndIndividual: error in SndHeader!\n";
+      } catch (Poco::Exception& exc) {
+         std::cerr << "> Error [SndIndividual()]: " << exc.displayText() << std::endl;
+         // FIXME: remove
+         Disconnect();
+      }
 
       Disconnect();
    }
@@ -31,8 +37,10 @@ int Client::Connect()
 
       connect = true;
 
+   } catch (Poco::Exception& exc) {
+      std::cerr << "> Error [Connect()]: " << exc.displayText() << std::endl;
    } catch (...) {
-      std::cerr << "Connection failed! Is the server running?\n" ;
+      std::cerr << "> Error [Connect()]: Unknown error\n" ;
       poco_error( m_logger, "Connection failed! Is the server running?" );
    }
    //std::cerr << "Connect: " << connect << std::endl;
@@ -42,10 +50,19 @@ int Client::Connect()
 /******************************************************************************/
 void Client::Disconnect()
 {
+   // FIXME: Poco with ThreadPool is not closing the socket at all! So,
+   // eventually the client cannot connect anymore because of "too many open
+   // sockets"!
+
    //m_ss.close();
+   try {
+      m_ss.close();
+   } catch (...) {
+      std::cerr << "Closing failed: connection already closed" << std::endl;
+   }
    try {
       m_ss.shutdown();
    } catch (...) {
-      std::cerr << "Closing failed: connection already closed" << std::endl;
+      std::cerr << "Shutdown failed: connection already closed" << std::endl;
    }
 }

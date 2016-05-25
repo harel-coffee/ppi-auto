@@ -503,7 +503,7 @@ void pee_send_individual( Population* population )
 
          if (!data.pool->threadpool.available())
          {
-            std::cerr << "No more thread available in Poco::ThreadPool::defaultPool\n";
+            std::cerr << "No more thread available in threadpool\n";
 
             /* Force a collect */
             data.pool->threadpool.collect();
@@ -521,7 +521,7 @@ void pee_send_individual( Population* population )
             /* If we still don't have enough threads, just skip! */
             if (!data.pool->threadpool.available()) continue;
          }
-         std::cerr << "Poco::ThreadPool::defaultPool: available " << data.pool->threadpool.available() << " | allocaded: " << data.pool->threadpool.allocated() << "\n";
+         std::cerr << "Poco::ThreadPool: available " << data.pool->threadpool.available() << " | allocated: " << data.pool->threadpool.allocated() << "\n";
 
          const int idx = pee_tournament( population->fitness );
 
@@ -535,6 +535,18 @@ void pee_send_individual( Population* population )
          //for( int j = 0; j < data.number_of_bits; j++ )
          //   results <<  data.best_individual.genome[j];
 
+#if 0
+   try {
+      if (data.pool->ss[i]) data.pool->ss[i]->close();
+   } catch (...) {
+      std::cerr << "[send] Closing failed: connection already closed" << std::endl;
+   }
+   try {
+      if (data.pool->ss[i]) data.pool->ss[i]->shutdown();
+   } catch (...) {
+      std::cerr << "[send] Shutdown failed: connection already closed" << std::endl;
+   }
+#endif
          delete data.pool->clients[i], data.pool->ss[i];
          data.pool->ss[i] = new StreamSocket();
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str(), &(data.pool->isrunning[i]) );
@@ -754,11 +766,62 @@ void pee_mutation( int* genome )
    const int max_bits_mutated = ceil(data.mutation_rate * data.number_of_bits);
    int num_bits_mutated = (int) (random_number() * (max_bits_mutated+1));
 
-   /* Then, each position is selected at random and its value is swapped. */
-   while( num_bits_mutated-- > 0 )
+   if (num_bits_mutated == 0) return; // lucky guy, no mutation for him...
+
+   if (RNG::Probability(0.75))
    {
-      int bit = (int)(random_number() * data.number_of_bits);
-      genome[bit] = !genome[bit];
+      //////////////////////////////////////////////////////////////////////////
+      // Bit (allele) mutation
+      //////////////////////////////////////////////////////////////////////////
+
+      /* Then, each position is selected at random and its value is swapped. */
+      while( num_bits_mutated-- > 0 )
+      {
+         int bit = (int)(random_number() * data.number_of_bits);
+         genome[bit] = !genome[bit];
+      }
+   } else {
+      //////////////////////////////////////////////////////////////////////////
+      // Shrink mutation
+      //////////////////////////////////////////////////////////////////////////
+
+      /* An illustrative example of how this mutation works (it is very useful
+         for simplifying solutions):
+
+            Original genome:
+
+                               ,> end
+               [AAA|AAA|###|###|BBB|BBB|BBB]
+                       L start
+
+
+            Mutated:
+
+                               ,> end
+               [AAA|AAA|BBB|BBB|BBB|   |   ]
+                       L start
+       */
+
+      /* This mutation works on entire genes, not single bits. Because of that,
+         first we need to convert num_bits_mutated to a multiple of
+         bits_per_gene (the next multiple of bits_per_gene). This equation
+         below does exactly this. Note that the maximum number of bits to
+         shrink is limited proportionally by 'mutation_rate'.
+      */
+
+      int number_of_bits_to_shrink = int((num_bits_mutated+(data.bits_per_gene-1))/data.bits_per_gene)*data.bits_per_gene;
+
+      /* Now we randomly choose the starting gene (again, this operates only on
+         multiple of bits_per_gene): */
+      int start = ((int)(random_number() * data.number_of_bits))/data.bits_per_gene * data.bits_per_gene;
+
+      /* What if 'number_of_bits + gene_position' is greater than the size of
+         the genome? We need to handle this situation: */
+      int end = std::min(int(start+number_of_bits_to_shrink), int(data.number_of_bits));
+
+      // Using memmove (overlapping) instead of a for-loop for efficiency
+      // FIXME: replace sizeof(int) by GENOME_TYPE (or something similar) when it is implemented!
+      memmove(&genome[start], &genome[end], (data.number_of_bits-end)*sizeof(int));
    }
 }
 

@@ -27,7 +27,17 @@ void Server::run()
 
    switch( command ) {
       case 'I': {
-                   while( m_freeslots.empty() ) { Thread::sleep(1000); }
+                   // FIXME: Is it better to cancel immediately the connection
+                   // or wait until a slot become available?
+
+                   // Wait until a slot become available
+                   //while( m_freeslots.empty() ) { Thread::sleep(1000); }
+
+                   // Return immediately when not a single slot is available
+                   if ( m_freeslots.empty() ) {
+                      std::cerr << "> Error: No free slots!\n";
+                      return;
+                   }
 
                    {
                       Poco::FastMutex::ScopedLock lock( m_mutex );
