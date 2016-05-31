@@ -57,11 +57,15 @@ void Client::Disconnect()
    //m_ss.close();
    try {
       m_ss.close();
+   } catch (Poco::Exception& exc) {
+      std::cerr << "> Error [Disconnect() close()]: " << exc.displayText() << std::endl;
    } catch (...) {
       std::cerr << "Closing failed: connection already closed" << std::endl;
    }
    try {
       m_ss.shutdown();
+   } catch (Poco::Exception& exc) {
+      std::cerr << "> Error [Disconnect() shutdown()]: " << exc.displayText() << std::endl;
    } catch (...) {
       std::cerr << "Shutdown failed: connection already closed" << std::endl;
    }
