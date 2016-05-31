@@ -130,3 +130,30 @@ case T_8:
 case T_9:
    stack[++stack_top] = 9.0f;
    break;
+case T_N1:
+   stack[++stack_top] = -1.0f;
+   break;
+case T_N2:
+   stack[++stack_top] = -2.0f;
+   break;
+case T_N3:
+   stack[++stack_top] = -3.0f;
+   break;
+case T_N4:
+   stack[++stack_top] = -4.0f;
+   break;
+case T_N5:
+   stack[++stack_top] = -5.0f;
+   break;
+case T_N6:
+   stack[++stack_top] = -6.0f;
+   break;
+case T_N7:
+   stack[++stack_top] = -7.0f;
+   break;
+case T_N8:
+   stack[++stack_top] = -8.0f;
+   break;
+case T_N9:
+   stack[++stack_top] = -9.0f;
+   break;

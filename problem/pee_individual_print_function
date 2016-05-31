@@ -112,6 +112,33 @@ case T_8:
 case T_9:
    fprintf( out, "9 " );
    break;
+case T_N1:
+   fprintf( out, "-1 " );
+   break;
+case T_N2:
+   fprintf( out, "-2 " );
+   break;
+case T_N3:
+   fprintf( out, "-3 " );
+   break;
+case T_N4:
+   fprintf( out, "-4 " );
+   break;
+case T_N5:
+   fprintf( out, "-5 " );
+   break;
+case T_N6:
+   fprintf( out, "-6 " );
+   break;
+case T_N7:
+   fprintf( out, "-7 " );
+   break;
+case T_N8:
+   fprintf( out, "-8 " );
+   break;
+case T_N9:
+   fprintf( out, "-9 " );
+   break;
 case T_ATTRIBUTE:
    fprintf( out, "ATTR-%d ", (int)ephemeral[i] );
    break;
