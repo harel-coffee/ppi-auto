@@ -63,9 +63,10 @@ f.close()
 ncol = len(lines[1].split(','))
 
 
+# TODO: aproveitar texto no caso sem peers
 text = [];
 if peers:
-   text.append("./main -e -acc -strategy PPCU -d ../" + inputfile + " -ncol " + str(ncol) + " -port " + port + " -peers \"" + ''.join(peers) + "\"" + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,15)) + " -g " + str(2**random.randint(6,17)) + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.5)) + " -ts " + str(random.randint(3,15)) + " -nb " + str(random.randint(100,2000)) + " -is " + str(random.randint(3,8)) + " -st " + stagnation)
+   text.append("./main -v -e -acc -strategy PPCU -d ../" + inputfile + " -ncol " + str(ncol) + " -port " + port + " -peers \"" + ''.join(peers) + "\"" + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,17)) + " -g 100000000" + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.1)) + " -ts " + str(random.randint(2,30)) + " -nb " + str(random.randint(500,3000)) + " -is " + str(random.randint(3,8)) + " -st " + stagnation)
 else:
    text.append("./main -e -acc -strategy PPCU -d ../" + inputfile + " -ncol " + str(ncol) + " -port " + port + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,15)) + " -g " + str(2**random.randint(6,17)) + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.5)) + " -ts " + str(random.randint(3,15)) + " -nb " + str(random.randint(100,2000)) + " -is " + str(random.randint(3,8)) + " -st " + stagnation)
 
