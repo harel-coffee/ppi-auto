@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #Running: 
-#          python script/run.py -i problem/random/data.csv -is script/islandfile.txt -port 8080 -ns 4 -cl-d 0 -cl-p 0
+#          python script/run.py -i problem/random/data.csv -is script/islandfile.txt -port 8080 -ns 4 -st 100 -cl-d 0 -cl-p 0
 #
 
 import os
@@ -11,7 +11,7 @@ import random
 
 nargs = len(sys.argv)
 if nargs < 13:
-   print 'run.py -i <inputfile> -is <islandfile> -port <port> -ns <numberofsendings> -cl-d <device> -cl-p <platform>' 
+   print 'run.py -i <inputfile> -is <islandfile> -port <port> -ns <numberofsendings> -st <stagnation> -cl-d <device> -cl-p <platform>' 
    exit();
 
 i = 1;
@@ -24,12 +24,14 @@ while i < nargs:
       port = sys.argv[i+1]
    elif str(sys.argv[i]) == "-ns":
       nsend = sys.argv[i+1]
+   elif str(sys.argv[i]) == "-st":
+      stagnation = sys.argv[i+1]
    elif str(sys.argv[i]) == "-cl-d":
       device = sys.argv[i+1]
    elif str(sys.argv[i]) == "-cl-p":
       platform = sys.argv[i+1]
    else:
-      print 'run.py -i <inputfile> -is <islandfile> -port <port> -ns <numberofsendings> -cl-d <device> -cl-p <platform>' 
+      print 'run.py -i <inputfile> -is <islandfile> -port <port> -ns <numberofsendings> -st <stagnation> -cl-d <device> -cl-p <platform>' 
       break
    i = i + 2
 
@@ -63,9 +65,9 @@ ncol = len(lines[1].split(','))
 
 text = [];
 if peers:
-   text.append("./main -v -e -acc -strategy PPCU -d ../" + inputfile + " -ncol " + str(ncol) + " -port " + port + " -peers \"" + ''.join(peers) + "\"" + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,15)) + " -g " + str(2**random.randint(6,17)) + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.5)) + " -ts " + str(random.randint(3,15)) + " -nb " + str(random.randint(16,2000)) + " -is " + str(random.randint(3,8)))
+   text.append("./main -e -acc -strategy PPCU -d ../" + inputfile + " -ncol " + str(ncol) + " -port " + port + " -peers \"" + ''.join(peers) + "\"" + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,15)) + " -g " + str(2**random.randint(6,17)) + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.5)) + " -ts " + str(random.randint(3,15)) + " -nb " + str(random.randint(100,2000)) + " -is " + str(random.randint(3,8)) + " -st " + stagnation)
 else:
-   text.append("./main -v -e -acc -strategy PPCU -d ../" + inputfile + " -ncol " + str(ncol) + " -port " + port + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,15)) + " -g " + str(2**random.randint(6,17)) + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.5)) + " -ts " + str(random.randint(3,15)) + " -nb " + str(random.randint(16,2000)) + " -is " + str(random.randint(3,8)))
+   text.append("./main -e -acc -strategy PPCU -d ../" + inputfile + " -ncol " + str(ncol) + " -port " + port + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,15)) + " -g " + str(2**random.randint(6,17)) + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.5)) + " -ts " + str(random.randint(3,15)) + " -nb " + str(random.randint(100,2000)) + " -is " + str(random.randint(3,8)) + " -st " + stagnation)
 
 print "\n" + ''.join(text) + "\n"
 os.system("cd build; make;" + ''.join(text) + ";cd -;")
