@@ -525,34 +525,17 @@ void pee_send_individual( Population* population )
 
          const int idx = pee_tournament( population->fitness );
 
-         std::stringstream results; //results.str(std::string());
+         std::stringstream results;
          results <<  population->fitness[idx] << " ";
          for( int j = 0; j < data.number_of_bits; j++ )
             results <<  population->genome[idx * data.number_of_bits + j];
 
-         //std::stringstream results; 
-         //results <<  data.best_individual.fitness[0] << " ";
-         //for( int j = 0; j < data.number_of_bits; j++ )
-         //   results <<  data.best_individual.genome[j];
-
-#if 0
-   try {
-      if (data.pool->ss[i]) data.pool->ss[i]->close();
-   } catch (...) {
-      std::cerr << "[send] Closing failed: connection already closed" << std::endl;
-   }
-   try {
-      if (data.pool->ss[i]) data.pool->ss[i]->shutdown();
-   } catch (...) {
-      std::cerr << "[send] Shutdown failed: connection already closed" << std::endl;
-   }
-#endif
          delete data.pool->clients[i]; delete data.pool->ss[i];
+
          data.pool->ss[i] = new StreamSocket();
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str(), data.pool->isrunning[i] );
          data.pool->threadpool.start( *(data.pool->clients[i]) );
 
-         //std::cerr << "\nSending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << data.best_individual.fitness[0] << std::endl;
          std::cerr << "\nSending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
          //std::cerr << results.str() << std::endl;
       }

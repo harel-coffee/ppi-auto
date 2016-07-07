@@ -1,5 +1,7 @@
 #include "client.h"
 
+#define TIMEOUT 10000
+
 /******************************************************************************/
 void Client::SndIndividual()
 {
@@ -13,8 +15,6 @@ void Client::SndIndividual()
          else std::cerr << "SndIndividual: error in SndHeader!\n";
       } catch (Poco::Exception& exc) {
          std::cerr << "> Error [SndIndividual()]: " << exc.displayText() << std::endl;
-         // FIXME: remove
-         Disconnect();
       }
 
       Disconnect();
@@ -31,16 +31,16 @@ int Client::Connect()
       //std::cerr << "Trying to connect to " << m_server << "...";
       //Thread::sleep(5000);
       //m_ss.connect( SocketAddress( m_server ) );
-      m_ss.connect( SocketAddress( m_server ), 10000 );
+      m_ss.connect( SocketAddress( m_server ), TIMEOUT );
       //std::cerr << " connected!";
       poco_debug( m_logger, "Connected!" );
 
       connect = true;
 
    } catch (Poco::Exception& exc) {
-      std::cerr << "> Error [Connect()]: " << exc.displayText() << std::endl;
+      std::cerr << "> Error [Connect() to " << m_server << "]: " << exc.displayText() << std::endl;
    } catch (...) {
-      std::cerr << "> Error [Connect()]: Unknown error\n" ;
+      std::cerr << "> Error [Connect() to " << m_server << "]: Unknown error\n" ;
       poco_error( m_logger, "Connection failed! Is the server running?" );
    }
    //std::cerr << "Connect: " << connect << std::endl;
@@ -50,22 +50,17 @@ int Client::Connect()
 /******************************************************************************/
 void Client::Disconnect()
 {
-   // FIXME: Poco with ThreadPool is not closing the socket at all! So,
-   // eventually the client cannot connect anymore because of "too many open
-   // sockets"!
-
-   //m_ss.close();
    try {
       m_ss.close();
    } catch (Poco::Exception& exc) {
-      std::cerr << "> Error [Disconnect() close()]: " << exc.displayText() << std::endl;
+      std::cerr << "> Error [Disconnect() close() from " << m_server << "]: " << exc.displayText() << std::endl;
    } catch (...) {
       std::cerr << "Closing failed: connection already closed" << std::endl;
    }
    try {
       m_ss.shutdown();
    } catch (Poco::Exception& exc) {
-      std::cerr << "> Error [Disconnect() shutdown()]: " << exc.displayText() << std::endl;
+      std::cerr << "> Error [Disconnect() shutdown() from " << m_server << "]: " << exc.displayText() << std::endl;
    } catch (...) {
       std::cerr << "Shutdown failed: connection already closed" << std::endl;
    }
