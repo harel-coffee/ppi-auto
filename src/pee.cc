@@ -547,7 +547,7 @@ void pee_send_individual( Population* population )
       std::cerr << "[send] Shutdown failed: connection already closed" << std::endl;
    }
 #endif
-         delete data.pool->clients[i], data.pool->ss[i];
+         delete data.pool->clients[i]; delete data.pool->ss[i];
          data.pool->ss[i] = new StreamSocket();
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str(), data.pool->isrunning[i] );
          data.pool->threadpool.start( *(data.pool->clients[i]) );
