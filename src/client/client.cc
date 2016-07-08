@@ -57,6 +57,7 @@ void Client::Disconnect()
    } catch (...) {
       std::cerr << "Closing failed: connection already closed" << std::endl;
    }
+#if 0
    try {
       m_ss.shutdown();
    } catch (Poco::Exception& exc) {
@@ -64,4 +65,5 @@ void Client::Disconnect()
    } catch (...) {
       std::cerr << "Shutdown failed: connection already closed" << std::endl;
    }
+#endif
 }
