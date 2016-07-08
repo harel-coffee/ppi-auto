@@ -1,6 +1,11 @@
 #include "../util/CmdLineParser.h"
 #include "server.h"
 
+// Is it better to cancel immediately the connection or wait until a slot
+// become available? Setting DROP_WHEN_THERE_ARE_NO_SLOTS causes the connection
+// to be dropped immediately if there is not a single slot available
+#define DROP_WHEN_THERE_ARE_NO_SLOTS
+
 /******************************************************************************/
 /** Definition of the static variables **/
 Poco::FastMutex Server::m_mutex;
@@ -13,10 +18,8 @@ std::queue<int> Server::m_ready;
 
 
 /******************************************************************************/
-/** This function is called whenever a worker connects to master. The master
-   will check the request and then do the following action:
-
-   1) Receive the results from the worker
+/** This function is called whenever an island connects to a server island. The
+    server will check the request and then do the following action:
 **/
 void Server::run()
 {
@@ -27,17 +30,19 @@ void Server::run()
 
    switch( command ) {
       case 'I': {
-                   // FIXME: Is it better to cancel immediately the connection
-                   // or wait until a slot become available?
+                   // TODO: Implement the acceptance tolerance here! (-iat option)
 
-                   // Wait until a slot become available
-                   //while( m_freeslots.empty() ) { Thread::sleep(1000); }
-
+#ifdef DROP_WHEN_THERE_ARE_NO_SLOTS
                    // Return immediately when not a single slot is available
                    if ( m_freeslots.empty() ) {
-                      std::cerr << "> Error: No free slots!\n";
+                      poco_debug( m_logger, "Dropping connection because there are no free slots!" );
                       return;
                    }
+#else
+                   // Wait until a slot become available
+                   while( m_freeslots.empty() ) { Thread::sleep(1000); }
+#endif
+
 
                    {
                       Poco::FastMutex::ScopedLock lock( m_mutex );
