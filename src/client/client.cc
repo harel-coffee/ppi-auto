@@ -38,10 +38,9 @@ int Client::Connect()
       connect = true;
 
    } catch (Poco::Exception& exc) {
-      std::cerr << "> Error [Connect() to " << m_server << "]: " << exc.displayText() << std::endl;
+      std::cerr << "> Warning [Connect() to " << m_server << "]: " << exc.displayText() << " (Is the remote island '" << m_server << "' running?)" << std::endl;
    } catch (...) {
       std::cerr << "> Error [Connect() to " << m_server << "]: Unknown error\n" ;
-      poco_error( m_logger, "Connection failed! Is the server running?" );
    }
    //std::cerr << "Connect: " << connect << std::endl;
    return( connect );
