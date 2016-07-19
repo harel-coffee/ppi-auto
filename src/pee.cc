@@ -981,6 +981,10 @@ void pee_evolve()
 
 void pee_destroy()
 {
+   // Wait until all threads finish. This ensures a graceful termination and
+   // prevents segmentation faults at the end
+   Poco::ThreadPool::defaultPool().joinAll();
+
    delete[] data.best_individual.genome, data.best_individual.fitness, data.phenotype, data.ephemeral, data.size;
    delete[] Server::m_immigrants, Server::m_fitness;
    delete data.pool;
