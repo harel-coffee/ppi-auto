@@ -16,7 +16,7 @@ using Poco::Thread;
 /******************************************************************************/
 class Client: public Common, public Poco::Runnable {
 public:
-   Client( StreamSocket& s, const char* server, const std::string& results, int &isrunning ):
+   Client( StreamSocket& s, const char* server, const std::string& results, bool &isrunning ):
       Common( s ), m_server( server ), m_results( results ), m_isrunning(isrunning) {}
 
    int  Connect();
@@ -46,7 +46,7 @@ public:
 private:
    const char* m_server;
    const std::string m_results;
-   int &m_isrunning;
+   bool &m_isrunning;
 };
 /******************************************************************************/
 #endif

@@ -18,6 +18,7 @@
 #include <string>   
 #include <sstream>
 #include <iostream> 
+#include "common/common.h"
 #include "util/CmdLineParser.h"
 #include "interpreter/accelerator.h"
 #include "interpreter/sequential.h"
@@ -28,6 +29,7 @@
 #include "grammar"
 #include "util/Util.h"
 #include "util/Random.h"
+#include "Poco/Logger.h"
 
 // Definition of the Random Number Generator to be used (see util/Random.h)
 #define RNG XorShift128Plus
@@ -46,18 +48,6 @@ using namespace std;
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
-
-Pool::Pool( unsigned size ): ss( size, NULL), clients( size, NULL )
-{
-      /* Expands defaultPool() if the available number of threads is less than
-       * the number of peers, otherwise the exception "No thread available" is
-       * thrown. */
-   if (threadpool.available() < size)
-      threadpool.addCapacity(size - threadpool.available());
-
-      isrunning = new int[size];
-      for( unsigned i = 0; i < size; i++ ) isrunning[i] = 0;
-}
 
 struct Peer {
   Peer( const std::string& s, float f ):
@@ -486,8 +476,7 @@ int pee_tournament( const float* fitness )
 void pee_send_individual( Population* population )
 {
    static bool firstcall = true;
-   if( firstcall )
-   {
+   if( firstcall ) {
       firstcall = false;
       return;
    }
@@ -501,27 +490,31 @@ void pee_send_individual( Population* population )
          //if( !(data.pool->threads[i] == NULL) && data.pool->threads[i]->isRunning() ) continue;
          if( data.pool->isrunning[i] ) continue;
 
-         if (!data.pool->threadpool.available())
+         if (!Poco::ThreadPool::defaultPool().available())
          {
-            std::cerr << "No more thread available in threadpool\n";
+            std::cerr << "No more thread available in defaultPool()\n";
 
             /* Force a collect */
-            data.pool->threadpool.collect();
+            Poco::ThreadPool::defaultPool().collect();
 
-            if (!data.pool->threadpool.available())
+            if (!Poco::ThreadPool::defaultPool().available())
             {
                /* Try to increase the capacity of defaultPool */
                try {
-                  data.pool->threadpool.addCapacity(1);
+                  Poco::ThreadPool::defaultPool().addCapacity(1);
                } catch (Poco::Exception& exc) {
                   std::cerr << "ThreadPool: " << exc.displayText() << std::endl;
                }
             }
 
             /* If we still don't have enough threads, just skip! */
-            if (!data.pool->threadpool.available()) continue;
+            if (!Poco::ThreadPool::defaultPool().available())
+            {
+               poco_warning( Common::m_logger, "pee_send_individual(): Still no available threads, skipping..." );
+               continue;
+            }
          }
-         std::cerr << "Poco::ThreadPool: available " << data.pool->threadpool.available() << " | allocated: " << data.pool->threadpool.allocated() << "\n";
+         //std::cerr << "Poco::ThreadPool: available " << Poco::ThreadPool::defaultPool().available() << " | allocated: " << Poco::ThreadPool::defaultPool().allocated() << "\n";
 
          const int idx = pee_tournament( population->fitness );
 
@@ -534,7 +527,7 @@ void pee_send_individual( Population* population )
 
          data.pool->ss[i] = new StreamSocket();
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str(), data.pool->isrunning[i] );
-         data.pool->threadpool.start( *(data.pool->clients[i]) );
+         Poco::ThreadPool::defaultPool().start( *(data.pool->clients[i]) );
 
          std::cerr << "\nSending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
          //std::cerr << results.str() << std::endl;
