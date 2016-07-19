@@ -129,6 +129,10 @@ void pep_print( FILE* out )
 
 void pep_destroy() 
 {
-   delete[] data.phenotype, data.ephemeral, data.size, data.vector;
+   delete[] data.phenotype;
+   delete[] data.ephemeral;
+   delete[] data.size;
+   delete[] data.vector;
+
    if( !data.version ) {seq_interpret_destroy();}
 }

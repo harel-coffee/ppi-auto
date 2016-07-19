@@ -974,7 +974,10 @@ void pee_evolve()
 
    // join all threads
    // Clean up
-   delete[] antecedentes.genome, antecedentes.fitness, descendentes.genome, descendentes.fitness; 
+   delete[] antecedentes.genome;
+   delete[] antecedentes.fitness;
+   delete[] descendentes.genome;
+   delete[] descendentes.fitness;
 
    data.time_total = t_total.elapsed();
 }
@@ -985,8 +988,15 @@ void pee_destroy()
    // prevents segmentation faults at the end
    Poco::ThreadPool::defaultPool().joinAll();
 
-   delete[] data.best_individual.genome, data.best_individual.fitness, data.phenotype, data.ephemeral, data.size;
-   delete[] Server::m_immigrants, Server::m_fitness;
+   delete[] data.best_individual.genome;
+   delete[] data.best_individual.fitness;
+   delete[] data.phenotype;
+   delete[] data.ephemeral;
+   delete[] data.size;
+   delete[] Server::m_immigrants;
+   delete[] Server::m_fitness;
+
    delete data.pool;
+
    if( !data.version ) {seq_interpret_destroy();}
 }

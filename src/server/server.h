@@ -34,7 +34,7 @@ public:
 
    //~Server()
    //{
-   //   delete[] m_immigrants, m_fitness;
+   //   delete[] m_immigrants; delete[] m_fitness;
    //}
 
 public:
