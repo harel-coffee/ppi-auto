@@ -74,7 +74,7 @@ public:
          //if( threads[i]->isRunning() ) { threads[i]->join(); }
          //Clean up. They were allocated in pee_send_individual (pee.cc)
          //delete threads[i], clients[i], ss[i];
-         delete clients[i], ss[i];
+         delete clients[i]; delete ss[i];
       } 
    }
 
