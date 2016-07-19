@@ -13,6 +13,9 @@ Poco::FastMutex Server::m_mutex;
 std::vector<char>* Server::m_immigrants = NULL;
 float* Server::m_fitness = NULL;
 
+unsigned long Server::stagnation = 0;
+unsigned long Server::immigrants_acceptance_threshold = 0;
+
 std::queue<int> Server::m_freeslots;
 std::queue<int> Server::m_ready;
 
@@ -30,7 +33,13 @@ void Server::run()
 
    switch( command ) {
       case 'I': {
-                   // TODO: Implement the acceptance tolerance here! (-iat option)
+                   /* Only accepts an immigrant if we are stagnated (above a
+                    * certain threshold)! This promotes niches and therefore
+                    * diversification among islands. */
+                   if (stagnation <= immigrants_acceptance_threshold) {
+                      poco_debug(m_logger, "Rejecting individual because we still didn't stagnate!");
+                      return;
+                   }
 
 #ifdef DROP_WHEN_THERE_ARE_NO_SLOTS
                    // Return immediately when not a single slot is available

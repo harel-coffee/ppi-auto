@@ -56,6 +56,9 @@ public:
 
    static std::queue<int> m_freeslots;
    static std::queue<int> m_ready;
+
+   static unsigned long stagnation;
+   static unsigned long immigrants_acceptance_threshold;
 };
 
 #endif

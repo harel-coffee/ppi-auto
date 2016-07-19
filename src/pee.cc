@@ -184,6 +184,8 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    /* Maximum allowed number of generations without improvement [default = disabled] */
    Opts.Int.Add( "-st", "--stagnation-tolerance", numeric_limits<unsigned long>::max(), 0 );
 
+   Opts.Float.Add( "-iat", "--immigrants-acceptange-threshold", 0.0, 0.0 );
+
    // processing the command-line
    Opts.Process();
 
@@ -285,7 +287,11 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    }
 
    data.stagnation_tolerance = Opts.Int.Get( "-st" );
-
+   double iat = Opts.Float.Get( "-iat" );
+   if (iat < 1.0) // If in [0.0,1.0), then it is expressed as a percentage of '-st'
+      Server::immigrants_acceptance_threshold = iat * data.stagnation_tolerance;
+   else // if '>= 1.0', it is an absolute value
+      Server::immigrants_acceptance_threshold = static_cast<long int>(iat);
 }
 
 void pee_clone( Population* original, int idx_original, Population* copy, int idx_copy )
@@ -656,23 +662,23 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
    //   pee_individual_print( &population[index], stdout, 0 );
    //}
 
-   static unsigned long stagnation = 0;
+   //static unsigned long stagnation = 0;
    for( int i = 0; i < data.best_size; i++ )
    {
       if( descendentes->fitness[index[i]] < data.best_individual.fitness[i] )
       {
-         stagnation = 0;
+         Server::stagnation = 0;
          pee_clone( descendentes, index[i], &data.best_individual, i );
          //printf( "IMPORTANTE::[%d]:: %.12f\n", index[i], data.best_individual.fitness[i] ); 
          //sleep(5);
       }
       else
       {
-         ++stagnation;
+         ++Server::stagnation;
       }
    }
 
-   return stagnation;
+   return Server::stagnation;
 }
 
 void pee_generate_population( Population* antecedentes, Population* descendentes, int* nImmigrants )
