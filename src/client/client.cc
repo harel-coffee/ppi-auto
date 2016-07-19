@@ -1,6 +1,7 @@
 #include "client.h"
 
-#define TIMEOUT 10000
+// Timeout in microseconds (10000000 microseconds = 10 seconds)
+#define TIMEOUT 10000000
 
 /******************************************************************************/
 void Client::SndIndividual()
