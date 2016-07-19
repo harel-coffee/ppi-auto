@@ -16,8 +16,8 @@ using Poco::Thread;
 /******************************************************************************/
 class Client: public Common, public Poco::Runnable {
 public:
-   Client( StreamSocket& s, const char* server, const std::string& results, bool &isrunning ):
-      Common( s ), m_server( server ), m_results( results ), m_isrunning(isrunning) {}
+   Client( StreamSocket& s, const char* server, const std::string& results, bool &isrunning, Poco::FastMutex &mutex ):
+      Common( s ), m_server( server ), m_results( results ), m_isrunning(isrunning), m_mutex(mutex) {}
 
    int  Connect();
    void Disconnect();
@@ -25,21 +25,34 @@ public:
 
    virtual void run()
    {
-      if (m_isrunning)
-      {
-         std::cerr << "Thread is already running!\n";
-         return;
-      }
+      { // Lock begin
+         // Ensures that the following read and write to m_isrunning is done synchronously
+         Poco::FastMutex::ScopedLock lock(m_mutex);
 
-      m_isrunning = 1;
-      //std::cerr << "\n[*m_isrunning = 1: (" << *m_isrunning << ")]\n";
+         if (m_isrunning)
+         {
+            poco_debug( m_logger, "Ops, some other thread took this task before me, exiting... (thread is already running)");
+            return;
+         }
+
+         // Tell to everybody that this task is now of my responsibility!
+         m_isrunning = 1;
+      } // Lock end
+
       try {
          SndIndividual();
       } catch (Poco::Exception& exc) {
-         m_isrunning = 0;
          std::cerr << "SndIndividual(): " << exc.displayText() << std::endl;
+      } catch (...) {
+         std::cerr << "SndIndividual(): Unknown error!" << std::endl;
       }
-      m_isrunning = 0;
+
+      // Ensures that this thread will release m_isrunning whatever happens!
+      {
+         Poco::FastMutex::ScopedLock lock(m_mutex);
+         m_isrunning = 0;
+      }
+
       //std::cerr << "\n[*m_isrunning = 0: (" << *m_isrunning << ")]\n";
    }
 
@@ -47,6 +60,7 @@ private:
    const char* m_server;
    const std::string m_results;
    bool &m_isrunning;
+   Poco::FastMutex &m_mutex;
 };
 /******************************************************************************/
 #endif

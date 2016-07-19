@@ -54,6 +54,10 @@ public:
       if (Poco::ThreadPool::defaultPool().available() < size)
          Poco::ThreadPool::defaultPool().addCapacity(size - (Poco::ThreadPool::defaultPool().available()));
 
+      // Create an array of mutexes (one for each id)
+      mutexes = new Poco::FastMutex[size];
+
+      // Create and initialize an array of isrunning's (one for each id)
       isrunning = new bool[size];
       for (unsigned i = 0; i < size; i++) isrunning[i] = false;
    }
@@ -63,6 +67,7 @@ public:
       // Clean up!
 
       delete[] isrunning;
+      delete[] mutexes;
 
       for (unsigned i = 0; i < clients.size(); i++)
       {
@@ -73,7 +78,9 @@ public:
 
    std::vector<StreamSocket*> ss;
    std::vector<Client*> clients;
+
    bool * isrunning;
+   Poco::FastMutex * mutexes;
 };
 /******************************************************************************/
 

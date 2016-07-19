@@ -487,7 +487,6 @@ void pee_send_individual( Population* population )
       if( random_number() < data.peers[i].frequency )
       {
          //Testa se o thread ainda está mandando o indivíduo, escolhido na geração anterior, para a ilha.
-         //if( !(data.pool->threads[i] == NULL) && data.pool->threads[i]->isRunning() ) continue;
          if( data.pool->isrunning[i] ) continue;
 
          if (!Poco::ThreadPool::defaultPool().available())
@@ -526,7 +525,7 @@ void pee_send_individual( Population* population )
          delete data.pool->clients[i]; delete data.pool->ss[i];
 
          data.pool->ss[i] = new StreamSocket();
-         data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str(), data.pool->isrunning[i] );
+         data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str(), data.pool->isrunning[i], data.pool->mutexes[i] );
          Poco::ThreadPool::defaultPool().start( *(data.pool->clients[i]) );
 
          std::cerr << "\nSending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
