@@ -2,9 +2,6 @@
 
 #include <sstream>
 
-// Timeout in microseconds (10000000 microseconds = 10 seconds)
-#define TIMEOUT 10000000
-
 /******************************************************************************/
 void Client::SndIndividual()
 {
@@ -29,7 +26,7 @@ int Client::Connect()
    bool connect = false;
    try {
       //Thread::sleep(5000);
-      m_ss.connect( SocketAddress( m_server ), TIMEOUT );
+      m_ss.connect(SocketAddress( m_server ));
 
       connect = true;
 
