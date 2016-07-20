@@ -184,7 +184,7 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    /* Maximum allowed number of generations without improvement [default = disabled] */
    Opts.Int.Add( "-st", "--stagnation-tolerance", numeric_limits<unsigned long>::max(), 0 );
 
-   Opts.Float.Add( "-iat", "--immigrants-acceptange-threshold", 0.0, 0.0 );
+   Opts.Float.Add( "-iat", "--immigrants-acceptance-threshold", 0.0, 0.0 );
 
    // processing the command-line
    Opts.Process();
