@@ -1,12 +1,13 @@
 #include "client.h"
 
+#include <sstream>
+
 // Timeout in microseconds (10000000 microseconds = 10 seconds)
 #define TIMEOUT 10000000
 
 /******************************************************************************/
 void Client::SndIndividual()
 {
-   //std::cerr << "SndIndividual: trying to connect...\n";
    if( Connect() )
    {
       try {
@@ -20,7 +21,6 @@ void Client::SndIndividual()
 
       Disconnect();
    }
-   //else std::cerr << "SndIndividual: could not connect!\n";
 }
 
 /******************************************************************************/
@@ -28,13 +28,8 @@ int Client::Connect()
 {
    bool connect = false;
    try {
-      poco_debug( m_logger, "Trying to connect..." );
-      //std::cerr << "Trying to connect to " << m_server << "...";
       //Thread::sleep(5000);
-      //m_ss.connect( SocketAddress( m_server ) );
       m_ss.connect( SocketAddress( m_server ), TIMEOUT );
-      //std::cerr << " connected!";
-      poco_debug( m_logger, "Connected!" );
 
       connect = true;
 
@@ -43,7 +38,7 @@ int Client::Connect()
    } catch (...) {
       std::cerr << "> Error [Connect() to " << m_server << "]: Unknown error\n" ;
    }
-   //std::cerr << "Connect: " << connect << std::endl;
+
    return( connect );
 }
 
@@ -53,9 +48,11 @@ void Client::Disconnect()
    try {
       m_ss.close();
    } catch (Poco::Exception& exc) {
-      std::cerr << "> Warning [Disconnect() close() from " << m_server << "]: " << exc.displayText() << std::endl;
+      std::stringstream error_msg;
+      error_msg << "> [Disconnect() close() from " << m_server << "]: " << exc.displayText() << std::endl;
+      poco_debug(m_logger, error_msg.str());
    } catch (...) {
-      std::cerr << "Closing failed: connection already closed" << std::endl;
+      std::cerr << "Closing failed: unknown error" << std::endl;
    }
 #if 0
    try {

@@ -52,8 +52,6 @@ public:
          Poco::FastMutex::ScopedLock lock(m_mutex);
          m_isrunning = 0;
       }
-
-      //std::cerr << "\n[*m_isrunning = 0: (" << *m_isrunning << ")]\n";
    }
 
 private:
