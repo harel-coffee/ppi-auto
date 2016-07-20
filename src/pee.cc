@@ -69,7 +69,7 @@ namespace { struct t_data { Symbol initial_symbol; Population best_individual; i
 double random_number() { return RNG::Real(); };
 
 
-t_rule* decode_rule( const int* genome, int* const allele, Symbol cabeca )
+t_rule* decode_rule( const GENOME_TYPE* genome, int* const allele, Symbol cabeca )
 {
    // Verifica se é possível decodificar mais uma regra, caso contrário
    // retorna uma regra nula.
@@ -87,7 +87,7 @@ t_rule* decode_rule( const int* genome, int* const allele, Symbol cabeca )
    return gramatica[cabeca][valor_bruto % num_regras];
 }
 
-float decode_real( const int* genome, int* const allele )
+float decode_real( const GENOME_TYPE* genome, int* const allele )
 {
    // Retorna a constante zero se não há número suficiente de bits
    if( *allele + data.bits_per_constant > data.number_of_bits ) { return 0.; }
@@ -102,7 +102,7 @@ float decode_real( const int* genome, int* const allele )
           (pow( 2.0, data.bits_per_constant ) - 1);
 }
 
-int decode( const int* genome, int* const allele, Symbol* phenotype, float* ephemeral, int pos, Symbol initial_symbol )
+int decode( const GENOME_TYPE* genome, int* const allele, Symbol* phenotype, float* ephemeral, int pos, Symbol initial_symbol )
 {
    t_rule* r = decode_rule( genome, allele, initial_symbol ); 
    if( !r ) { return 0; }
@@ -296,8 +296,8 @@ void pee_init( float** input, int nlin, int argc, char** argv )
 
 void pee_clone( Population* original, int idx_original, Population* copy, int idx_copy )
 {
-   const int* const org = original->genome + idx_original*data.number_of_bits;
-   int* cpy = copy->genome + idx_copy*data.number_of_bits;
+   const GENOME_TYPE* const org = original->genome + idx_original*data.number_of_bits;
+   GENOME_TYPE* cpy = copy->genome + idx_copy*data.number_of_bits;
 
    for( int i = 0; i < data.number_of_bits; ++i ) cpy[i] = org[i];
 
@@ -526,7 +526,7 @@ void pee_send_individual( Population* population )
          std::stringstream results;
          results <<  population->fitness[idx] << " ";
          for( int j = 0; j < data.number_of_bits; j++ )
-            results <<  population->genome[idx * data.number_of_bits + j];
+            results <<  static_cast<int>(population->genome[idx * data.number_of_bits + j]); /* NB: A cast to 'int' is necessary here otherwise it will send characters instead of digits when GENOME_TYPE == char */
 
          delete data.pool->clients[i]; delete data.pool->ss[i];
 
@@ -540,7 +540,7 @@ void pee_send_individual( Population* population )
    }
 }
 
-int pee_receive_individual( int* immigrants )
+int pee_receive_individual( GENOME_TYPE* immigrants )
 {
    int slot; int nImmigrants = 0;
    while( !Server::m_ready.empty() && nImmigrants < data.immigrants_size )
@@ -693,7 +693,7 @@ void pee_generate_population( Population* antecedentes, Population* descendentes
    pee_evaluate( antecedentes, descendentes, nImmigrants );
 }
 
-void pee_crossover( const int* father, const int* mother, int* offspring1, int* offspring2 )
+void pee_crossover( const GENOME_TYPE* father, const GENOME_TYPE* mother, GENOME_TYPE* offspring1, GENOME_TYPE* offspring2 )
 {
    if (RNG::Probability(2./3.))
    {
@@ -739,7 +739,7 @@ void pee_crossover( const int* father, const int* mother, int* offspring1, int* 
    }
 }
 
-void pee_mutation( int* genome )
+void pee_mutation( GENOME_TYPE* genome )
 {
    /* First the number of bit positions that will be mutated is chosen
     * (num_bits_mutated), based on 'mutation_rate', which defines the maximum
@@ -801,8 +801,7 @@ void pee_mutation( int* genome )
       int end = std::min(int(start+number_of_bits_to_shrink), int(data.number_of_bits));
 
       // Using memmove (overlapping) instead of a for-loop for efficiency
-      // FIXME: replace sizeof(int) by GENOME_TYPE (or something similar) when it is implemented!
-      memmove(&genome[start], &genome[end], (data.number_of_bits-end)*sizeof(int));
+      memmove(&genome[start], &genome[end], (data.number_of_bits-end)*sizeof(GENOME_TYPE));
    }
 }
 
@@ -861,11 +860,11 @@ void pee_evolve()
    antecedentes.fitness = new float[data.population_size];
    descendentes.fitness = new float[data.population_size];
 
-   antecedentes.genome = new int[data.population_size * data.number_of_bits];
-   descendentes.genome = new int[data.population_size * data.number_of_bits];
+   antecedentes.genome = new GENOME_TYPE[data.population_size * data.number_of_bits];
+   descendentes.genome = new GENOME_TYPE[data.population_size * data.number_of_bits];
 
    data.best_individual.fitness = new float[data.best_size];
-   data.best_individual.genome = new int[data.best_size * data.number_of_bits];
+   data.best_individual.genome = new GENOME_TYPE[data.best_size * data.number_of_bits];
    for( int i = 0; i < data.best_size; i++ )
    {
       data.best_individual.fitness[i] = std::numeric_limits<float>::max();
