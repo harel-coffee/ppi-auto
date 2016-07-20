@@ -590,8 +590,8 @@ int pee_receive_individual( GENOME_TYPE* immigrants )
       for( int i = 0; i < chars_to_convert; i++ )
       // TODO? for( int i = 0; i < chars_to_convert && tmp[i] != '\0'; i++ )
       {
-         immigrants[nImmigrants * data.number_of_bits + i] = tmp[i] - '0';
-         //fprintf(stdout,"%d",immigrants[nImmigrants * data.number_of_bits + i]);
+         assert(tmp[i]-'0'==1 || tmp[i]-'0'==0); // In debug mode, assert that each value is either '0' or '1'
+         immigrants[nImmigrants * data.number_of_bits + i] = static_cast<bool>(tmp[i] - '0'); /* Ensures that the allele will be binary (0 or 1) regardless of the received value--this ensures it would work even if a communication error occurs (or a malicious message is sent). */
       }
       nImmigrants++;
       //fprintf(stdout,"\n");

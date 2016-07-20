@@ -1,5 +1,7 @@
 #include "common.h"
 
+#define MAX_MESSAGE_SIZE 65536
+
 /******************************************************************************/
 Logger& Common::m_logger( Logger::get( "logger" ) ); 
 
@@ -96,6 +98,8 @@ char Common::RcvHeader( int& msg_size )
 
       sscanf( header, "%c%d", &command, &msg_size );
       if (!( header[1] == '0' || msg_size > 0 )) throw Poco::Exception("Invalid message size");
+
+      if (msg_size > MAX_MESSAGE_SIZE) throw Poco::Exception("Invalid message size, too big");
 
       if (!( command == 'I' || command == 'T' || command == 'R' || command == 'S')) throw Poco::Exception("Invalid command");
    }
