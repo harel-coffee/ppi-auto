@@ -14,7 +14,7 @@ case T_XOR:
    --stack_top;
    break;
 case T_NOT:
-   stack[stack_top] = !stack[stack_top];
+   stack[stack_top] = !(int) stack[stack_top];
    break;
 case T_GREATER:
    stack[stack_top - 1] = ( (stack[stack_top] > stack[stack_top - 1]) ? 1.0f : 0.0f );
