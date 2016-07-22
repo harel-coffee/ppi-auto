@@ -4,26 +4,25 @@
 #          python script/read_grammar.py -i problem/random/grammar_bnf
 #
 
-import sys, getopt
+# script/read_grammar.py -o output_dir -g grammar.bnf -i interpreter_core -p interpreter_core_print
+
+import sys, argparse
 
 import numpy as np
 
 
 def main(argv):
-   try:
-      opts, args = getopt.getopt(argv,"hi:",["help", "ifile="])
-   except getopt.GetoptError:
-      print 'read_grammar.py -i <inputfile>'
-      sys.exit(2)
-   for opt, arg in opts:
-      if opt in ("-h", "--help"):
-         print 'read_grammar.py -i <inputfile>'
-         sys.exit()
-      elif opt in ("-i", "--ifile"):
-         inputfile = arg
-         return inputfile
-      else:
-         return None
+   parser = argparse.ArgumentParser()
+   #parser.add_argument("-o", "--output-dir", required=True, help="Output directory")
+   parser.add_argument("-i", "--grammar", required=True, help="BNF grammar's path name")
+   #parser.add_argument("-i", "--interpreter", required=True, help="Interpreter core's path name")
+   #parser.add_argument("-p", "--interpreter-print", required=True, help="Interpreter print definitions' path name")
+
+   args = parser.parse_args()
+
+   #print args.output_dir, args.grammar, args.interpreter, args.interpreter_print
+
+   return args.grammar
 
 
 def interpreter(terminal):
@@ -53,9 +52,6 @@ def interpreter(terminal):
 
 if __name__ == "__main__":
    inputfile = main(sys.argv[1:])
-if inputfile is None:
-   print 'read_grammar.py -i <inputfile>'
-   exit();
 
 
 try:
