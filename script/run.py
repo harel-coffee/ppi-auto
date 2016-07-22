@@ -1,75 +1,73 @@
 #!/usr/bin/env python
 
-#Running: 
-#          python script/run.py -i problem/random/data.csv -is script/islandfile.txt -port 8080 -ns 4 -st 100 -cl-d 0 -cl-p 0
-#
-
 import os
 import sys
 import random
+import argparse
+
+################################################################################
+# Usage:
+################################################################################
+#
+# From the build directory (this is required due to the OpenCL kernels which
+# are compiled at runtime):
+#
+#     ./run.py [-h] [-e EXE] -d DATASET -i ISLANDS_FILE -p PORT -n
+#               NUMBER_TARGET_ISLANDS -st STAGNATION_TOLERANCE
+#               [-cl-p CL_PLATFORM] [-cl-d CL_DEVICE]
+#               [-s {PPCU,ppcu,PP,pp,FP,fp}]
+#
+# Example (don't forget to change the port number for each instance):
+#
+#    cd build
+#    ../script/run.py -d ../problem/random/data.csv -i islands.txt -p 9080 -n 3 -st 1000
+################################################################################
 
 
-nargs = len(sys.argv)
-if nargs < 13:
-   print 'run.py -i <inputfile> -is <islandfile> -port <port> -ns <numberofsendings> -st <stagnation> -cl-d <device> -cl-p <platform>' 
-   exit();
+parser = argparse.ArgumentParser()
+parser.add_argument("-e", "--exe", required=False, default="./main", help="Executable filename [default=./main]")
+parser.add_argument("-d", "--dataset", required=True, help="Training dataset")
+parser.add_argument("-i", "--islands-file", required=True, help="Island file")
+parser.add_argument("-p", "--port", required=True, help="Port number")
+parser.add_argument("-n", "--number-target-islands", type=int, required=True, help="Number of islands to send individuals")
+parser.add_argument("-st", "--stagnation-tolerance", type=int, required=True, help="Stagnation tolerance")
+parser.add_argument("-cl-p", "--cl_platform", required=False, default=0, help="OpenCL platform id [default=0]")
+parser.add_argument("-cl-d", "--cl_device", required=False, default=0, help="OpenCL device id [default=0]")
+parser.add_argument("-s", "--strategy", required=False, default="PPCU", choices=['PPCU', 'ppcu', 'PP', 'pp', 'FP', 'fp'], help="Parallelization strategy")
 
-i = 1;
-while i < nargs:
-   if str(sys.argv[i]) == "-i":
-      inputfile = sys.argv[i+1]
-   elif str(sys.argv[i]) == "-is":
-      islandfile = sys.argv[i+1]
-   elif str(sys.argv[i]) == "-port":
-      port = sys.argv[i+1]
-   elif str(sys.argv[i]) == "-ns":
-      nsend = sys.argv[i+1]
-   elif str(sys.argv[i]) == "-st":
-      stagnation = sys.argv[i+1]
-   elif str(sys.argv[i]) == "-cl-d":
-      device = sys.argv[i+1]
-   elif str(sys.argv[i]) == "-cl-p":
-      platform = sys.argv[i+1]
-   else:
-      print 'run.py -i <inputfile> -is <islandfile> -port <port> -ns <numberofsendings> -st <stagnation> -cl-d <device> -cl-p <platform>' 
-      break
-   i = i + 2
-
+args = parser.parse_args()
 
 try:
-   f = open(islandfile,"r")
+   f = open(args.islands_file,"r")
 except IOError:
-   print "Could not open file " + islandfile + "!"
+   print "Could not open file '" + args.islands_file + "'"
 lines = f.readlines()
 f.close()
 lines = [s.replace('\n', '') for s in lines]
 
 i = 0; peers = [];
-while i < int(nsend):
+while i < args.number_target_islands:
    address = random.choice(lines)
-   if address.split(':')[1] != port:
+   if address.split(':')[1] != args.port:
       peers.append(address + "," + str(random.random()))
-      if i < int(nsend)-1:
+      if i < args.number_target_islands-1:
          peers.append(";")
       i = i + 1
 
 
 try:
-   f = open(inputfile,"r")
+   f = open(args.dataset,"r")
 except IOError:
-   print "Could not open file " + inputfile + "!"
+   print "Could not open file '" + dataset + "'"
 lines = f.readlines()
 f.close()
 ncol = len(lines[1].split(','))
 
-
-# TODO: aproveitar texto no caso sem peers
 text = [];
+text.append(args.exe + " -v -e -acc -strategy " + args.strategy.upper() + " -d " + args.dataset + " -ncol " + str(ncol) + " -port " + str(args.port) + " -cl-d " + str(args.cl_device) + " -cl-p " + str(args.cl_platform) + " -ps " + str(2**random.randint(9,16)) + " -g 100000000" + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.1)) + " -ts " + str(random.randint(2,30)) + " -nb " + str(random.randint(800,2000)) + " -is " + str(random.randint(1,1)) + " -st " + str(args.stagnation_tolerance) + " -iat " + str(random.uniform(0.0,0.8)) )
 if peers:
-   text.append("./main -v -e -acc -strategy PPCU -d ../" + inputfile + " -ncol " + str(ncol) + " -port " + port + " -peers \"" + ''.join(peers) + "\"" + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,17)) + " -g 100000000" + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.1)) + " -ts " + str(random.randint(2,30)) + " -nb " + str(random.randint(500,3000)) + " -is " + str(random.randint(3,8)) + " -st " + stagnation)
-else:
-   text.append("./main -e -acc -strategy PPCU -d ../" + inputfile + " -ncol " + str(ncol) + " -port " + port + " -cl-d " + device + " -cl-p " + platform + " -ps " + str(2**random.randint(10,15)) + " -g " + str(2**random.randint(6,17)) + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.5)) + " -ts " + str(random.randint(3,15)) + " -nb " + str(random.randint(100,2000)) + " -is " + str(random.randint(3,8)) + " -st " + stagnation)
+   text.append(" -peers \"" + ''.join(peers) + "\"")
 
 print "\n" + ''.join(text) + "\n"
-os.system("cd build; make;" + ''.join(text) + ";cd -;")
-
+#os.system("cd build; make;" + ''.join(text) + ";cd -;")
+os.system(''.join(text))
