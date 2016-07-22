@@ -3,7 +3,7 @@
 #ifndef sequential_h
 #define sequential_h
 
-#include "../symbol"
+#include <symbol>
 
 /** Funcoes exportadas **/
 /** ************************************************************************************************** **/

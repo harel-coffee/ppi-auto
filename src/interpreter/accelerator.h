@@ -3,7 +3,7 @@
 #ifndef accelerator_h
 #define accelerator_h
 
-#include "../symbol"
+#include <symbol>
 #include "../individual"
 
 /** Funcoes exportadas **/

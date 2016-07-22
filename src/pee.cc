@@ -146,7 +146,7 @@ int decode( const GENOME_TYPE* genome, int* const allele, Symbol* phenotype, flo
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-#include "pee_individual_print_function"
+#include <interpreter_core_print>
 
 void pee_init( float** input, int nlin, int argc, char** argv ) 
 {
