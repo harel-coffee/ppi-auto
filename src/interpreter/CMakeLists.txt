@@ -36,6 +36,6 @@ ENDIF( NOT OPENCL_HAS_CPP_BINDINGS )
 add_library(interpreter sequential.cc accelerator.cc)
 
 # Copy to the binary directory all the individual OpenCL kernels (they are compiled on-the-fly)
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/accelerator.cl ${CMAKE_BINARY_DIR}/accelerator.cl COPYONLY)
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/accelerator.cl ${CMAKE_BINARY_DIR}/${LABEL}-accelerator.cl COPYONLY)
 #configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../symbol ${CMAKE_BINARY_DIR}/symbol COPYONLY)
 #configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/interpreter_core ${CMAKE_BINARY_DIR}/interpreter_core COPYONLY)

@@ -1,4 +1,4 @@
-#include "symbol"
+#include <symbol>
 
 __kernel void
 evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, __local float* PE, int nlin, int ncol, int prediction_mode )
@@ -22,7 +22,7 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
          {
             switch( phenotype[gl_id * MAX_PHENOTYPE_SIZE + i] )
             {
-               #include "interpreter_core"
+               #include <interpreter_core>
                case T_ATTRIBUTE:
                   stack[++stack_top] = inputs[n * ncol + (int)ephemeral[gl_id * MAX_PHENOTYPE_SIZE + i]];
                   break;
@@ -148,7 +148,7 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
             {
                switch( phenotype[gr_id * MAX_PHENOTYPE_SIZE + i] )
                {
-                  #include "interpreter_core"
+                  #include <interpreter_core>
                   case T_ATTRIBUTE:
                      stack[++stack_top] = inputs[n + nlin * (int)ephemeral[gr_id * MAX_PHENOTYPE_SIZE + i]];
                      break;

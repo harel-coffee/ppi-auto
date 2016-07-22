@@ -194,7 +194,10 @@ int build_kernel( int maxlocalsize, int prediction_mode )
                   (float) std::min( data.max_arity, data.max_size ) ) ) );
    }
 
-   ifstream file("accelerator.cl");
+   /* Use a prefix (the given label) to minimize the likelihood of collisions
+    * when two or more problems are built into the same build directory. */
+   std::string opencl_file = std::string(std::string(xstr(LABEL)) + "-accelerator.cl");
+   ifstream file(opencl_file.c_str());
    string kernel_str( istreambuf_iterator<char>(file), ( istreambuf_iterator<char>()) );
 
    string program_str = 
