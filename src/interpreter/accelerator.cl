@@ -85,7 +85,7 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
          {
             switch( phenotype[ind * MAX_PHENOTYPE_SIZE + i] )
             {
-               #include "interpreter_core"
+               #include <interpreter_core>
                case T_ATTRIBUTE:
                   stack[++stack_top] = inputs[(gr_id * lo_size + lo_id) + nlin * (int)ephemeral[ind * MAX_PHENOTYPE_SIZE + i]];
                   break;

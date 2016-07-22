@@ -18,6 +18,10 @@
 #include "../util/CmdLineParser.h"
 #include "../util/Util.h"
 
+/* Macros to stringify an expansion of a macro/definition */
+#define xstr(a) str(a)
+#define str(a) #a
+
 using namespace std;
 
 /** ****************************************************************** **/
@@ -206,7 +210,12 @@ int build_kernel( int maxlocalsize, int prediction_mode )
 
    vector<cl::Device> device; device.push_back( data.device );
    try {
-      program.build( device, " -I. " );
+      /* Pass the following definition to the OpenCL compiler:
+       *    -IGRAMMAR_INTERPRETER_INCLUDE_DIR
+         where GRAMMAR_INTERPRETER_INCLUDE_DIR is a subdirectory under the
+         build directory, defined by CMake. */
+      std::string flags = std::string(" -I" + std::string(xstr(GRAMMAR_INTERPRETER_INCLUDE_DIR)));
+      program.build( device, flags.c_str() );
    }
    catch( cl::Error& e )
    {
