@@ -46,13 +46,20 @@ f.close()
 lines = [s.replace('\n', '') for s in lines]
 
 i = 0; peers = [];
-while i < args.number_target_islands:
+while i < args.number_target_islands and len(lines) > 0:
    address = random.choice(lines)
-   if address.split(':')[1] != args.port:
+   if address != "localhost:"+args.port and address != "127.0.0.1:"+args.port and address != "0.0.0.0:"+args.port:
       peers.append(address + "," + str(random.random()))
+      lines.remove(address)
       if i < args.number_target_islands-1:
          peers.append(";")
       i = i + 1
+   else:
+      lines.remove(address)
+
+# Remove the trailing ';' that might be left in some cases
+if peers and peers[-1] == ';':
+   peers.pop()
 
 
 try:
