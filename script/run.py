@@ -30,12 +30,15 @@ parser.add_argument("-d", "--dataset", required=True, help="Training dataset")
 parser.add_argument("-i", "--islands-file", required=True, help="Island file")
 parser.add_argument("-p", "--port", required=True, help="Port number")
 parser.add_argument("-n", "--number-target-islands", type=int, required=True, help="Number of islands to send individuals")
-parser.add_argument("-st", "--stagnation-tolerance", type=int, required=True, help="Stagnation tolerance")
+parser.add_argument("-st", "--stagnation-tolerance", type=int, required=True, help="How many new individuals without improvement until the algorithm terminates")
 parser.add_argument("-cl-p", "--cl_platform", required=False, default=0, help="OpenCL platform id [default=0]")
 parser.add_argument("-cl-d", "--cl_device", required=False, default=0, help="OpenCL device id [default=0]")
 parser.add_argument("-s", "--strategy", required=False, default="PPCU", choices=['PPCU', 'ppcu', 'PP', 'pp', 'FP', 'fp'], help="Parallelization strategy")
 
 args = parser.parse_args()
+
+if args.stagnation_tolerance and args.stagnation_tolerance < 1000000:
+   parser.error("Minimum stagnation tolerance (-st) is 1000000")
 
 try:
    f = open(args.islands_file,"r")
@@ -70,11 +73,26 @@ lines = f.readlines()
 f.close()
 ncol = len(lines[1].split(','))
 
+
+##############################
+##### Parameters' values #####
+##############################
+P = {}
+P['ps']  = 2**random.randint(9,16)
+P['st']  = args.stagnation_tolerance/P['ps'] # Transform population-based into individual-based (this is fairer when using different population sizes
+P['cp']  = random.random()
+P['mr']  = random.uniform(0,0.1)
+P['ts']  = random.randint(2,30)
+P['nb']  = random.randint(800,2000)
+P['is']  = random.randint(1,1)
+P['iat'] = random.uniform(0.0,0.8)
+##############################
+
 text = [];
-text.append(args.exe + " -v -e -acc -strategy " + args.strategy.upper() + " -d " + args.dataset + " -ncol " + str(ncol) + " -port " + str(args.port) + " -cl-d " + str(args.cl_device) + " -cl-p " + str(args.cl_platform) + " -ps " + str(2**random.randint(9,16)) + " -g 100000000" + " -cp " + str(random.random()) + " -mr " + str(random.uniform(0,0.1)) + " -ts " + str(random.randint(2,30)) + " -nb " + str(random.randint(800,2000)) + " -is " + str(random.randint(1,1)) + " -st " + str(args.stagnation_tolerance) + " -iat " + str(random.uniform(0.0,0.8)) )
+text.append(args.exe + " -v -e -acc -strategy " + args.strategy.upper() + " -d " + args.dataset + " -ncol " + str(ncol) + " -port " + str(args.port) + " -cl-d " + str(args.cl_device) + " -cl-p " + str(args.cl_platform) + " -ps " + str(P['ps']) + " -g 100000000" + " -cp " + str(P['cp']) + " -mr " + str(P['mr']) + " -ts " + str(P['ts']) + " -nb " + str(P['nb']) + " -is " + str(P['is']) + " -st " + str(P['st']) + " -iat " + str(P['iat']) )
 if peers:
    text.append(" -peers \"" + ''.join(peers) + "\"")
 
 print "\n" + ''.join(text) + "\n"
-#os.system("cd build; make;" + ''.join(text) + ";cd -;")
+
 os.system(''.join(text))
