@@ -985,7 +985,7 @@ void pee_evolve()
 
       if (data.verbose)
       {
-         if (Server::stagnation == 0) {
+         if (Server::stagnation == 0 || geracao < 2) {
             printf("\n[%d] ", geracao);
             pee_individual_print( &data.best_individual, 0, stdout, 0 );
          }
