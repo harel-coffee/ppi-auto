@@ -73,7 +73,7 @@ while i < len(grammar):
       text1.append("\nt_rule* regras_INICIAL[] = { &INICIAL_0")
       text2.append("\nt_rule** gramatica[] = { regras_INICIAL")
       text3.append("\nunsigned tamanhos[] = { sizeof(regras_INICIAL) / sizeof(t_rule*),")
-      text4.append("NT_INICIAL, ")
+      text4.append("NT_INICIAL"); text4.append(", ")
 
       if( rule > maxrule ): maxrule = rule;
       text0.append("t_rule INICIAL_0 = { " + str(rule) + ", {NT_" + grammar[ini][1 : 1 + (len(grammar[ini])-2)].upper())
@@ -97,7 +97,8 @@ while i < len(grammar):
             text1.append("\nt_rule* regras_" + nterminal + "[] = { ")
             text2.append(", regras_" + nterminal)
             text3.append(" sizeof(regras_" + nterminal + ")/sizeof(t_rule*),")
-            text4.append("NT_" + nterminal + ", ")
+            if "NT_"+nterminal not in text4:
+               text4.append("NT_" + nterminal); text4.append(", ")
 
             n = 0; i = i + 1; flag = 1
             while flag and i < len(grammar):
@@ -130,10 +131,11 @@ while i < len(grammar):
                         exit()
                      else:
                         text0.append("t_rule " + nterminal + "_" + str(n) + " = { " + str(rule) + ", {T_" + value)
-                        if not text5: 
-                           text5.append("T_" + value + " = TERMINAL_MIN")
+                        if not text5:
+                           text5.append("T_" + value); text5.append(" = TERMINAL_MIN")
                         else:
-                           text5.append(", T_" + value)
+                           if "T_"+value not in text5:
+                              text5.append(", "); text5.append("T_" + value)
                   else:
                      text0.append("t_rule " + nterminal + "_" + str(n) + " = { " + str(rule) + ", {T_" + grammar[ini].upper())
                      if "ATTR" in  grammar[ini].upper():
