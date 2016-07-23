@@ -534,8 +534,14 @@ void pee_send_individual( Population* population )
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str(), data.pool->isrunning[i], data.pool->mutexes[i] );
          Poco::ThreadPool::defaultPool().start( *(data.pool->clients[i]) );
 
-         std::cerr << "\nSending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
-         //std::cerr << results.str() << std::endl;
+         if (data.verbose)
+         {
+#ifdef NDEBUG
+            std::cerr << "^";
+#else
+            std::cerr << "\nSending Individual Thread[" << i << "] to " << data.peers[i].address << ": " << population->fitness[idx] << std::endl;
+#endif
+         }
       }
    }
 }
@@ -559,7 +565,14 @@ int pee_receive_individual( GENOME_TYPE* immigrants )
       tmp += offset + 1; 
       
       //std::cerr << "\nReceive::Receiving[slot=" << slot << "]: " << Server::m_immigrants[slot].data() << std::endl;
-      std::cerr << "\nReceive::Receiving[slot=" << slot << "]: " << Server::m_fitness[slot] << std::endl;
+      if (data.verbose)
+      {
+#ifdef NDEBUG
+         std::cerr << 'v';
+#else
+         std::cerr << "\nReceive::Receiving[slot=" << slot << "]: " << Server::m_fitness[slot] << std::endl;
+#endif
+      }
 
       //if( Server::m_fitness[slot] < data.best_individual.fitness[0] )
       //{
@@ -970,10 +983,13 @@ void pee_evolve()
       // 18:
       swap( &antecedentes, &descendentes );
 
-      if( data.verbose ) 
+      if (data.verbose)
       {
-         printf("\n[%d] ", geracao);
-         pee_individual_print( &data.best_individual, 0, stdout, 0 );
+         if (Server::stagnation == 0) {
+            printf("\n[%d] ", geracao, Server::stagnation);
+            pee_individual_print( &data.best_individual, 0, stdout, 0 );
+         }
+         else std::cerr << '.';
       }
    } // 19
 

@@ -31,7 +31,11 @@ int Client::Connect()
       connect = true;
 
    } catch (Poco::Exception& exc) {
+#ifdef NDEBUG
+      std::cerr << '!';
+#else
       std::cerr << "> Warning [Connect() to " << m_server << "]: " << exc.displayText() << " (Is the remote island '" << m_server << "' running?)" << std::endl;
+#endif
    } catch (...) {
       std::cerr << "> Error [Connect() to " << m_server << "]: Unknown error\n" ;
    }
