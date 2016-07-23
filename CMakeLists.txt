@@ -24,8 +24,12 @@ execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/script/read_grammar.py -o "${
    ERROR_VARIABLE ERROR
    RESULT_VARIABLE RESULT)
 
+if (OUTPUT)
+   message("\nOutput from [python ${CMAKE_SOURCE_DIR}/script/read_grammar.py -o ${GRAMMAR_INTERPRETER_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/problem/interpreter_core -p ${CMAKE_SOURCE_DIR}/problem/pee_individual_print_function]:\n ${OUTPUT}")
+endif ()
+
 if (NOT RESULT EQUAL 0)
-   message(FATAL_ERROR "Error, failed to run the script to build the grammar [python ${CMAKE_SOURCE_DIR}/script/read_grammar.py -o ${GRAMMAR_INTERPRETER_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/problem/interpreter_core -p ${CMAKE_SOURCE_DIR}/problem/pee_individual_print_function]:\n ${OUTPUT} ${ERROR}")
+   message(FATAL_ERROR "\nError, failed to run the script to build the grammar [python ${CMAKE_SOURCE_DIR}/script/read_grammar.py -o ${GRAMMAR_INTERPRETER_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/problem/interpreter_core -p ${CMAKE_SOURCE_DIR}/problem/pee_individual_print_function]:\n ${ERROR}")
 endif ()
 
 # Add the CMAKE_BINARY_DIR to the include path in order to make it easy to the
