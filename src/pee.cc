@@ -170,13 +170,13 @@ void pee_init( float** input, int nlin, int argc, char** argv )
 
    Opts.Int.Add( "-ncol", "--number-of-columns" );
 
-   Opts.Int.Add( "-g", "--generations", 50, 1, std::numeric_limits<int>::max() );
+   Opts.Int.Add( "-g", "--generations", 1000, 1, std::numeric_limits<int>::max() );
 
    Opts.Int.Add( "-s", "--seed", 0, 0, std::numeric_limits<long>::max() );
 
    Opts.Int.Add( "-ps", "--population-size", 1024, 1, std::numeric_limits<int>::max() );
    Opts.Int.Add( "-is", "--immigrants-size", 5, 1 );
-   Opts.Float.Add( "-cp", "--crossover-probability", 0.95, 0.0, 1.0 );
+   Opts.Float.Add( "-cp", "--crossover-probability", 0.90, 0.0, 1.0 );
    Opts.Float.Add( "-mr", "--mutation-rate", 0.01, 0.0, 1.0 );
    Opts.Int.Add( "-ts", "--tournament-size", 3, 1, std::numeric_limits<int>::max() );
 
@@ -186,8 +186,8 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    Opts.Int.Add( "-bg", "--bits-per-gene", 8, 8 );
    Opts.Int.Add( "-bc", "--bits-per-constant", 16, 4 );
 
-   Opts.Float.Add( "-min", "--min-constant", 0 );
-   Opts.Float.Add( "-max", "--max-constant", 300 );
+   Opts.Float.Add( "-min", "--min-constant", -10 );
+   Opts.Float.Add( "-max", "--max-constant", 10 );
 
    Opts.String.Add( "-peers", "--address_of_island" );
  
