@@ -10,6 +10,9 @@
 /**                                                                    **/
 /** ****************************************************************** **/
 
+/* The probability of applying two-point crossover instead of one-point */
+#define TWOPOINT_CROSSOVER_PROBABILITY 0.66
+
 /* Probability of applying the standard mutation (bit flip) instead of shrink
  * mutation */
 #define BITFLIP_MUTATION_PROBABILITY 0.75
@@ -314,161 +317,6 @@ void pee_clone( Population* original, int idx_original, Population* copy, int id
    copy->fitness[idx_copy] = original->fitness[idx_original];
 }
 
-//void pee_individual_print( const Population* individual, int idx, FILE* out, int print_mode )
-//{
-//   Symbol phenotype[data.max_size_phenotype];
-//   float ephemeral[data.max_size_phenotype];
-//
-//   int allele = 0;
-//   int size = decode( individual->genome + (idx * data.number_of_bits), &allele, phenotype, ephemeral, 0, data.initial_symbol );
-//   if( !size ) { return; }
-//  
-//   if( print_mode )
-//   {
-//      fprintf( out, "{%d}\n", size );
-//      for( int i = 0; i < size; ++i )
-//         if( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )
-//            fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
-//         else
-//            fprintf( out, "%d ", phenotype[i] );
-//      fprintf( out, "\n" );
-//   } 
-//   else 
-//      fprintf( out, "{%d} ", size );
-//
-//   for( int i = 0; i < size; ++i )
-//      switch( phenotype[i] )
-//      {
-//            case T_IF_THEN_ELSE:
-//               fprintf( out, "IF-THEN-ELSE " );
-//               break;
-//            case T_AND:
-//               fprintf( out, "AND " );
-//               break;
-//            case T_OR:
-//               fprintf( out, "OR " );
-//               break;
-//            case T_XOR:
-//               fprintf( out, "XOR " );
-//               break;
-//            case T_NOT:
-//               fprintf( out, "NOT " );
-//               break;
-//            case T_GREATER:
-//               fprintf( out, "> " );
-//               break;
-//            case T_GREATEREQUAL:
-//               fprintf( out, ">= " );
-//               break;
-//            case T_LESS:
-//               fprintf( out, "< " );
-//               break;
-//            case T_LESSEQUAL:
-//               fprintf( out, "<= " );
-//               break;
-//            case T_EQUAL:
-//               fprintf( out, "= " );
-//               break;
-//            case T_NOTEQUAL:
-//               fprintf( out, "!= " );
-//               break;
-//            case T_ADD:
-//               fprintf( out, "+ " );
-//               break;
-//            case T_SUB:
-//               fprintf( out, "- " );
-//               break;
-//            case T_MULT:
-//               fprintf( out, "* " );
-//               break;
-//            case T_DIV:
-//               fprintf( out, "/ " );
-//               break;
-//            case T_MEAN:
-//               fprintf( out, "MEAN " );
-//               break;
-//            case T_MAX:
-//               fprintf( out, "MAX " );
-//               break;
-//            case T_MIN:
-//               fprintf( out, "MIN " );
-//               break;
-//            case T_MOD:
-//               fprintf( out, "MOD " );
-//               break;
-//            case T_POW:
-//               fprintf( out, "POW " );
-//               break;
-//            case T_ABS:
-//               fprintf( out, "ABS " );
-//               break;
-//            case T_SQRT:
-//               fprintf( out, "SQRT " );
-//               break;
-//            case T_POW2:
-//               fprintf( out, "POW2 " );
-//               break;
-//            case T_POW3:
-//               fprintf( out, "POW3 " );
-//               break;
-//            case T_POW4:
-//               fprintf( out, "POW4 " );
-//               break;
-//            case T_POW5:
-//               fprintf( out, "POW5 " );
-//               break;
-//            case T_NEG:
-//               fprintf( out, "NEG " );
-//               break;
-//            case T_ROUND:
-//               fprintf( out, "ROUND " );
-//               break;
-//            case T_0:
-//               fprintf( out, "0 " );
-//               break;
-//            case T_1:
-//               fprintf( out, "1 " );
-//               break;
-//            case T_2:
-//               fprintf( out, "2 " );
-//               break;
-//            case T_3:
-//               fprintf( out, "3 " );
-//               break;
-//            case T_4:
-//               fprintf( out, "4 " );
-//               break;
-//            case T_5:
-//               fprintf( out, "5 " );
-//               break;
-//            case T_6:
-//               fprintf( out, "6 " );
-//               break;
-//            case T_7:
-//               fprintf( out, "7 " );
-//               break;
-//            case T_8:
-//               fprintf( out, "8 " );
-//               break;
-//            case T_9:
-//               fprintf( out, "9 " );
-//               break;
-//            case T_ATTRIBUTE:
-//               fprintf( out, "ATTR-%d ", (int)ephemeral[i] );
-//               break;
-//            case T_CONST:
-//               fprintf( out, "%.12f ",  ephemeral[i] );
-//               break;
-//      } 
-//   if( print_mode )
-//   {
-//      fprintf( out, "\n" );
-//      fprintf( out, ":: %.12f\n", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
-//   }
-//   else
-//      fprintf( out, ":: %.12f\n", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
-//}
-
 int pee_tournament( const float* fitness )
 {
    int idx_winner = (int)(random_number() * data.population_size);
@@ -584,32 +432,12 @@ int pee_receive_individual( GENOME_TYPE* immigrants )
 #endif
       }
 
-      //if( Server::m_fitness[slot] < data.best_individual.fitness[0] )
-      //{
-      //   std::cerr << "\nReceiving[slot=" << slot << "]: " << Server::m_fitness[slot] << " " << data.best_individual.fitness[0] << std::endl; 
-      //   sleep(5);
-      //}
-
-      //tmp += offset;
-      //fprintf(stdout,"Receiving[slot=%d]: ",slot);
-      //for( int i = 0; i < (data.number_of_bits - 1); i++ )
-      //{
-      //   sscanf( tmp, "%d%n", &immigrants[nImmigrants * data.number_of_bits + i], &offset );
-      //   tmp += offset;
-      //   fprintf(stdout,"%d ",immigrants[nImmigrants * data.number_of_bits + i]);
-      //}
-      //sscanf( tmp, "%d", &immigrants[nImmigrants * (data.number_of_bits - 1)] );
-      //fprintf(stdout,"%d\n",immigrants[nImmigrants * (data.number_of_bits - 1)]);
-
-      //fprintf(stdout,"Receiving[slot=%d]: ",slot);
-
       /* It is possible that the number of char bits in 'tmp' is smaller than
        * 'number_of_bits', for instance when the parameter '-nb' of an external
        * island is smaller than the '-nb' of the current island. The line below
        * handles this case (it also takes into account the offset). */
       int chars_to_convert = std::min((int) data.number_of_bits, (int) Server::m_immigrants[slot].size() - offset - 1);
       //std::cerr << "\n[" << offset << ", " << Server::m_immigrants[slot].size() << ", " << chars_to_convert << ", " << data.number_of_bits << "]\n";
-      //fprintf(stdout,"Importante::slot[%d]:: ",slot);
       for( int i = 0; i < chars_to_convert; i++ )
       // TODO? for( int i = 0; i < chars_to_convert && tmp[i] != '\0'; i++ )
       {
@@ -617,7 +445,6 @@ int pee_receive_individual( GENOME_TYPE* immigrants )
          immigrants[nImmigrants * data.number_of_bits + i] = static_cast<bool>(tmp[i] - '0'); /* Ensures that the allele will be binary (0 or 1) regardless of the received value--this ensures it would work even if a communication error occurs (or a malicious message is sent). */
       }
       nImmigrants++;
-      //fprintf(stdout,"\n");
 
       {
          Poco::FastMutex::ScopedLock lock( Server::m_mutex );
@@ -637,23 +464,7 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
       int allele = 0;
       data.size[i] = decode( descendentes->genome + (i * data.number_of_bits), &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
    }
-   
-//   for( int j = 0; j < nInd; j++ )
-//   {
-//      fprintf(stdout,"Ind[%d]=%d\n",j,data.size[j]);
-//      for( int i = 0; i < data.size[j]; i++ )
-//      {
-//         fprintf(stdout,"%d ",data.phenotype[j * data.max_size_phenotype + i]);
-//      }
-//      fprintf(stdout,"\n");
-//      for( int i = 0; i < data.size[j]; i++ )
-//      {
-//         fprintf(stdout,"%f ",data.ephemeral[j * data.max_size_phenotype + i]);
-//      }
-//      fprintf(stdout,"\n");
-//   }
 
-   
    int index[data.best_size];
 
    if( data.version )
@@ -665,35 +476,13 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
       seq_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, index, &data.best_size, 0, ALPHA );
       *nImmigrants = pee_receive_individual( antecedentes->genome );
    }
-   //std::cout << data.best_size << std::endl;
 
-   //bool flag = false;
-   //for( int i = 0; i < data.population_size; i++ )
-   //{
-   //   if( antecedentes->fitness[i] < data.best_individual.fitness[0] )
-   //   {
-   //      cerr << antecedentes->fitness[i] << endl;
-   //      flag = true;
-   //   }
-   //}
-   
-   //if( flag )
-   //{
-   //   printf("Método1:%d  ",flag);
-   //   pee_individual_print( &data.best_individual, stdout, 0 );
-   //   printf("Método2:%d  ",flag);
-   //   pee_individual_print( &population[index], stdout, 0 );
-   //}
-
-   //static unsigned long stagnation = 0;
    for( int i = 0; i < data.best_size; i++ )
    {
       if( descendentes->fitness[index[i]] < data.best_individual.fitness[i] )
       {
          Server::stagnation = 0;
          pee_clone( descendentes, index[i], &data.best_individual, i );
-         //printf( "IMPORTANTE::[%d]:: %.12f\n", index[i], data.best_individual.fitness[i] ); 
-         //sleep(5);
       }
       else
       {
@@ -718,7 +507,7 @@ void pee_generate_population( Population* antecedentes, Population* descendentes
 
 void pee_crossover( const GENOME_TYPE* father, const GENOME_TYPE* mother, GENOME_TYPE* offspring1, GENOME_TYPE* offspring2 )
 {
-   if (RNG::Probability(2./3.))
+   if (RNG::Probability(TWOPOINT_CROSSOVER_PROBABILITY))
    {
       // Cruzamento de dois pontos
       int pontos[2];
@@ -1000,7 +789,7 @@ void pee_evolve()
       {
          if (Server::stagnation == 0 || geracao < 2) {
             printf("\n[%d] ", geracao);
-            pee_individual_print( &data.best_individual, 0, stdout, 0 );
+            pee_print_best(stdout, 0);
          }
          else std::cerr << '.';
       }
