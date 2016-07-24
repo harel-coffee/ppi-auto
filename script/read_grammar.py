@@ -210,9 +210,19 @@ f = open(os.path.join(args.output_dir, "grammar"), 'w')
 f.write("#define MAX_QUANT_SIMBOLOS_POR_REGRA " + str(maxrule) + "\n\nstruct t_rule { unsigned quantity; Symbol symbols[MAX_QUANT_SIMBOLOS_POR_REGRA]; };\n\n" + text0 + text1 + text2 + text3)
 f.close()
 
+symbol_head = r"""#ifndef __SYMBOL_H
+#define __SYMBOL_H
+
+#define TERMINAL_MIN 10000
+#define ATTRIBUTE_MIN 20000
+
+typedef enum {"""
+
+symbol_tail = r"""} Symbol;
+#endif"""
+
 f = open(os.path.join(args.output_dir, "symbol"), 'w')
-f.write("#ifndef __SYMBOL_H\n#define __SYMBOL_H\n\n#define TERMINAL_MIN 10000\n#define ATTRIBUTE_MIN 20000\n\ntypedef enum { " + text4 + text5 + text6 + " } Symbol;\n#endif")
-#f.write("#ifndef __SYMBOL_H\n#define __SYMBOL_H\n\n#define TERMINAL_MIN 10000\n#define ATTRIBUTE_MIN 20000\n\ntypedef enum { " + text4 + "T_IF_THEN_ELSE = TERMINAL_MIN, T_AND, T_OR, T_XOR, T_NOT, T_GREATER, T_GREATEREQUAL, T_LESS, T_LESSEQUAL, T_EQUAL, T_NOTEQUAL, T_ADD, T_SUB, T_MULT, T_DIV, T_MEAN, T_MAX, T_MIN, T_MOD, T_POW, T_ABS, T_SQRT, T_POW2, T_POW3, T_POW4, T_POW5, T_NEG, T_ROUND, T_CONST, T_0, T_1, T_2, T_3, T_4, T_5, T_6, T_7, T_8, T_9, T_ATTRIBUTE, T_ATTR1 = ATTRIBUTE_MIN, T_ATTR2, T_ATTR3, T_ATTR4, T_ATTR5, T_ATTR6, T_ATTR7, T_ATTR8, T_ATTR9, T_ATTR10, T_ATTR11, T_ATTR12, T_ATTR13, T_ATTR14, T_ATTR15, T_ATTR16, T_ATTR17, T_ATTR18, T_ATTR19, T_ATTR20, T_ATTR21, T_ATTR22, T_ATTR23, T_ATTR24, T_ATTR25, T_ATTR26, T_ATTR27, T_ATTR28, T_ATTR29, T_ATTR30, T_ATTR31, T_ATTR32, T_ATTR33, T_ATTR34, T_ATTR35, T_ATTR36, T_ATTR37, T_ATTR38, T_ATTR39, T_ATTR40, T_ATTR41, T_ATTR42, T_ATTR43, T_ATTR44, T_ATTR45, T_ATTR46, T_ATTR47, T_ATTR48, T_ATTR49 } Symbol;\n#endif")
+f.write(symbol_head + text4 + text5 + text6 + symbol_tail)
 f.close()
 
 try:
@@ -269,9 +279,45 @@ for i in range(0,len(index)):
       else:
          print_function += lines[index[i]:index[i+1]]
 
+icp_header = r"""void pee_individual_print( const Population* individual, int idx, FILE* out, int print_mode )
+{
+   Symbol phenotype[data.max_size_phenotype];
+   float ephemeral[data.max_size_phenotype];
+
+   int allele = 0;
+   int size = decode( individual->genome + (idx * data.number_of_bits), &allele, phenotype, ephemeral, 0, data.initial_symbol );
+   if( !size ) { return; }
+
+   if( print_mode )
+   {
+      for( int i = 0; i < size; ++i )
+         if( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )
+            fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
+         else
+            fprintf( out, "%d ", phenotype[i] );
+      fprintf( out, "\n{%d} ", size );
+   }
+   else
+      fprintf( out, "{%d} ", size );
+
+   for( int i = 0; i < size; ++i )
+      switch( phenotype[i] )
+      {
+"""
+
+icp_tail = r"""
+         case T_ATTRIBUTE:
+            fprintf( out, "ATTR-%d ", (int)ephemeral[i] );
+            break;
+      }
+   fprintf( out, ":: %.12f\n", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
+}
+"""
+
 f = open(os.path.join(args.output_dir, "interpreter_core_print"), 'w')
-f.write("void pee_individual_print( const Population* individual, int idx, FILE* out, int print_mode )\n{\nSymbol phenotype[data.max_size_phenotype];\nfloat ephemeral[data.max_size_phenotype];\n\nint allele = 0;\nint size = decode( individual->genome + (idx * data.number_of_bits), &allele, phenotype, ephemeral, 0, data.initial_symbol );\nif( !size ) { return; }\n\nif( print_mode )\n{\nfor( int i = 0; i < size; ++i )\nif( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )\nfprintf( out, \"%d %.12f \", phenotype[i], ephemeral[i] );\nelse\nfprintf( out, \"%d \", phenotype[i] );\nfprintf( out, \"\\n{%d} \", size );\n}\nelse\nfprintf( out, \"{%d} \", size );\n\nfor( int i = 0; i < size; ++i )\nswitch( phenotype[i] )\n{\n" + ''.join(print_function) + "case T_ATTRIBUTE:\nfprintf( out, \"ATTR-%d \", (int)ephemeral[i] );\nbreak;\n}\nfprintf( out, \":: %.12f\\n\", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity\n}")
+f.write(icp_header + ''.join(print_function) + icp_tail)
 f.close()
+
 
 #lst -> contem os terminais fornecidos pela gramatica bnf
 #terminais -> contem os terminais tratados no algoritmo (interpreter_core)
