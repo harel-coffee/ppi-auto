@@ -631,7 +631,7 @@ void pee_print_time()
    {
       acc_print_time();
    }
-   //cerr << "time_evaluate: " << data.time_evaluate << ", time_crossover: " << data.time_crossover << ", time_mutation: " << data.time_mutation << ", time_clone: " << data.time_clone << ", time_tournament: " << data.time_tournament << ", time_total: " << data.time_total << "\n" << endl;
+   //cerr << ", time_evaluate: " << data.time_evaluate << ", time_crossover: " << data.time_crossover << ", time_mutation: " << data.time_mutation << ", time_clone: " << data.time_clone << ", time_tournament: " << data.time_tournament << ", time_total: " << data.time_total << "\n" << endl;
 }
 
 void pee_evolve()

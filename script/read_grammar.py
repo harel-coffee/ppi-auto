@@ -288,17 +288,10 @@ icp_header = r"""void pee_individual_print( const Population* individual, int id
    int size = decode( individual->genome + (idx * data.number_of_bits), &allele, phenotype, ephemeral, 0, data.initial_symbol );
    if( !size ) { return; }
 
-   if( print_mode )
-   {
-      for( int i = 0; i < size; ++i )
-         if( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )
-            fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
-         else
-            fprintf( out, "%d ", phenotype[i] );
-      fprintf( out, "\n{%d} ", size );
-   }
+   if (print_mode)
+      fprintf( out, "%d;%.12f;", size, individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
    else
-      fprintf( out, "{%d} ", size );
+      fprintf( out, "%3d :: %.12f :: ", size, individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
 
    for( int i = 0; i < size; ++i )
       switch( phenotype[i] )
@@ -310,7 +303,18 @@ icp_tail = r"""
             fprintf( out, "ATTR-%d ", (int)ephemeral[i] );
             break;
       }
-   fprintf( out, ":: %.12f\n", individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
+
+   if( print_mode )
+   {
+      fprintf(out, ";");
+      for( int i = 0; i < size; ++i )
+         if( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )
+            fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
+         else
+            fprintf( out, "%d ", phenotype[i] );
+   }
+   else
+      fprintf( out, ":: ");
 }
 """
 
