@@ -10,6 +10,16 @@
 /**                                                                    **/
 /** ****************************************************************** **/
 
+/* Probability of applying the standard mutation (bit flip) instead of shrink
+ * mutation */
+#define BITFLIP_MUTATION_PROBABILITY 0.75
+
+/* When applying the shrink mutation, the variable
+ * AGGRESSIVE_SHRINK_MUTATION_PROBABILITY defines the ratio in which the
+ * aggressive version will be applied instead. The aggressive version ignores
+ * the mutation rate and might even shrink the entire genome. */
+#define AGGRESSIVE_SHRINK_MUTATION_PROBABILITY 0.10
+
 #include <stdio.h> 
 #include <stdlib.h>
 #include <cmath>    
@@ -762,7 +772,7 @@ void pee_mutation( GENOME_TYPE* genome )
 
    if (num_bits_mutated == 0) return; // lucky guy, no mutation for him...
 
-   if (RNG::Probability(0.75))
+   if (RNG::Probability(BITFLIP_MUTATION_PROBABILITY))
    {
       //////////////////////////////////////////////////////////////////////////
       // Bit (allele) mutation
@@ -802,6 +812,9 @@ void pee_mutation( GENOME_TYPE* genome )
          below does exactly this. Note that the maximum number of bits to
          shrink is limited proportionally by 'mutation_rate'.
       */
+
+      if (RNG::Probability(AGGRESSIVE_SHRINK_MUTATION_PROBABILITY))
+         num_bits_mutated = (int) (random_number() * (data.number_of_bits));
 
       int number_of_bits_to_shrink = int((num_bits_mutated+(data.bits_per_gene-1))/data.bits_per_gene)*data.bits_per_gene;
 
