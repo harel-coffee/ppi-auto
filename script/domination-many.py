@@ -33,6 +33,7 @@ tmp = [i.split(';') for i in sys.stdin.read().splitlines()]
 points_dataset = []
 for i in tmp:
    for j in i:
+      if len(j) == 0: continue
       points_dataset.append([float(k) for k in j.split(',')])
 #print points_dataset
 
