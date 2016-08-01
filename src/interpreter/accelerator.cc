@@ -453,9 +453,9 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    CmdLine::Parser Opts( argc, argv );
 
    Opts.Int.Add( "-ncol", "--number-of-columns", -1 );
-   Opts.Int.Add( "-cl-p", "--platform-id", -1, 0 );
-   Opts.Int.Add( "-cl-d", "--device-id", -1, 0 );
-   Opts.Int.Add( "-maxlocalsize", "--maximum-local-size", -1 );
+   Opts.Int.Add( "-cl-p", "--cl-platform-id", -1, 0 );
+   Opts.Int.Add( "-cl-d", "--cl-device-id", -1, 0 );
+   Opts.Int.Add( "-cl-mls", "--cl-max-local-size", -1 );
    Opts.String.Add( "-type" );
    Opts.String.Add( "-strategy" );
    Opts.String.Add( "-error", "--function-difference", "fabs((X)-(Y))" );
@@ -506,7 +506,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       return 1;
    }
 
-   if ( build_kernel( Opts.Int.Get("-maxlocalsize"), prediction_mode ) )
+   if ( build_kernel( Opts.Int.Get("-cl-mls"), prediction_mode ) )
    {
       fprintf(stderr,"Error in build the kernel.\n");
       return 1;
