@@ -70,7 +70,7 @@ struct Peer {
   float frequency;
 };
 
-namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int verbose; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; double time_evaluate; double time_crossover; double time_mutation; double time_clone; double time_tournament; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; } data; };
+namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int verbose; int machine; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int version; double time_total; double time_evaluate; double time_crossover; double time_mutation; double time_clone; double time_tournament; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; int argc; char ** argv;  } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -163,9 +163,12 @@ int decode( const GENOME_TYPE* genome, int* const allele, Symbol* phenotype, flo
 
 void pee_init( float** input, int nlin, int argc, char** argv ) 
 {
+   data.argc = argc; data.argv = argv;
    CmdLine::Parser Opts( argc, argv );
 
    Opts.Bool.Add( "-v", "--verbose" );
+
+   Opts.Bool.Add( "-machine" );
 
    Opts.Bool.Add( "-acc" );
 
@@ -204,6 +207,8 @@ void pee_init( float** input, int nlin, int argc, char** argv )
 
    // getting the results!
    data.verbose = Opts.Bool.Get("-v");
+
+   data.machine = Opts.Bool.Get("-machine");
 
    data.generations = Opts.Int.Get("-g");
 
@@ -620,9 +625,9 @@ void pee_mutation( GENOME_TYPE* genome )
    }
 }
 
-void pee_print_best( FILE* out, int print_mode ) 
+void pee_print_best( FILE* out, int generation, int print_mode ) 
 {
-   pee_individual_print( &data.best_individual, 0, out, print_mode );
+   pee_individual_print( &data.best_individual, 0, out, generation, data.argc, data.argv, print_mode );
 }
 
 void pee_print_time() 
@@ -634,7 +639,7 @@ void pee_print_time()
    //cerr << ", time_evaluate: " << data.time_evaluate << ", time_crossover: " << data.time_crossover << ", time_mutation: " << data.time_mutation << ", time_clone: " << data.time_clone << ", time_tournament: " << data.time_tournament << ", time_total: " << data.time_total << "\n" << endl;
 }
 
-void pee_evolve()
+int pee_evolve()
 {
    /* Initialize the RNG seed */
    RNG::Seed(data.seed);
@@ -702,7 +707,8 @@ void pee_evolve()
    data.time_tournament = 0.0f;
    
    // 3:
-   for( int geracao = 1; geracao <= data.generations; ++geracao )
+   int geracao;
+   for( geracao = 1; geracao <= data.generations; ++geracao )
    {
       // 4:
       if( data.elitism ) 
@@ -788,8 +794,12 @@ void pee_evolve()
       if (data.verbose)
       {
          if (Server::stagnation == 0 || geracao < 2) {
-            printf("\n[%d] ", geracao);
-            pee_print_best(stdout, 0);
+            if (data.machine) { // Output meant to be consumed by scripts, not humans
+               pee_print_best(stdout, geracao, 1);
+               pee_print_time();
+            } else
+               pee_print_best(stdout, geracao, 0);
+
          }
          else std::cerr << '.';
       }
@@ -802,6 +812,8 @@ void pee_evolve()
    delete[] descendentes.fitness;
 
    data.time_total = t_total.elapsed();
+
+   return geracao;
 }
 
 void pee_destroy()

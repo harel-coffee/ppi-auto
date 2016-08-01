@@ -733,5 +733,5 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 // -----------------------------------------------------------------------------
 void acc_print_time()
 {
-   printf("\ntime_send: %lf, time_receive: %lf, time_kernels(send+receive): %lf, time_kernel[1]: %lf, time_kernel[2]: %lf, time_overhead: %lf", data.time_send, data.time_receive, data.time_kernels, data.time_kernel1, data.time_kernel2, data.time_overhead);
+   printf(";time_send: %lf, time_receive: %lf, time_kernels(send+receive): %lf, time_kernel[1]: %lf, time_kernel[2]: %lf, time_overhead: %lf\n", data.time_send, data.time_receive, data.time_kernels, data.time_kernel1, data.time_kernel2, data.time_overhead);
 }

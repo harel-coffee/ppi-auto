@@ -109,15 +109,9 @@ int main(int argc, char** argv)
          //sleep(100);
 
          pee_init( input, nlin, argc, argv );
-         pee_evolve();
-         fprintf(stdout, "\nOverall best:\n");
-         pee_print_best( stdout, 1 );
-
-         // Print the command-line
-         std::cout << ';';
-         for (int i=0; i<argc; ++i)
-            std::cout << argv[i] << ' ';
-
+         int generations = pee_evolve();
+         fprintf(stdout, "\n> Overall best:");
+         pee_print_best( stdout, generations, 1 );
          pee_print_time();
          pee_destroy();
       }

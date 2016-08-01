@@ -279,7 +279,7 @@ for i in range(0,len(index)):
       else:
          print_function += lines[index[i]:index[i+1]]
 
-icp_header = r"""void pee_individual_print( const Population* individual, int idx, FILE* out, int print_mode )
+icp_header = r"""void pee_individual_print( const Population* individual, int idx, FILE* out, int generation, int argc, char** argv, int print_mode )
 {
    Symbol phenotype[data.max_size_phenotype];
    float ephemeral[data.max_size_phenotype];
@@ -289,9 +289,9 @@ icp_header = r"""void pee_individual_print( const Population* individual, int id
    if( !size ) { return; }
 
    if (print_mode)
-      fprintf( out, "%d;%.12f;", size, individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
+      fprintf( out, "\n> %d;%d;%.12f;", generation, size, individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
    else
-      fprintf( out, "%3d :: %.12f :: ", size, individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
+      fprintf( out, "\n[%d] %3d :: %.12f :: ", generation, size, individual->fitness[idx] - ALPHA*size ); // Print the raw error, that is, without the penalization for complexity
 
    for( int i = 0; i < size; ++i )
       switch( phenotype[i] )
@@ -312,6 +312,9 @@ icp_tail = r"""
             fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
          else
             fprintf( out, "%d ", phenotype[i] );
+      fprintf(out, ";");
+      for (int i=0; i<argc; ++i)
+         fprintf(out, "%s ", argv[i]);
    }
    else
       fprintf( out, ":: ");
