@@ -31,8 +31,8 @@ parser.add_argument("-i", "--islands-file", required=True, help="Island file")
 parser.add_argument("-p", "--port", required=True, help="Port number")
 parser.add_argument("-n", "--number-target-islands", type=int, required=True, help="Number of islands to send individuals")
 parser.add_argument("-st", "--stagnation-tolerance", type=int, required=True, help="How many new individuals without improvement until the algorithm terminates")
-parser.add_argument("-cl-p", "--cl_platform", required=False, default=0, help="OpenCL platform id [default=0]")
-parser.add_argument("-cl-d", "--cl_device", required=False, default=0, help="OpenCL device id [default=0]")
+parser.add_argument("-cl-p", "--cl-platform-id", required=False, default=0, help="OpenCL platform id [default=0]")
+parser.add_argument("-cl-d", "--cl-device-id", required=False, default=0, help="OpenCL device id [default=0]")
 parser.add_argument("-s", "--strategy", required=False, default="PPCU", choices=['PPCU', 'ppcu', 'PP', 'pp', 'FP', 'fp'], help="Parallelization strategy")
 
 args = parser.parse_args()
@@ -89,7 +89,7 @@ P['iat'] = random.uniform(0.0,0.8)
 ##############################
 
 text = [];
-text.append(args.exe + " -v -e -acc -strategy " + args.strategy.upper() + " -d " + args.dataset + " -ncol " + str(ncol) + " -port " + str(args.port) + " -cl-d " + str(args.cl_device) + " -cl-p " + str(args.cl_platform) + " -ps " + str(P['ps']) + " -g 100000000" + " -cp " + str(P['cp']) + " -mr " + str(P['mr']) + " -ts " + str(P['ts']) + " -nb " + str(P['nb']) + " -is " + str(P['is']) + " -st " + str(P['st']) + " -iat " + str(P['iat']) )
+text.append(args.exe + " -v -machine -e -acc -strategy " + args.strategy.upper() + " -d " + args.dataset + " -ncol " + str(ncol) + " -port " + str(args.port) + " -cl-d " + str(args.cl_device_id) + " -cl-p " + str(args.cl_platform_id) + " -ps " + str(P['ps']) + " -g 100000000" + " -cp " + str(P['cp']) + " -mr " + str(P['mr']) + " -ts " + str(P['ts']) + " -nb " + str(P['nb']) + " -is " + str(P['is']) + " -st " + str(P['st']) + " -iat " + str(P['iat']) )
 if peers:
    text.append(" -peers \"" + ''.join(peers) + "\"")
 
