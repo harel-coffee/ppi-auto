@@ -34,3 +34,9 @@ Within `build/`:
 ~~~~~~~~
 
 This will generate the Pareto front in file 'pareto.front'
+
+### Watching the Pareto front progress on-the-fly ###
+
+~~~~~~~~
+   watch -n 1 "cut -d';' -f2-4 pareto.front|sort -n"
+~~~~~~~~

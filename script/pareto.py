@@ -11,14 +11,14 @@ import simpleflock
 FIELD_START=1
 FIELD_END=3
 
-def UpdatePareto(pareto, candidate):
+def UpdatePareto(pareto, candidate, FIELD_END_DUPLICATE):
    if len(pareto) == 0: # Empty pareto, obviously 'candidate' dominates the empty
       return True, [candidate]
 
    # Check if the candidate is dominated by any of the current members; if so, then bye bye...
    cmd = [os.path.dirname(os.path.realpath(__file__))+"/"+"domination-many.py", "-t", "less", "-a", "dominated", ','.join(candidate.split(';')[FIELD_START:FIELD_END])]
    for p in pareto:
-      if p.split(';')[FIELD_START:FIELD_END] == candidate.split(';')[FIELD_START:FIELD_END]:
+      if p.split(';')[FIELD_START:FIELD_END_DUPLICATE] == candidate.split(';')[FIELD_START:FIELD_END_DUPLICATE]:
          return False, pareto # candidate is already a pareto front member
 
       domination = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -53,8 +53,14 @@ def main():
    parser = argparse.ArgumentParser()
    parser.add_argument("-p", "--pareto-file", required=True, help="Pareto file path")
    parser.add_argument("-l", "--lock-file", required=False, default="pareto.lock", help="Lock file path")
+   parser.add_argument("-dup", "--allow-duplicate", action='store_true', default=False, help="Allow duplicate entries provided they have different symbolic solutions")
    parser.add_argument("candidate", help="Candidate")
    args = parser.parse_args()
+
+   if args.allow_duplicate: # Includes the "solution" itself in order to whether consider duplicate or not
+      FIELD_END_DUPLICATE=FIELD_END+1
+   else:
+      FIELD_END_DUPLICATE=FIELD_END
 
    #sys.stdout.write("(Processing: [%s]...)" % (';'.join(args.candidate.split(';')[FIELD_START:FIELD_END])))
 
@@ -66,7 +72,7 @@ def main():
 
    with open(args.pareto_file) as pareto:
       old_pareto = pareto.read().splitlines()
-   changed, new_pareto = UpdatePareto(old_pareto, args.candidate)
+   changed, new_pareto = UpdatePareto(old_pareto, args.candidate, FIELD_END_DUPLICATE)
 
    #print old_pareto, new_pareto
 
@@ -86,7 +92,7 @@ def main():
                pareto.write('\n'.join(new_pareto)+"\n")
             else: # Hmmm, someone else wrote to the pareto_file in the meantime, recalculating the pareto...
                #print "Different"
-               changed, new_pareto = UpdatePareto(cur_pareto, args.candidate)
+               changed, new_pareto = UpdatePareto(cur_pareto, args.candidate, FIELD_END_DUPLICATE)
                if changed:
                   #print "New: ", new_pareto
                   pareto.truncate()
