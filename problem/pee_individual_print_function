@@ -139,6 +139,93 @@ case T_N8:
 case T_N9:
    fprintf( out, "-9 " );
    break;
+case T_CEIL:
+   fprintf(out, "CEIL ");
+   break;
+case T_FLOOR:
+   fprintf(out, "FLOOR ");
+   break;
+case T_EXP:
+   fprintf(out, "EXP ");
+   break;
+case T_EXP10:
+   fprintf(out, "EXP10 ");
+   break;
+case T_EXP2:
+   fprintf(out, "EXP2 ");
+   break;
+case T_LOG:
+   fprintf(out, "LOG ");
+   break;
+case T_LOG10:
+   fprintf(out, "LOG10 ");
+   break;
+case T_LOG2:
+   fprintf(out, "LOG2 ");
+   break;
+case T_SIN:
+   fprintf(out, "SIN ");
+   break;
+case T_COS:
+   fprintf(out, "COS ");
+   break;
+case T_TAN:
+   fprintf(out, "TAN ");
+   break;
+case T_STEP:
+   fprintf(out, "STEP ");
+   break;
+case T_SIGN:
+   fprintf(out, "SIGN ");
+   break;
+case T_LOGISTIC:
+   fprintf(out, "LOGISTIC ");
+   break;
+case T_GAMMA:
+   fprintf(out, "GAMMA ");
+   break;
+case T_GAUSS:
+   fprintf(out, "GAUSS ");
+   break;
+case T_PI:
+   fprintf(out, "pi ");
+   break;
+case T_PI_2:
+   fprintf(out, "pi/2 ");
+   break;
+case T_PI_4:
+   fprintf(out, "pi/4 ");
+   break;
+case T_1_PI:
+   fprintf(out, "1/pi ");
+   break;
+case T_2_PI:
+   fprintf(out, "2/pi ");
+   break;
+case T_2_SQRTPI:
+   fprintf(out, "2/sqrt(pi) ");
+   break;
+case T_SQRT2:
+   fprintf(out, "sqrt(2) ");
+   break;
+case T_SQRT1_2:
+   fprintf(out, "sqrt(2)/2 ");
+   break;
+case T_E:
+   fprintf(out, "e ");
+   break;
+case T_LOG2E:
+   fprintf(out, "log2(e) ");
+   break;
+case T_LOG10E:
+   fprintf(out, "log10(e) ");
+   break;
+case T_LN2:
+   fprintf(out, "ln(2) ");
+   break;
+case T_LN10:
+   fprintf(out, "ln(10) ");
+   break;
 case T_ATTRIBUTE:
    fprintf( out, "ATTR-%d ", (int)ephemeral[i] );
    break;
