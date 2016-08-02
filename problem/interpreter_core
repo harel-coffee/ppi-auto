@@ -174,7 +174,7 @@ case T_LOGISTIC:
    stack[stack_top] = (1.0f/(1.0f + exp(-stack[stack_top])));
    break;
 case T_GAMMA:
-   stack[stack_top] = pow((stack[stack_top]/2.71828174591064f)*sqrt(stack[stack_top]*sinh(1/stack[stack_top])),stack[stack_top])*sqrt(2*3.14159274101257f/stack[stack_top]);
+   stack[stack_top] = pow((stack[stack_top]/M_E_F)*sqrt(stack[stack_top]*sinh(1/stack[stack_top])),stack[stack_top])*sqrt(2.0f*M_PI_F/stack[stack_top]);
    break;
 case T_GAUSS:
    stack[stack_top] = exp(-stack[stack_top]*stack[stack_top]);
