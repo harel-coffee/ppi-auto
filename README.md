@@ -30,11 +30,7 @@ For instance:
 Within `build/`:
 
 ~~~~~~~~
-   while true; do  ../script/run.py -d ../problem/vento/wndm00_1s.txt -e ./vento -i ./islands.txt -p 9080 -n 4 -st 1000000 -cl-p 0 -cl-d 0 |grep -a -A 1 'Overall best' | tail -n 1 >> out; sleep 1; done
+   while true; do ../script/run.py -d ../problem/random/data.csv -e ./main -i islands.txt -p 9080 -n 4 -st 5000000 -cl-p 0 -cl-d 0 | grep -a '^> [0-9]' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p pareto.front "$CANDIDATE"; done; sleep 1; done
 ~~~~~~~~
 
-### Generating pareto front ###
-
-~~~~~~~~
-   cat out | tr -s ';' ',' | sort -t',' -k1,1n -k2,2 -u > tmp.domination && cat tmp.domination | while read L; do cut -d',' -f1-2 tmp.domination | if ! ../script/domination-many.py -t less -a dominated $(echo $L|cut -d',' -f1-2) > /dev/null; then echo $L; fi; done
-~~~~~~~~
+This will generate the Pareto front in file 'pareto.front'
