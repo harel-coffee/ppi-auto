@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import os
 import sys
 import random
 import argparse
+import subprocess
 
 ################################################################################
 # Usage:
@@ -34,7 +34,7 @@ parser.add_argument("-st", "--stagnation-tolerance", type=int, required=True, he
 parser.add_argument("-cl-p", "--cl-platform-id", required=False, default=0, help="OpenCL platform id [default=0]")
 parser.add_argument("-cl-d", "--cl-device-id", required=False, default=0, help="OpenCL device id [default=0]")
 parser.add_argument("-s", "--strategy", required=False, default="PPCU", choices=['PPCU', 'ppcu', 'PP', 'pp', 'FP', 'fp'], help="Parallelization strategy")
-parser.add_argument("args", nargs=argparse.REMAINDER, help="Extra arguments to be passed to the executable; use after -- (ex: ... -- -error \"'((X)!=(Y))'\")")
+parser.add_argument("args", nargs=argparse.REMAINDER, help="Extra arguments to be passed to the executable; use after -- (ex: ... -- -error '((X)!=(Y))')")
 
 args = parser.parse_args()
 
@@ -84,18 +84,30 @@ P['st']  = args.stagnation_tolerance/P['ps'] # Transform population-based into i
 P['cp']  = random.random()
 P['mr']  = random.uniform(0,0.1)
 P['ts']  = random.randint(2,30)
-P['nb']  = random.randint(800,2000)
+P['nb']  = random.randint(400,2000)
 P['is']  = random.randint(1,1)
 P['iat'] = random.uniform(0.0,0.8)
 ##############################
 
-text = [];
-text.append(args.exe + " -v -machine -e -acc -strategy " + args.strategy.upper() + " -d " + args.dataset + " -ncol " + str(ncol) + " -port " + str(args.port) + " -cl-d " + str(args.cl_device_id) + " -cl-p " + str(args.cl_platform_id) + " -ps " + str(P['ps']) + " -g 100000000" + " -cp " + str(P['cp']) + " -mr " + str(P['mr']) + " -ts " + str(P['ts']) + " -nb " + str(P['nb']) + " -is " + str(P['is']) + " -st " + str(P['st']) + " -iat " + str(P['iat']))
+cmd = [];
+cmd.append(args.exe + " -v -machine -e -acc -strategy " + args.strategy.upper() + " -d " + args.dataset + " -ncol " + str(ncol) + " -port " + str(args.port) + " -cl-d " + str(args.cl_device_id) + " -cl-p " + str(args.cl_platform_id) + " -ps " + str(P['ps']) + " -g 100000000" + " -cp " + str(P['cp']) + " -mr " + str(P['mr']) + " -ts " + str(P['ts']) + " -nb " + str(P['nb']) + " -is " + str(P['is']) + " -st " + str(P['st']) + " -iat " + str(P['iat']))
 if peers:
-   text.append(" -peers \"" + ''.join(peers) + "\"")
+   cmd.append(" -peers \"" + ''.join(peers) + "\"")
 if args.args: # Adds extra arguments to the executable if any
-   text.append(" " + ' '.join(args.args[1:]))
+   cmd.append(" " + ' '.join(args.args[1:]))
 
-print "\n" + ''.join(text) + "\n"
+print "\n" + ''.join(cmd) + "\n"
 
-os.system(''.join(text))
+try:
+   process = subprocess.Popen(''.join(cmd).split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+   #for out in iter(lambda: process.stdout.read(1), ''): # Outputs char by char
+   for out in iter(process.stdout.readline, ''): # Outputs line by line
+      sys.stdout.write(out)
+      #sys.stdout.flush()
+   process.wait() # Wait for the completion and sets the returncode (if used communicate() this wouldn't be necessary)
+   if process.returncode != 0:
+      raise Exception("'%s (return code: %d)'" % (''.join(process.stderr.readlines()), process.returncode))
+except Exception as e:
+   print >> sys.stderr, "<> ", "The following error occurred when running the command ('%s'): %s" % (''.join(cmd), e)
+
+sys.exit(0) # Always exit with SUCCESS!
