@@ -94,7 +94,7 @@ t_rule* decode_rule( const GENOME_TYPE* genome, int* const allele, Symbol cabeca
    // Converte data.bits_per_gene bits em um valor integral
    unsigned valor_bruto = 0;
    for( int i = 0; i < data.bits_per_gene; ++i )
-      if( genome[(*allele)++] ) valor_bruto += pow( 2, i ); // TODO: replace pow with a more efficient way of performing such operation (such as <<)
+      if( genome[(*allele)++] ) valor_bruto += (1 << i); // (1<<i) is a more efficient way of performing 2^i
 
    // Seleciona uma regra no intervalo [0, num_regras - 1]
    return gramatica[cabeca][valor_bruto % num_regras];
@@ -106,13 +106,13 @@ float decode_real( const GENOME_TYPE* genome, int* const allele )
    if( *allele + data.bits_per_constant > data.number_of_bits ) { return 0.; }
 
    // Converte data.bits_per_constant bits em um valor real
-   float valor_bruto = 0.;
-   for( int i = 0; i < data.bits_per_constant; ++i ) 
-      if( genome[(*allele)++] ) valor_bruto += pow( 2.0, i ); // TODO: replace pow with a more efficient way of performing such operation
+   // NB: This works backwards in the sense that the most significant bit is the last bit (from left to right).
+   unsigned long valor_bruto = 0;
+   for( int i = 0; i < data.bits_per_constant; ++i )
+      if( genome[(*allele)++] ) valor_bruto += (1UL << i);
 
    // Normalizar para o intervalo desejado: a + valor_bruto * (b - a)/(2^n - 1)
-   return data.interval[0] + valor_bruto * (data.interval[1] - data.interval[0]) / 
-          (pow( 2.0, data.bits_per_constant ) - 1); // TODO: replace pow with a more efficient way of performing such operation
+   return data.interval[0] + float(valor_bruto) * (data.interval[1] - data.interval[0]) / ((1UL << data.bits_per_constant) - 1.0);
 }
 
 int decode( const GENOME_TYPE* genome, int* const allele, Symbol* phenotype, float* ephemeral, int pos, Symbol initial_symbol )
@@ -189,8 +189,8 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    Opts.Bool.Add( "-e", "--elitism" );
 
    Opts.Int.Add( "-nb", "--number-of-bits", 2000, 16 );
-   Opts.Int.Add( "-bg", "--bits-per-gene", 8, 8 );
-   Opts.Int.Add( "-bc", "--bits-per-constant", 16, 4 );
+   Opts.Int.Add( "-bg", "--bits-per-gene", 8, 8, 31 );
+   Opts.Int.Add( "-bc", "--bits-per-constant", 16, 4, 63 );
 
    Opts.Float.Add( "-min", "--min-constant", -10 );
    Opts.Float.Add( "-max", "--max-constant", 10 );
