@@ -354,6 +354,10 @@ icp_tail = r"""
             fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
          else
             fprintf( out, "%d ", phenotype[i] );
+      // Print the individual's genome, but only the active (no introns) region (useful for seeding new generations)
+      fprintf(out, ";");
+      for(int i=0; i<allele; ++i)
+         fprintf(out, "%d", (individual->genome + (idx * data.number_of_bits))[i]);
       fprintf(out, ";");
       for (int i=0; i<argc; ++i)
          fprintf(out, "%s ", argv[i]);

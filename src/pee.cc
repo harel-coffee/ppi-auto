@@ -93,8 +93,8 @@ t_rule* decode_rule( const GENOME_TYPE* genome, int* const allele, Symbol cabeca
 
    // Converte data.bits_per_gene bits em um valor integral
    unsigned valor_bruto = 0;
-   for( int i = 0; i < data.bits_per_gene; ++i )  
-      if( genome[(*allele)++] ) valor_bruto += pow( 2, i );
+   for( int i = 0; i < data.bits_per_gene; ++i )
+      if( genome[(*allele)++] ) valor_bruto += pow( 2, i ); // TODO: replace pow with a more efficient way of performing such operation (such as <<)
 
    // Seleciona uma regra no intervalo [0, num_regras - 1]
    return gramatica[cabeca][valor_bruto % num_regras];
@@ -108,11 +108,11 @@ float decode_real( const GENOME_TYPE* genome, int* const allele )
    // Converte data.bits_per_constant bits em um valor real
    float valor_bruto = 0.;
    for( int i = 0; i < data.bits_per_constant; ++i ) 
-      if( genome[(*allele)++] ) valor_bruto += pow( 2.0, i );
+      if( genome[(*allele)++] ) valor_bruto += pow( 2.0, i ); // TODO: replace pow with a more efficient way of performing such operation
 
    // Normalizar para o intervalo desejado: a + valor_bruto * (b - a)/(2^n - 1)
    return data.interval[0] + valor_bruto * (data.interval[1] - data.interval[0]) / 
-          (pow( 2.0, data.bits_per_constant ) - 1);
+          (pow( 2.0, data.bits_per_constant ) - 1); // TODO: replace pow with a more efficient way of performing such operation
 }
 
 int decode( const GENOME_TYPE* genome, int* const allele, Symbol* phenotype, float* ephemeral, int pos, Symbol initial_symbol )
@@ -145,7 +145,7 @@ int decode( const GENOME_TYPE* genome, int* const allele, Symbol* phenotype, flo
          }
          ++pos;
       }
-      else
+      else // It's a non-terminal, so calling recursively decode again...
       {
          pos = decode( genome, allele, phenotype, ephemeral, pos, r->symbols[i] );
          if( !pos ) return 0;
@@ -636,6 +636,8 @@ void pee_print_time()
    {
       acc_print_time();
    }
+   else
+      printf(";");
    //cerr << ", time_evaluate: " << data.time_evaluate << ", time_crossover: " << data.time_crossover << ", time_mutation: " << data.time_mutation << ", time_clone: " << data.time_clone << ", time_tournament: " << data.time_tournament << ", time_total: " << data.time_total << "\n" << endl;
 }
 
