@@ -92,17 +92,18 @@ P['iat'] = random.uniform(0.0,0.8)
 cmd = [];
 cmd.append(args.exe + " -v -machine -e -acc -strategy " + args.strategy.upper() + " -d " + args.dataset + " -ncol " + str(ncol) + " -port " + str(args.port) + " -cl-d " + str(args.cl_device_id) + " -cl-p " + str(args.cl_platform_id) + " -ps " + str(P['ps']) + " -g 100000000" + " -cp " + str(P['cp']) + " -mr " + str(P['mr']) + " -ts " + str(P['ts']) + " -nb " + str(P['nb']) + " -is " + str(P['is']) + " -st " + str(P['st']) + " -iat " + str(P['iat']))
 if peers:
-   cmd.append(" -peers \"" + ''.join(peers) + "\"")
+   cmd.append(" -peers " + ''.join(peers))
 if args.args: # Adds extra arguments to the executable if any
    cmd.append(" " + ' '.join(args.args[1:]))
 
 print "\n" + ''.join(cmd) + "\n"
 
 try:
-   process = subprocess.Popen(''.join(cmd).split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-   #for out in iter(lambda: process.stdout.read(1), ''): # Outputs char by char
-   for out in iter(process.stdout.readline, ''): # Outputs line by line
+   process = subprocess.Popen(''.join(cmd).split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+   for out in iter(lambda: process.stdout.read(1), ''): # Outputs char by char
+   #for out in iter(process.stdout.readline, ''): # Outputs line by line
       sys.stdout.write(out)
+      sys.stderr.write(out)
       #sys.stdout.flush()
    process.wait() # Wait for the completion and sets the returncode (if used communicate() this wouldn't be necessary)
    if process.returncode != 0:
