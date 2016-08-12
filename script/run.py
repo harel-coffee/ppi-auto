@@ -84,7 +84,7 @@ P['st']  = args.stagnation_tolerance/P['ps'] # Transform population-based into i
 P['cp']  = random.random()
 P['mr']  = random.uniform(0,0.1)
 P['ts']  = random.randint(2,30)
-P['nb']  = random.randint(400,2000)
+P['nb']  = random.randint(200,4000)
 P['is']  = random.randint(1,1)
 P['iat'] = random.uniform(0.0,0.8)
 ##############################
