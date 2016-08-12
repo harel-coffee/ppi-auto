@@ -55,7 +55,7 @@ for peer in args.peers:
       if sock.send(header) != 10:
          raise Exception()
       # Send the message
-      print >> sys.stderr, "[%s:%d] Trying to send message: %s" % (address,port,message)
+      print >> sys.stderr, "[%s:%d] Trying to send message of size %dB: [%s]" % (address,port,len(message),message)
       if sock.send(message) != len(message):
          raise Exception()
    except:

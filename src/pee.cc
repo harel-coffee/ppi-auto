@@ -443,8 +443,7 @@ int pee_receive_individual( GENOME_TYPE* immigrants )
        * handles this case (it also takes into account the offset). */
       int chars_to_convert = std::min((int) data.number_of_bits, (int) Server::m_immigrants[slot].size() - offset - 1);
       //std::cerr << "\n[" << offset << ", " << Server::m_immigrants[slot].size() << ", " << chars_to_convert << ", " << data.number_of_bits << "]\n";
-      for( int i = 0; i < chars_to_convert; i++ )
-      // TODO? for( int i = 0; i < chars_to_convert && tmp[i] != '\0'; i++ )
+      for( int i = 0; i < chars_to_convert && tmp[i] != '\0'; i++ )
       {
          assert(tmp[i]-'0'==1 || tmp[i]-'0'==0); // In debug mode, assert that each value is either '0' or '1'
          immigrants[nImmigrants * data.number_of_bits + i] = static_cast<bool>(tmp[i] - '0'); /* Ensures that the allele will be binary (0 or 1) regardless of the received value--this ensures it would work even if a communication error occurs (or a malicious message is sent). */
