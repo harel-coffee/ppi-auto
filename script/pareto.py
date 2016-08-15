@@ -6,7 +6,7 @@ import time
 import subprocess
 import simpleflock
 
-# Format: 'generation;size;error;solution;genome;command-line;timings;...'
+# Format: 'generation;size;error;solution;phenotype;genome;command-line;timings;...'
 #                    |_________|
 FIELD_START=1
 FIELD_END=3
@@ -57,6 +57,21 @@ def main():
    parser.add_argument("candidate", help="Candidate")
    args = parser.parse_args()
 
+   # Some validation regarding the given candidate
+   isvalid = True
+   if len(args.candidate.split(';')) < 2: # Must has at least two delimiters (;)
+      isvalid = False
+   try: # FIELD_START up to FIELD_END must be convertible to float
+      for value in args.candidate.split(';')[FIELD_START:FIELD_END]:
+         float(value)
+   except:
+      isvalid = False
+   if not isvalid:
+      print >> sys.stderr, "[INVALID Candidate: %s]" % (args.candidate)
+      sys.exit(0)
+
+   print >> sys.stderr, "[Candidate: %s]" % (args.candidate)
+
    if args.allow_duplicate: # Includes the "solution" itself in order to whether consider duplicate or not
       FIELD_END_DUPLICATE=FIELD_END+1
    else:
@@ -66,12 +81,15 @@ def main():
 
    old_pareto = []; new_pareto = []; changed = None
 
-   # Create the pareto file if it doesn't exist:
-   with open(args.pareto_file, 'a+') as pareto:
-      pass
+   # A lock is required here since other pareto.py process might be writing to the pareto_file right now
+   with simpleflock.SimpleFlock(args.lock_file):
+      # Create the pareto file if it doesn't exist:
+      with open(args.pareto_file, 'a+') as pareto:
+         pass
 
-   with open(args.pareto_file) as pareto:
-      old_pareto = pareto.read().splitlines()
+      with open(args.pareto_file) as pareto:
+         old_pareto = pareto.read().splitlines()
+
    changed, new_pareto = UpdatePareto(old_pareto, args.candidate, FIELD_END_DUPLICATE)
 
    #print old_pareto, new_pareto
