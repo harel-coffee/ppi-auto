@@ -81,7 +81,7 @@ ncol = len(lines[1].split(','))
 P = {}
 P['ps']  = 2**random.randint(9,16)
 P['st']  = args.stagnation_tolerance/P['ps'] # Transform population-based into individual-based (this is fairer when using different population sizes
-P['cp']  = random.random()
+P['cp']  = random.uniform(0.5,1.0)
 P['mr']  = random.uniform(0,0.1)
 P['ts']  = random.randint(2,30)
 P['nb']  = random.randint(200,4000)
@@ -100,11 +100,11 @@ print "\n" + ''.join(cmd) + "\n"
 
 try:
    process = subprocess.Popen(''.join(cmd).split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-   for out in iter(lambda: process.stdout.read(1), ''): # Outputs char by char
-   #for out in iter(process.stdout.readline, ''): # Outputs line by line
+   #for out in iter(lambda: process.stdout.read(1), ''): # Outputs char by char
+   for out in iter(process.stdout.readline, ''): # Outputs line by line
       sys.stdout.write(out)
+      sys.stdout.flush()
       sys.stderr.write(out)
-      #sys.stdout.flush()
    process.wait() # Wait for the completion and sets the returncode (if used communicate() this wouldn't be necessary)
    if process.returncode != 0:
       raise Exception("'%s (return code: %d)'" % (''.join(process.stderr.readlines()), process.returncode))
