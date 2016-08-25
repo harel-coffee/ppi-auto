@@ -34,34 +34,23 @@ void pep_init( float** input, int nlin, int argc, char** argv )
 {
    CmdLine::Parser Opts( argc, argv );
 
-   Opts.String.Add( "-sol", "--solution_file" );
+   Opts.String.Add( "-sol", "--solution" );
    Opts.Bool.Add( "-acc" );
    Opts.Bool.Add( "-pred", "--prediction" );
    Opts.String.Add( "-error", "--function-difference", "fabs((X)-(Y))" );
    Opts.Int.Add( "-ncol", "--number_of_columns" );
    Opts.Process();
    
-   //const char* file = Opts.String.Get("-sol").c_str();
    std::istringstream iss;
    std::string solution = Opts.String.Get("-sol");
    iss.str (solution);
    std::cout << solution;
 
-   //FILE *arqentra;
-   //arqentra = fopen(file,"r");
-   //if(arqentra == NULL) 
-   //{
-   //  fprintf(stderr, "Could not open file for reading (%s).\n", file);
-   //  //printf("Nao foi possivel abrir o arquivo de entrada.\n");
-   //  exit(-1);
-   //}
-   
    data.prediction = Opts.Bool.Get("-pred");
    data.version = Opts.Bool.Get("-acc");
 
    data.size = new int[1];
    iss >> data.size[0];
-   //fscanf(arqentra,"%d",&data.size[0]);
    //fprintf(stdout,"%d\n",data.size[0]);
 
    data.phenotype = new Symbol[data.size[0]];
@@ -71,17 +60,14 @@ void pep_init( float** input, int nlin, int argc, char** argv )
    {
       iss >> tmp;
       data.phenotype[i] = (Symbol)tmp;
-      //fscanf(arqentra,"%d ",&tmp); data.phenotype[i] = (Symbol)tmp;
       //fprintf(stdout,"%d ",data.phenotype[i]);
       if( data.phenotype[i] == T_CONST || data.phenotype[i] == T_ATTRIBUTE )
       {
          iss >> data.ephemeral[i];
-         //fscanf(arqentra,"%f ",&data.ephemeral[i]);
          //fprintf(stdout,"%.12f ",data.ephemeral[i]);
       }
    }
    //fprintf(stdout,"\n");
-   //fclose (arqentra);
 
    data.nlin = nlin;
 

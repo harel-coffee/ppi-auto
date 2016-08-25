@@ -76,7 +76,7 @@ int main(int argc, char** argv)
       Opts.Int.Add( "-ncol", "--number_of_columns" );
       Opts.Int.Add( "-port", "--number_of_port" );
       Opts.String.Add( "-d", "--dataset" );
-      Opts.String.Add( "-sol", "--solution_file" );
+      Opts.String.Add( "-sol", "--solution" );
 
       Opts.Process();
 
