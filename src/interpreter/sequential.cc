@@ -62,7 +62,7 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 
    for( int ind = 0; ind < nInd; ++ind )
    {
-      if( size[ind] == 0 && !prediction_mode )
+      if( size[ind] == 0 && !pep_mode && !prediction_mode )
       {
          vector[ind] = std::numeric_limits<float>::max();
          continue;
@@ -89,11 +89,11 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
                   break;
             }
          }
-         if( prediction_mode ) {vector[ponto] = stack[stack_top];}
+         if( pep_mode && prediction_mode ) {vector[ponto] = stack[stack_top];}
          //else {sum += ERROR(stack[stack_top], data.inputs[ponto][data.ncol-1]);}
          else {sum += fabs(stack[stack_top] - data.inputs[ponto][data.ncol-1]);}
       }
-      if( !prediction_mode )
+      if( !pep_mode && !prediction_mode )
       {
          if( isnan( sum ) || isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
          else 

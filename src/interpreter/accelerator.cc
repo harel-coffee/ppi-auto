@@ -170,7 +170,7 @@ int opencl_init( int platform_id, int device_id, cl_device_type type )
 int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
 {
    unsigned max_stack_size;
-   if( prediction_mode ) 
+   if( pep_mode && prediction_mode ) 
    {
       max_stack_size = data.max_size;
    }
@@ -395,7 +395,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
    data.buffer_ephemeral = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.max_size * data.population_size * sizeof( float ) );
    data.buffer_size      = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.population_size * sizeof( int ) );
 
-   if( prediction_mode ) // Buffer (memory on the device) of prediction (one por example)
+   if( pep_mode && prediction_mode ) // Buffer (memory on the device) of prediction (one por example)
    { 
       data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data.nlin * sizeof( float ) );
    }
@@ -606,7 +606,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 
    // TODO: data.queuetransfer.finish();
    float *tmp;
-   if ( prediction_mode )
+   if ( pep_mode && prediction_mode )
    {
       // TODO: vector = tmp (?) substituiu as duas linhas de baixo
       tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, data.nlin * sizeof( float ) );
