@@ -294,7 +294,7 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    data.version = Opts.Bool.Get("-acc");
    if( data.version )
    {
-      if( acc_interpret_init( argc, argv, data.max_size_phenotype, MAX_QUANT_SIMBOLOS_POR_REGRA, data.population_size, input, nlin, 0 ) )
+      if( acc_interpret_init( argc, argv, data.max_size_phenotype, MAX_QUANT_SIMBOLOS_POR_REGRA, data.population_size, input, nlin, 0, 0 ) )
       {
          fprintf(stderr,"Error in initialization phase.\n");
       }

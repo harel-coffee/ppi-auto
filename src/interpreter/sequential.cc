@@ -98,8 +98,7 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          if( isnan( sum ) || isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
          else 
          {
-            if ( !pep_mode ) {vector[ind] = sum/data.nlin + alpha * size[ind];}
-            else {vector[ind] = sum/data.nlin;}
+            vector[ind] = sum/data.nlin + alpha * size[ind];
          }
       }
    }
