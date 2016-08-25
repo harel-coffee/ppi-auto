@@ -52,7 +52,7 @@ void seq_interpret_init( std::string error, const unsigned size, float** input, 
 //   }
 }
 
-void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int prediction_mode, float alpha )
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
 {
    //std::cerr << data.error << " " << ERROR(10,5) << std::endl;
 
@@ -93,25 +93,29 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          //else {sum += ERROR(stack[stack_top], data.inputs[ponto][data.ncol-1]);}
          else {sum += fabs(stack[stack_top] - data.inputs[ponto][data.ncol-1]);}
       }
-      if ( !prediction_mode )
+      if( !prediction_mode )
       {
          if( isnan( sum ) || isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
          else 
          {
-            vector[ind] = sum/data.nlin + alpha * size[ind];
+            if ( !pep_mode ) {vector[ind] = sum/data.nlin + alpha * size[ind];}
+            else {vector[ind] = sum/data.nlin;}
          }
       }
    }
 
-   std::priority_queue<std::pair<float, int> > q;
-   for( int i = 0; i < nInd; ++i ) 
+   if( !pep_mode )
    {
-      q.push( std::pair<float, int>(vector[i]*(-1), i) );
-   }
-   for( int i = 0; i < *best_size; ++i ) 
-   {
-      index[i] = q.top().second;
-      q.pop();
+      std::priority_queue<std::pair<float, int> > q;
+      for( int i = 0; i < nInd; ++i ) 
+      {
+         q.push( std::pair<float, int>(vector[i]*(-1), i) );
+      }
+      for( int i = 0; i < *best_size; ++i ) 
+      {
+         index[i] = q.top().second;
+         q.pop();
+      }
    }
 }
 

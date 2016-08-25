@@ -18,7 +18,7 @@ void seq_interpret_init( std::string error, const unsigned size, float** input, 
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int prediction_mode, float alpha );
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha );
 
 /** ************************************************************************************************** **/
 /** ********************************** Function interpret_destroy ************************************ **/

@@ -473,11 +473,11 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
 
    if( data.version )
    {
-      acc_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, &pee_send_individual, &pee_receive_individual, antecedentes, nImmigrants, index, &data.best_size, 0, ALPHA );
+      acc_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, &pee_send_individual, &pee_receive_individual, antecedentes, nImmigrants, index, &data.best_size, 0, 0, ALPHA );
    }
    else
    {
-      seq_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, index, &data.best_size, 0, ALPHA );
+      seq_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, index, &data.best_size, 0, 0, ALPHA );
       *nImmigrants = pee_receive_individual( antecedentes->genome );
    }
 

@@ -76,7 +76,7 @@ int main(int argc, char** argv)
       Opts.Int.Add( "-ncol", "--number_of_columns" );
       Opts.Int.Add( "-port", "--number_of_port" );
       Opts.String.Add( "-d", "--dataset" );
-      Opts.String.Add( "-run", "--program_file" );
+      Opts.String.Add( "-sol", "--solution_file" );
 
       Opts.Process();
 
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
       int error = read( Opts.String.Get("-d"), input, ncol, nlin );
       if ( error ) {return error;}
 
-      if( Opts.String.Found("-run") )
+      if( Opts.String.Found("-sol") )
       {
          pep_init( input, nlin, argc, argv );
          pep_interpret();

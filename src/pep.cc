@@ -34,19 +34,21 @@ void pep_init( float** input, int nlin, int argc, char** argv )
 {
    CmdLine::Parser Opts( argc, argv );
 
-   Opts.String.Add( "-run", "--program_file" );
+   Opts.String.Add( "-sol", "--solution_file" );
    Opts.Bool.Add( "-acc" );
    Opts.Bool.Add( "-pred", "--prediction" );
    Opts.String.Add( "-error", "--function-difference", "fabs((X)-(Y))" );
    Opts.Int.Add( "-ncol", "--number_of_columns" );
    Opts.Process();
-   const char* file = Opts.String.Get("-run").c_str();
+   const char* file = Opts.String.Get("-sol").c_str();
+
 
    FILE *arqentra;
    arqentra = fopen(file,"r");
    if(arqentra == NULL) 
    {
-     printf("Nao foi possivel abrir o arquivo de entrada.\n");
+     fprintf(stderr, "Could not open file for reading (%s).\n", file);
+     //printf("Nao foi possivel abrir o arquivo de entrada.\n");
      exit(-1);
    }
    
@@ -55,7 +57,7 @@ void pep_init( float** input, int nlin, int argc, char** argv )
 
    data.size = new int[1];
    fscanf(arqentra,"%d",&data.size[0]);
-   //fprintf(stdout,"%d\n",data.size[0]);
+   fprintf(stdout,"%d\n",data.size[0]);
 
    data.phenotype = new Symbol[data.size[0]];
    data.ephemeral = new float[data.size[0]];
@@ -63,14 +65,14 @@ void pep_init( float** input, int nlin, int argc, char** argv )
    for( int tmp, i = 0; i < data.size[0]; ++i )
    {
       fscanf(arqentra,"%d ",&tmp); data.phenotype[i] = (Symbol)tmp;
-      //fprintf(stdout,"%d ",data.phenotype[i]);
+      fprintf(stdout,"%d ",data.phenotype[i]);
       if( data.phenotype[i] == T_CONST || data.phenotype[i] == T_ATTRIBUTE )
       {
          fscanf(arqentra,"%f ",&data.ephemeral[i]);
-         //fprintf(stdout,"%.12f ",data.ephemeral[i]);
+         fprintf(stdout,"%.12f ",data.ephemeral[i]);
       }
    }
-   //fprintf(stdout,"\n");
+   fprintf(stdout,"\n");
    fclose (arqentra);
 
    data.nlin = nlin;
@@ -95,11 +97,11 @@ void pep_interpret()
       data.vector = new float[data.nlin];
       if( data.version )
       {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0 );
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, 0 );
       }
       else
       {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, 1, 0 );
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, 1, 1, 0 );
       }
    }
    else
@@ -107,11 +109,11 @@ void pep_interpret()
       data.vector = new float[1];
       if( data.version )
       {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0 );
+         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, 0 );
       }
       else
       {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, 0, 0 );
+         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, 1, 0, 0 );
       }
    }
 }
