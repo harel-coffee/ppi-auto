@@ -11,6 +11,16 @@ import simpleflock
 FIELD_START=1
 FIELD_END=3
 
+def IsValid(p):
+   if len(p.split(';')) < 2: # Must has at least two delimiters (;)
+      return False
+   try: # FIELD_START up to FIELD_END must be convertible to float
+      for value in p.split(';')[FIELD_START:FIELD_END]:
+         float(value)
+   except:
+      return False
+   return True
+
 def UpdatePareto(pareto, candidate, FIELD_END_DUPLICATE):
    if len(pareto) == 0: # Empty pareto, obviously 'candidate' dominates the empty
       return True, [candidate]
@@ -58,15 +68,7 @@ def main():
    args = parser.parse_args()
 
    # Some validation regarding the given candidate
-   isvalid = True
-   if len(args.candidate.split(';')) < 2: # Must has at least two delimiters (;)
-      isvalid = False
-   try: # FIELD_START up to FIELD_END must be convertible to float
-      for value in args.candidate.split(';')[FIELD_START:FIELD_END]:
-         float(value)
-   except:
-      isvalid = False
-   if not isvalid:
+   if not IsValid(args.candidate):
       print >> sys.stderr, "[INVALID Candidate: %s]" % (args.candidate)
       sys.exit(0)
 
@@ -89,6 +91,10 @@ def main():
 
       with open(args.pareto_file) as pareto:
          old_pareto = pareto.read().splitlines()
+         # Strangely enough, sometimes malformed entries end up into the Pareto
+         # file. This procedure ignores such dirty entries.
+         for p in old_pareto:
+            if not IsValid(p): old_pareto.remove(p)
 
    changed, new_pareto = UpdatePareto(old_pareto, args.candidate, FIELD_END_DUPLICATE)
 
@@ -102,6 +108,10 @@ def main():
          #print "lock acquired!"
          with open(args.pareto_file, 'r+') as pareto:
             cur_pareto = pareto.read().splitlines()
+            # Strangely enough, sometimes malformed entries end up into the Pareto
+            # file. This procedure ignores such dirty entries.
+            for p in cur_pareto:
+               if not IsValid(p): cur_pareto.remove(p)
             pareto.seek(0)
             if cur_pareto == old_pareto:
                #print "Equal"
