@@ -44,7 +44,7 @@ void pep_init( float** input, int nlin, int argc, char** argv )
    std::istringstream iss;
    std::string solution = Opts.String.Get("-sol");
    iss.str (solution);
-   std::cout << solution;
+   //std::cout << solution;
 
    data.prediction = Opts.Bool.Get("-pred");
    data.version = Opts.Bool.Get("-acc");
