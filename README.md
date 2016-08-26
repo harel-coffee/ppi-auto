@@ -75,38 +75,51 @@ will periodically (each 10s) send a random genome from the pareto.front file ("H
 ### Putting it all together through 'screen' (AKA doing all above within GNU screen) ###
 
 ~~~~~~~~
-# Create the screen session named 'pee'
-screen -S pee -A -d -m
+   # Create the screen session named 'pee'
+   screen -S pee -A -d -m
 
-# Create all necessary windows (tabs)
-screen -S pee -X screen -t island-9080
-screen -S pee -X screen -t island-9081
-screen -S pee -X screen -t island-9082
-screen -S pee -X screen -t island-9083
-screen -S pee -X screen -t island-9084
-screen -S pee -X screen -t island-9085
+   # Create all necessary windows (tabs)
+   screen -S pee -X screen -t island-9080
+   screen -S pee -X screen -t island-9081
+   screen -S pee -X screen -t island-9082
+   screen -S pee -X screen -t island-9083
+   screen -S pee -X screen -t island-9084
+   screen -S pee -X screen -t island-9085
 
-screen -S pee -X screen -t seeder
-screen -S pee -X screen -t pareto
+   screen -S pee -X screen -t seeder
+   screen -S pee -X screen -t pareto
 
-# Run each island on a different window
-screen -S pee -p island-9080 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9080 -n 1 -st 1000000 -cl-p 0 -cl-d 0 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-screen -S pee -p island-9081 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9081 -n 1 -st 2000000 -cl-p 0 -cl-d 0 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-screen -S pee -p island-9082 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9082 -n 1 -st 3000000 -cl-p 0 -cl-d 1 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-screen -S pee -p island-9083 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9083 -n 1 -st 4000000 -cl-p 0 -cl-d 1 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-screen -S pee -p island-9084 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9084 -n 1 -st 5000000 -cl-p 0 -cl-d 2 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-screen -S pee -p island-9085 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9085 -n 1 -st 6000000 -cl-p 0 -cl-d 2 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   # Run each island on a different window
+   screen -S pee -p island-9080 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9080 -n 1 -st 1000000 -cl-p 0 -cl-d 0 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S pee -p island-9081 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9081 -n 1 -st 2000000 -cl-p 0 -cl-d 0 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S pee -p island-9082 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9082 -n 1 -st 3000000 -cl-p 0 -cl-d 1 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S pee -p island-9083 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9083 -n 1 -st 4000000 -cl-p 0 -cl-d 1 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S pee -p island-9084 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9084 -n 1 -st 5000000 -cl-p 0 -cl-d 2 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S pee -p island-9085 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9085 -n 1 -st 6000000 -cl-p 0 -cl-d 2 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
 
-# Runs the seeder (feedback) and visualize the Pareto front
-screen -S pee -p seeder -X stuff $'while true; do ../script/seeder.py -i iris-pareto.front -p 9080 -p 9081 -p 9082 -p 9083 -p 9084 -p 9085; sleep 5; done\n'
-screen -S pee -p pareto -X stuff $'watch -n 1 "cut -d\';\' -f2-4 iris-pareto.front|cut -c1-140|sort -n|tail -n 35"\n'
+   # Runs the seeder (feedback) and visualize the Pareto front
+   screen -S pee -p seeder -X stuff $'while true; do ../script/seeder.py -i iris-pareto.front -p 9080 -p 9081 -p 9082 -p 9083 -p 9084 -p 9085; sleep 5; done\n'
+   screen -S pee -p pareto -X stuff $'watch -n 1 "cut -d\';\' -f2-4 iris-pareto.front|cut -c1-140|sort -n|tail -n 35"\n'
 ~~~~~~~~
 
 ## Running Prediction (example) ##
 
-./main -acc -strategy PP -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062' -pred
+The prediction mode outputs a prediction for each instance of the dataset (`-d`) with respect to the solution given by its phenotype (`-sol`). It can process the instances sequentially; e.g.:
+
+~~~~~~~~
+   ./main -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062' -pred
+~~~~~~~~
+
+or in parallel if one adds the `-acc` flag and the corresponding strategy (`-strategy`):
+
+~~~~~~~~
+   ./main -acc -strategy PP -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062' -pred
+~~~~~~~~
 
 ## Running Testing Solution (example) ##
 
-./main -acc -strategy PP -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062'
+In this mode, only the MAE is output. Similarly, it can run sequentially or in parallel:
 
+~~~~~~~~
+   ./main -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062'
+~~~~~~~~
