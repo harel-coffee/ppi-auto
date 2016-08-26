@@ -101,3 +101,12 @@ screen -S pee -p island-9085 -X stuff $'while true; do ../script/run.py -d ../pr
 screen -S pee -p seeder -X stuff $'while true; do ../script/seeder.py -i iris-pareto.front -p 9080 -p 9081 -p 9082 -p 9083 -p 9084 -p 9085; sleep 5; done\n'
 screen -S pee -p pareto -X stuff $'watch -n 1 "cut -d\';\' -f2-4 iris-pareto.front|cut -c1-140|sort -n|tail -n 35"\n'
 ~~~~~~~~
+
+## Running Prediction (example) ##
+
+./main -acc -strategy PP -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062' -pred
+
+## Running Testing Solution (example) ##
+
+./main -acc -strategy PP -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062'
+
