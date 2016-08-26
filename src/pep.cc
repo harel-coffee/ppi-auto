@@ -40,34 +40,40 @@ void pep_init( float** input, int nlin, int argc, char** argv )
    Opts.String.Add( "-error", "--function-difference", "fabs((X)-(Y))" );
    Opts.Int.Add( "-ncol", "--number_of_columns" );
    Opts.Process();
-   
+
    std::istringstream iss;
    std::string solution = Opts.String.Get("-sol");
    iss.str (solution);
-   //std::cout << solution;
 
    data.prediction = Opts.Bool.Get("-pred");
    data.version = Opts.Bool.Get("-acc");
 
    data.size = new int[1];
+   // Put the size of the solution (number of Symbols) into the variable data.size[0]
    iss >> data.size[0];
-   //fprintf(stdout,"%d\n",data.size[0]);
 
    data.phenotype = new Symbol[data.size[0]];
    data.ephemeral = new float[data.size[0]];
 
-   for( int tmp, i = 0; i < data.size[0]; ++i )
+   int actual_size = 0; int tmp = -1;
+   for( int i = 0; i < data.size[0]; ++i )
    {
       iss >> tmp;
+      if (iss)
+         ++actual_size;
+      else
+         break; // Stops if the actual number of Symbols is less than the informed
+
       data.phenotype[i] = (Symbol)tmp;
-      //fprintf(stdout,"%d ",data.phenotype[i]);
       if( data.phenotype[i] == T_CONST || data.phenotype[i] == T_ATTRIBUTE )
       {
          iss >> data.ephemeral[i];
-         //fprintf(stdout,"%.12f ",data.ephemeral[i]);
       }
    }
-   //fprintf(stdout,"\n");
+
+   while (iss >> tmp) ++actual_size; // Let's check if there are still more Symbols remaining
+   if (actual_size != data.size[0])
+      std::cerr << "WARNING: The given size (" << data.size[0] << ") and actual size (" << actual_size << ") differ: '" << solution << "'\n";
 
    data.nlin = nlin;
 
