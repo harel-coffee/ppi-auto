@@ -56,7 +56,7 @@ grammar = []
 for i in range(0,len(lines)):
    grammar += list(lines[i].split())
 
-text0 = []; text1 = []; text2 = []; text3 = []; text4 = []; text5 = []; text6 = [];
+text0 = []; text1 = []; text2 = []; text3 = []; text4 = []; text5 = []; text6 = []; text7 = []
 
 i = 0; maxrule = 0;
 while i < len(grammar):
@@ -142,9 +142,11 @@ while i < len(grammar):
                         if not text6:
                            text6.append(", "); text6.append("T_ATTRIBUTE")
                            text6.append(", "); text6.append("T_" + grammar[ini].upper()); text6.append(" = ATTRIBUTE_MIN")
+                           text7.append(grammar[ini][4:].upper())
                         else:
                            if "T_"+grammar[ini].upper() not in text6:
                               text6.append(", "); text6.append("T_" + grammar[ini].upper())
+                              text7.append(grammar[ini][4:].upper())
                      else:
                         if not text5:
                            text5.append("T_" + grammar[ini].upper()); text5.append(" = TERMINAL_MIN")
@@ -174,9 +176,11 @@ while i < len(grammar):
                            if not text6:
                               text6.append(", "); text6.append("T_ATTRIBUTE"); text6.append(", ");
                               text6.append("T_" + grammar[j].upper()); text6.append(" = ATTRIBUTE_MIN");
+                              text7.append(grammar[j][4:].upper())
                            else:
                               if "T_"+grammar[j].upper() not in text6:
                                  text6.append(", "); text6.append("T_" + grammar[j].upper())
+                                 text7.append(grammar[j][4:].upper())
                         else:
                            if not text5:
                               text5.append("T_" + grammar[j].upper()); text5.append(" = TERMINAL_MIN")
@@ -205,6 +209,15 @@ text3 = ''.join(text3)
 text4 = ''.join(text4)
 text5 = ''.join(text5)
 text6 = ''.join(text6)
+
+text7 = map(int,text7)
+text7.sort()
+text7 = map(str,text7)
+text7 = [', T_ATTR' + s for s in text7]
+text7[0] = text7[0] + ' = ATTRIBUTE_MIN'
+text7 = [', T_ATTRIBUTE'] + text7
+text7 = ''.join(text7)
+
 
 f = open(os.path.join(args.output_dir, "grammar"), 'w')
 f.write("#define MAX_QUANT_SIMBOLOS_POR_REGRA " + str(maxrule) + "\n\nstruct t_rule { unsigned quantity; Symbol symbols[MAX_QUANT_SIMBOLOS_POR_REGRA]; };\n\n" + text0 + text1 + text2 + text3)
@@ -264,7 +277,8 @@ symbol_tail = r"""} Symbol;
 #endif"""
 
 f = open(os.path.join(args.output_dir, "symbol"), 'w')
-f.write(symbol_head + text4 + text5 + text6 + symbol_tail)
+f.write(symbol_head + text4 + text5 + text7 + symbol_tail)
+#f.write(symbol_head + text4 + text5 + text6 + symbol_tail)
 f.close()
 
 try:
