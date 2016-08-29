@@ -112,6 +112,279 @@ case T_8:
 case T_9:
    fprintf( out, "9 " );
    break;
+case T_10:
+   fprintf( out, "10 " );
+   break;
+case T_11:
+   fprintf( out, "11 " );
+   break;
+case T_12:
+   fprintf( out, "12 " );
+   break;
+case T_13:
+   fprintf( out, "13 " );
+   break;
+case T_14:
+   fprintf( out, "14 " );
+   break;
+case T_15:
+   fprintf( out, "15 " );
+   break;
+case T_16:
+   fprintf( out, "16 " );
+   break;
+case T_17:
+   fprintf( out, "17 " );
+   break;
+case T_18:
+   fprintf( out, "18 " );
+   break;
+case T_19:
+   fprintf( out, "19 " );
+   break;
+case T_20:
+   fprintf( out, "20 " );
+   break;
+case T_21:
+   fprintf( out, "21 " );
+   break;
+case T_22:
+   fprintf( out, "22 " );
+   break;
+case T_23:
+   fprintf( out, "23 " );
+   break;
+case T_24:
+   fprintf( out, "24 " );
+   break;
+case T_25:
+   fprintf( out, "25 " );
+   break;
+case T_26:
+   fprintf( out, "26 " );
+   break;
+case T_27:
+   fprintf( out, "27 " );
+   break;
+case T_28:
+   fprintf( out, "28 " );
+   break;
+case T_29:
+   fprintf( out, "29 " );
+   break;
+case T_30:
+   fprintf( out, "30 " );
+   break;
+case T_31:
+   fprintf( out, "31 " );
+   break;
+case T_32:
+   fprintf( out, "32 " );
+   break;
+case T_33:
+   fprintf( out, "33 " );
+   break;
+case T_34:
+   fprintf( out, "34 " );
+   break;
+case T_35:
+   fprintf( out, "35 " );
+   break;
+case T_36:
+   fprintf( out, "36 " );
+   break;
+case T_37:
+   fprintf( out, "37 " );
+   break;
+case T_38:
+   fprintf( out, "38 " );
+   break;
+case T_39:
+   fprintf( out, "39 " );
+   break;
+case T_40:
+   fprintf( out, "40 " );
+   break;
+case T_41:
+   fprintf( out, "41 " );
+   break;
+case T_42:
+   fprintf( out, "42 " );
+   break;
+case T_43:
+   fprintf( out, "43 " );
+   break;
+case T_44:
+   fprintf( out, "44 " );
+   break;
+case T_45:
+   fprintf( out, "45 " );
+   break;
+case T_46:
+   fprintf( out, "46 " );
+   break;
+case T_47:
+   fprintf( out, "47 " );
+   break;
+case T_48:
+   fprintf( out, "48 " );
+   break;
+case T_49:
+   fprintf( out, "49 " );
+   break;
+case T_50:
+   fprintf( out, "50 " );
+   break;
+case T_51:
+   fprintf( out, "51 " );
+   break;
+case T_52:
+   fprintf( out, "52 " );
+   break;
+case T_53:
+   fprintf( out, "53 " );
+   break;
+case T_54:
+   fprintf( out, "54 " );
+   break;
+case T_55:
+   fprintf( out, "55 " );
+   break;
+case T_56:
+   fprintf( out, "56 " );
+   break;
+case T_57:
+   fprintf( out, "57 " );
+   break;
+case T_58:
+   fprintf( out, "58 " );
+   break;
+case T_59:
+   fprintf( out, "59 " );
+   break;
+case T_60:
+   fprintf( out, "60 " );
+   break;
+case T_61:
+   fprintf( out, "61 " );
+   break;
+case T_62:
+   fprintf( out, "62 " );
+   break;
+case T_63:
+   fprintf( out, "63 " );
+   break;
+case T_64:
+   fprintf( out, "64 " );
+   break;
+case T_65:
+   fprintf( out, "65 " );
+   break;
+case T_66:
+   fprintf( out, "66 " );
+   break;
+case T_67:
+   fprintf( out, "67 " );
+   break;
+case T_68:
+   fprintf( out, "68 " );
+   break;
+case T_69:
+   fprintf( out, "69 " );
+   break;
+case T_70:
+   fprintf( out, "70 " );
+   break;
+case T_71:
+   fprintf( out, "71 " );
+   break;
+case T_72:
+   fprintf( out, "72 " );
+   break;
+case T_73:
+   fprintf( out, "73 " );
+   break;
+case T_74:
+   fprintf( out, "74 " );
+   break;
+case T_75:
+   fprintf( out, "75 " );
+   break;
+case T_76:
+   fprintf( out, "76 " );
+   break;
+case T_77:
+   fprintf( out, "77 " );
+   break;
+case T_78:
+   fprintf( out, "78 " );
+   break;
+case T_79:
+   fprintf( out, "79 " );
+   break;
+case T_80:
+   fprintf( out, "80 " );
+   break;
+case T_81:
+   fprintf( out, "81 " );
+   break;
+case T_82:
+   fprintf( out, "82 " );
+   break;
+case T_83:
+   fprintf( out, "83 " );
+   break;
+case T_84:
+   fprintf( out, "84 " );
+   break;
+case T_85:
+   fprintf( out, "85 " );
+   break;
+case T_86:
+   fprintf( out, "86 " );
+   break;
+case T_87:
+   fprintf( out, "87 " );
+   break;
+case T_88:
+   fprintf( out, "88 " );
+   break;
+case T_89:
+   fprintf( out, "89 " );
+   break;
+case T_90:
+   fprintf( out, "90 " );
+   break;
+case T_91:
+   fprintf( out, "91 " );
+   break;
+case T_92:
+   fprintf( out, "92 " );
+   break;
+case T_93:
+   fprintf( out, "93 " );
+   break;
+case T_94:
+   fprintf( out, "94 " );
+   break;
+case T_95:
+   fprintf( out, "95 " );
+   break;
+case T_96:
+   fprintf( out, "96 " );
+   break;
+case T_97:
+   fprintf( out, "97 " );
+   break;
+case T_98:
+   fprintf( out, "98 " );
+   break;
+case T_99:
+   fprintf( out, "99 " );
+   break;
+case T_100:
+   fprintf( out, "100 " );
+   break;
 case T_N1:
    fprintf( out, "-1 " );
    break;
@@ -138,6 +411,279 @@ case T_N8:
    break;
 case T_N9:
    fprintf( out, "-9 " );
+   break;
+case T_N10:
+   fprintf( out, "-10 " );
+   break;
+case T_N11:
+   fprintf( out, "-11 " );
+   break;
+case T_N12:
+   fprintf( out, "-12 " );
+   break;
+case T_N13:
+   fprintf( out, "-13 " );
+   break;
+case T_N14:
+   fprintf( out, "-14 " );
+   break;
+case T_N15:
+   fprintf( out, "-15 " );
+   break;
+case T_N16:
+   fprintf( out, "-16 " );
+   break;
+case T_N17:
+   fprintf( out, "-17 " );
+   break;
+case T_N18:
+   fprintf( out, "-18 " );
+   break;
+case T_N19:
+   fprintf( out, "-19 " );
+   break;
+case T_N20:
+   fprintf( out, "-20 " );
+   break;
+case T_N21:
+   fprintf( out, "-21 " );
+   break;
+case T_N22:
+   fprintf( out, "-22 " );
+   break;
+case T_N23:
+   fprintf( out, "-23 " );
+   break;
+case T_N24:
+   fprintf( out, "-24 " );
+   break;
+case T_N25:
+   fprintf( out, "-25 " );
+   break;
+case T_N26:
+   fprintf( out, "-26 " );
+   break;
+case T_N27:
+   fprintf( out, "-27 " );
+   break;
+case T_N28:
+   fprintf( out, "-28 " );
+   break;
+case T_N29:
+   fprintf( out, "-29 " );
+   break;
+case T_N30:
+   fprintf( out, "-30 " );
+   break;
+case T_N31:
+   fprintf( out, "-31 " );
+   break;
+case T_N32:
+   fprintf( out, "-32 " );
+   break;
+case T_N33:
+   fprintf( out, "-33 " );
+   break;
+case T_N34:
+   fprintf( out, "-34 " );
+   break;
+case T_N35:
+   fprintf( out, "-35 " );
+   break;
+case T_N36:
+   fprintf( out, "-36 " );
+   break;
+case T_N37:
+   fprintf( out, "-37 " );
+   break;
+case T_N38:
+   fprintf( out, "-38 " );
+   break;
+case T_N39:
+   fprintf( out, "-39 " );
+   break;
+case T_N40:
+   fprintf( out, "-40 " );
+   break;
+case T_N41:
+   fprintf( out, "-41 " );
+   break;
+case T_N42:
+   fprintf( out, "-42 " );
+   break;
+case T_N43:
+   fprintf( out, "-43 " );
+   break;
+case T_N44:
+   fprintf( out, "-44 " );
+   break;
+case T_N45:
+   fprintf( out, "-45 " );
+   break;
+case T_N46:
+   fprintf( out, "-46 " );
+   break;
+case T_N47:
+   fprintf( out, "-47 " );
+   break;
+case T_N48:
+   fprintf( out, "-48 " );
+   break;
+case T_N49:
+   fprintf( out, "-49 " );
+   break;
+case T_N50:
+   fprintf( out, "-50 " );
+   break;
+case T_N51:
+   fprintf( out, "-51 " );
+   break;
+case T_N52:
+   fprintf( out, "-52 " );
+   break;
+case T_N53:
+   fprintf( out, "-53 " );
+   break;
+case T_N54:
+   fprintf( out, "-54 " );
+   break;
+case T_N55:
+   fprintf( out, "-55 " );
+   break;
+case T_N56:
+   fprintf( out, "-56 " );
+   break;
+case T_N57:
+   fprintf( out, "-57 " );
+   break;
+case T_N58:
+   fprintf( out, "-58 " );
+   break;
+case T_N59:
+   fprintf( out, "-59 " );
+   break;
+case T_N60:
+   fprintf( out, "-60 " );
+   break;
+case T_N61:
+   fprintf( out, "-61 " );
+   break;
+case T_N62:
+   fprintf( out, "-62 " );
+   break;
+case T_N63:
+   fprintf( out, "-63 " );
+   break;
+case T_N64:
+   fprintf( out, "-64 " );
+   break;
+case T_N65:
+   fprintf( out, "-65 " );
+   break;
+case T_N66:
+   fprintf( out, "-66 " );
+   break;
+case T_N67:
+   fprintf( out, "-67 " );
+   break;
+case T_N68:
+   fprintf( out, "-68 " );
+   break;
+case T_N69:
+   fprintf( out, "-69 " );
+   break;
+case T_N70:
+   fprintf( out, "-70 " );
+   break;
+case T_N71:
+   fprintf( out, "-71 " );
+   break;
+case T_N72:
+   fprintf( out, "-72 " );
+   break;
+case T_N73:
+   fprintf( out, "-73 " );
+   break;
+case T_N74:
+   fprintf( out, "-74 " );
+   break;
+case T_N75:
+   fprintf( out, "-75 " );
+   break;
+case T_N76:
+   fprintf( out, "-76 " );
+   break;
+case T_N77:
+   fprintf( out, "-77 " );
+   break;
+case T_N78:
+   fprintf( out, "-78 " );
+   break;
+case T_N79:
+   fprintf( out, "-79 " );
+   break;
+case T_N80:
+   fprintf( out, "-80 " );
+   break;
+case T_N81:
+   fprintf( out, "-81 " );
+   break;
+case T_N82:
+   fprintf( out, "-82 " );
+   break;
+case T_N83:
+   fprintf( out, "-83 " );
+   break;
+case T_N84:
+   fprintf( out, "-84 " );
+   break;
+case T_N85:
+   fprintf( out, "-85 " );
+   break;
+case T_N86:
+   fprintf( out, "-86 " );
+   break;
+case T_N87:
+   fprintf( out, "-87 " );
+   break;
+case T_N88:
+   fprintf( out, "-88 " );
+   break;
+case T_N89:
+   fprintf( out, "-89 " );
+   break;
+case T_N90:
+   fprintf( out, "-90 " );
+   break;
+case T_N91:
+   fprintf( out, "-91 " );
+   break;
+case T_N92:
+   fprintf( out, "-92 " );
+   break;
+case T_N93:
+   fprintf( out, "-93 " );
+   break;
+case T_N94:
+   fprintf( out, "-94 " );
+   break;
+case T_N95:
+   fprintf( out, "-95 " );
+   break;
+case T_N96:
+   fprintf( out, "-96 " );
+   break;
+case T_N97:
+   fprintf( out, "-97 " );
+   break;
+case T_N98:
+   fprintf( out, "-98 " );
+   break;
+case T_N99:
+   fprintf( out, "-99 " );
+   break;
+case T_N100:
+   fprintf( out, "-100 " );
    break;
 case T_CEIL:
    fprintf(out, "CEIL ");
