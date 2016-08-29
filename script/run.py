@@ -82,9 +82,9 @@ P = {}
 P['ps']  = 2**random.randint(9,16)
 P['st']  = args.stagnation_tolerance/P['ps'] # Transform population-based into individual-based (this is fairer when using different population sizes
 P['cp']  = random.uniform(0.5,1.0)
-P['mr']  = random.uniform(0,0.1)
-P['ts']  = random.randint(2,30)
-P['nb']  = random.randint(200,4000)
+P['mr']  = random.uniform(0.002,0.05)
+P['ts']  = random.randint(2,35)
+P['nb']  = random.randint(100,3000)
 P['is']  = random.randint(1,1)
 P['iat'] = random.uniform(0.0,0.8)
 ##############################
