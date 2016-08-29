@@ -104,7 +104,7 @@ will periodically (each 10s) send a random genome from the pareto.front file ("H
 
 ## Running Prediction (example) ##
 
-The prediction mode outputs a prediction for each instance of the dataset (`-d`) with respect to the solution given by its phenotype (`-sol`). It can process the instances sequentially; e.g.:
+The prediction mode outputs a prediction for each instance of the dataset (`-d`) with respect to the solution given by its phenotype (`-sol`). This mode does not assume that the dataset has the dependent variable (observation). It can process the instances sequentially; e.g.:
 
 ~~~~~~~~
    ./main -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062' -pred
@@ -123,3 +123,5 @@ In this mode, only the MAE is output. Similarly, it can run sequentially or in p
 ~~~~~~~~
    ./main -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062'
 ~~~~~~~~
+
+Since it computes the error, the dependent variable (observation) is required as the last field of the dataset.
