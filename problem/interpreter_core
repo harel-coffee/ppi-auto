@@ -248,6 +248,280 @@ case T_8:
 case T_9:
    stack[++stack_top] = 9.0f;
    break;
+
+case T_10:
+   stack[++stack_top] = 10.0f;
+   break;
+case T_11:
+   stack[++stack_top] = 11.0f;
+   break;
+case T_12:
+   stack[++stack_top] = 12.0f;
+   break;
+case T_13:
+   stack[++stack_top] = 13.0f;
+   break;
+case T_14:
+   stack[++stack_top] = 14.0f;
+   break;
+case T_15:
+   stack[++stack_top] = 15.0f;
+   break;
+case T_16:
+   stack[++stack_top] = 16.0f;
+   break;
+case T_17:
+   stack[++stack_top] = 17.0f;
+   break;
+case T_18:
+   stack[++stack_top] = 18.0f;
+   break;
+case T_19:
+   stack[++stack_top] = 19.0f;
+   break;
+case T_20:
+   stack[++stack_top] = 20.0f;
+   break;
+case T_21:
+   stack[++stack_top] = 21.0f;
+   break;
+case T_22:
+   stack[++stack_top] = 22.0f;
+   break;
+case T_23:
+   stack[++stack_top] = 23.0f;
+   break;
+case T_24:
+   stack[++stack_top] = 24.0f;
+   break;
+case T_25:
+   stack[++stack_top] = 25.0f;
+   break;
+case T_26:
+   stack[++stack_top] = 26.0f;
+   break;
+case T_27:
+   stack[++stack_top] = 27.0f;
+   break;
+case T_28:
+   stack[++stack_top] = 28.0f;
+   break;
+case T_29:
+   stack[++stack_top] = 29.0f;
+   break;
+case T_30:
+   stack[++stack_top] = 30.0f;
+   break;
+case T_31:
+   stack[++stack_top] = 31.0f;
+   break;
+case T_32:
+   stack[++stack_top] = 32.0f;
+   break;
+case T_33:
+   stack[++stack_top] = 33.0f;
+   break;
+case T_34:
+   stack[++stack_top] = 34.0f;
+   break;
+case T_35:
+   stack[++stack_top] = 35.0f;
+   break;
+case T_36:
+   stack[++stack_top] = 36.0f;
+   break;
+case T_37:
+   stack[++stack_top] = 37.0f;
+   break;
+case T_38:
+   stack[++stack_top] = 38.0f;
+   break;
+case T_39:
+   stack[++stack_top] = 39.0f;
+   break;
+case T_40:
+   stack[++stack_top] = 40.0f;
+   break;
+case T_41:
+   stack[++stack_top] = 41.0f;
+   break;
+case T_42:
+   stack[++stack_top] = 42.0f;
+   break;
+case T_43:
+   stack[++stack_top] = 43.0f;
+   break;
+case T_44:
+   stack[++stack_top] = 44.0f;
+   break;
+case T_45:
+   stack[++stack_top] = 45.0f;
+   break;
+case T_46:
+   stack[++stack_top] = 46.0f;
+   break;
+case T_47:
+   stack[++stack_top] = 47.0f;
+   break;
+case T_48:
+   stack[++stack_top] = 48.0f;
+   break;
+case T_49:
+   stack[++stack_top] = 49.0f;
+   break;
+case T_50:
+   stack[++stack_top] = 50.0f;
+   break;
+case T_51:
+   stack[++stack_top] = 51.0f;
+   break;
+case T_52:
+   stack[++stack_top] = 52.0f;
+   break;
+case T_53:
+   stack[++stack_top] = 53.0f;
+   break;
+case T_54:
+   stack[++stack_top] = 54.0f;
+   break;
+case T_55:
+   stack[++stack_top] = 55.0f;
+   break;
+case T_56:
+   stack[++stack_top] = 56.0f;
+   break;
+case T_57:
+   stack[++stack_top] = 57.0f;
+   break;
+case T_58:
+   stack[++stack_top] = 58.0f;
+   break;
+case T_59:
+   stack[++stack_top] = 59.0f;
+   break;
+case T_60:
+   stack[++stack_top] = 60.0f;
+   break;
+case T_61:
+   stack[++stack_top] = 61.0f;
+   break;
+case T_62:
+   stack[++stack_top] = 62.0f;
+   break;
+case T_63:
+   stack[++stack_top] = 63.0f;
+   break;
+case T_64:
+   stack[++stack_top] = 64.0f;
+   break;
+case T_65:
+   stack[++stack_top] = 65.0f;
+   break;
+case T_66:
+   stack[++stack_top] = 66.0f;
+   break;
+case T_67:
+   stack[++stack_top] = 67.0f;
+   break;
+case T_68:
+   stack[++stack_top] = 68.0f;
+   break;
+case T_69:
+   stack[++stack_top] = 69.0f;
+   break;
+case T_70:
+   stack[++stack_top] = 70.0f;
+   break;
+case T_71:
+   stack[++stack_top] = 71.0f;
+   break;
+case T_72:
+   stack[++stack_top] = 72.0f;
+   break;
+case T_73:
+   stack[++stack_top] = 73.0f;
+   break;
+case T_74:
+   stack[++stack_top] = 74.0f;
+   break;
+case T_75:
+   stack[++stack_top] = 75.0f;
+   break;
+case T_76:
+   stack[++stack_top] = 76.0f;
+   break;
+case T_77:
+   stack[++stack_top] = 77.0f;
+   break;
+case T_78:
+   stack[++stack_top] = 78.0f;
+   break;
+case T_79:
+   stack[++stack_top] = 79.0f;
+   break;
+case T_80:
+   stack[++stack_top] = 80.0f;
+   break;
+case T_81:
+   stack[++stack_top] = 81.0f;
+   break;
+case T_82:
+   stack[++stack_top] = 82.0f;
+   break;
+case T_83:
+   stack[++stack_top] = 83.0f;
+   break;
+case T_84:
+   stack[++stack_top] = 84.0f;
+   break;
+case T_85:
+   stack[++stack_top] = 85.0f;
+   break;
+case T_86:
+   stack[++stack_top] = 86.0f;
+   break;
+case T_87:
+   stack[++stack_top] = 87.0f;
+   break;
+case T_88:
+   stack[++stack_top] = 88.0f;
+   break;
+case T_89:
+   stack[++stack_top] = 89.0f;
+   break;
+case T_90:
+   stack[++stack_top] = 90.0f;
+   break;
+case T_91:
+   stack[++stack_top] = 91.0f;
+   break;
+case T_92:
+   stack[++stack_top] = 92.0f;
+   break;
+case T_93:
+   stack[++stack_top] = 93.0f;
+   break;
+case T_94:
+   stack[++stack_top] = 94.0f;
+   break;
+case T_95:
+   stack[++stack_top] = 95.0f;
+   break;
+case T_96:
+   stack[++stack_top] = 96.0f;
+   break;
+case T_97:
+   stack[++stack_top] = 97.0f;
+   break;
+case T_98:
+   stack[++stack_top] = 98.0f;
+   break;
+case T_99:
+   stack[++stack_top] = 99.0f;
+   break;
+case T_100:
+   stack[++stack_top] = 100.0f;
+   break;
 case T_N1:
    stack[++stack_top] = -1.0f;
    break;
@@ -274,4 +548,277 @@ case T_N8:
    break;
 case T_N9:
    stack[++stack_top] = -9.0f;
+   break;
+case T_N10:
+   stack[++stack_top] = -10.0f;
+   break;
+case T_N11:
+   stack[++stack_top] = -11.0f;
+   break;
+case T_N12:
+   stack[++stack_top] = -12.0f;
+   break;
+case T_N13:
+   stack[++stack_top] = -13.0f;
+   break;
+case T_N14:
+   stack[++stack_top] = -14.0f;
+   break;
+case T_N15:
+   stack[++stack_top] = -15.0f;
+   break;
+case T_N16:
+   stack[++stack_top] = -16.0f;
+   break;
+case T_N17:
+   stack[++stack_top] = -17.0f;
+   break;
+case T_N18:
+   stack[++stack_top] = -18.0f;
+   break;
+case T_N19:
+   stack[++stack_top] = -19.0f;
+   break;
+case T_N20:
+   stack[++stack_top] = -20.0f;
+   break;
+case T_N21:
+   stack[++stack_top] = -21.0f;
+   break;
+case T_N22:
+   stack[++stack_top] = -22.0f;
+   break;
+case T_N23:
+   stack[++stack_top] = -23.0f;
+   break;
+case T_N24:
+   stack[++stack_top] = -24.0f;
+   break;
+case T_N25:
+   stack[++stack_top] = -25.0f;
+   break;
+case T_N26:
+   stack[++stack_top] = -26.0f;
+   break;
+case T_N27:
+   stack[++stack_top] = -27.0f;
+   break;
+case T_N28:
+   stack[++stack_top] = -28.0f;
+   break;
+case T_N29:
+   stack[++stack_top] = -29.0f;
+   break;
+case T_N30:
+   stack[++stack_top] = -30.0f;
+   break;
+case T_N31:
+   stack[++stack_top] = -31.0f;
+   break;
+case T_N32:
+   stack[++stack_top] = -32.0f;
+   break;
+case T_N33:
+   stack[++stack_top] = -33.0f;
+   break;
+case T_N34:
+   stack[++stack_top] = -34.0f;
+   break;
+case T_N35:
+   stack[++stack_top] = -35.0f;
+   break;
+case T_N36:
+   stack[++stack_top] = -36.0f;
+   break;
+case T_N37:
+   stack[++stack_top] = -37.0f;
+   break;
+case T_N38:
+   stack[++stack_top] = -38.0f;
+   break;
+case T_N39:
+   stack[++stack_top] = -39.0f;
+   break;
+case T_N40:
+   stack[++stack_top] = -40.0f;
+   break;
+case T_N41:
+   stack[++stack_top] = -41.0f;
+   break;
+case T_N42:
+   stack[++stack_top] = -42.0f;
+   break;
+case T_N43:
+   stack[++stack_top] = -43.0f;
+   break;
+case T_N44:
+   stack[++stack_top] = -44.0f;
+   break;
+case T_N45:
+   stack[++stack_top] = -45.0f;
+   break;
+case T_N46:
+   stack[++stack_top] = -46.0f;
+   break;
+case T_N47:
+   stack[++stack_top] = -47.0f;
+   break;
+case T_N48:
+   stack[++stack_top] = -48.0f;
+   break;
+case T_N49:
+   stack[++stack_top] = -49.0f;
+   break;
+case T_N50:
+   stack[++stack_top] = -50.0f;
+   break;
+case T_N51:
+   stack[++stack_top] = -51.0f;
+   break;
+case T_N52:
+   stack[++stack_top] = -52.0f;
+   break;
+case T_N53:
+   stack[++stack_top] = -53.0f;
+   break;
+case T_N54:
+   stack[++stack_top] = -54.0f;
+   break;
+case T_N55:
+   stack[++stack_top] = -55.0f;
+   break;
+case T_N56:
+   stack[++stack_top] = -56.0f;
+   break;
+case T_N57:
+   stack[++stack_top] = -57.0f;
+   break;
+case T_N58:
+   stack[++stack_top] = -58.0f;
+   break;
+case T_N59:
+   stack[++stack_top] = -59.0f;
+   break;
+case T_N60:
+   stack[++stack_top] = -60.0f;
+   break;
+case T_N61:
+   stack[++stack_top] = -61.0f;
+   break;
+case T_N62:
+   stack[++stack_top] = -62.0f;
+   break;
+case T_N63:
+   stack[++stack_top] = -63.0f;
+   break;
+case T_N64:
+   stack[++stack_top] = -64.0f;
+   break;
+case T_N65:
+   stack[++stack_top] = -65.0f;
+   break;
+case T_N66:
+   stack[++stack_top] = -66.0f;
+   break;
+case T_N67:
+   stack[++stack_top] = -67.0f;
+   break;
+case T_N68:
+   stack[++stack_top] = -68.0f;
+   break;
+case T_N69:
+   stack[++stack_top] = -69.0f;
+   break;
+case T_N70:
+   stack[++stack_top] = -70.0f;
+   break;
+case T_N71:
+   stack[++stack_top] = -71.0f;
+   break;
+case T_N72:
+   stack[++stack_top] = -72.0f;
+   break;
+case T_N73:
+   stack[++stack_top] = -73.0f;
+   break;
+case T_N74:
+   stack[++stack_top] = -74.0f;
+   break;
+case T_N75:
+   stack[++stack_top] = -75.0f;
+   break;
+case T_N76:
+   stack[++stack_top] = -76.0f;
+   break;
+case T_N77:
+   stack[++stack_top] = -77.0f;
+   break;
+case T_N78:
+   stack[++stack_top] = -78.0f;
+   break;
+case T_N79:
+   stack[++stack_top] = -79.0f;
+   break;
+case T_N80:
+   stack[++stack_top] = -80.0f;
+   break;
+case T_N81:
+   stack[++stack_top] = -81.0f;
+   break;
+case T_N82:
+   stack[++stack_top] = -82.0f;
+   break;
+case T_N83:
+   stack[++stack_top] = -83.0f;
+   break;
+case T_N84:
+   stack[++stack_top] = -84.0f;
+   break;
+case T_N85:
+   stack[++stack_top] = -85.0f;
+   break;
+case T_N86:
+   stack[++stack_top] = -86.0f;
+   break;
+case T_N87:
+   stack[++stack_top] = -87.0f;
+   break;
+case T_N88:
+   stack[++stack_top] = -88.0f;
+   break;
+case T_N89:
+   stack[++stack_top] = -89.0f;
+   break;
+case T_N90:
+   stack[++stack_top] = -90.0f;
+   break;
+case T_N91:
+   stack[++stack_top] = -91.0f;
+   break;
+case T_N92:
+   stack[++stack_top] = -92.0f;
+   break;
+case T_N93:
+   stack[++stack_top] = -93.0f;
+   break;
+case T_N94:
+   stack[++stack_top] = -94.0f;
+   break;
+case T_N95:
+   stack[++stack_top] = -95.0f;
+   break;
+case T_N96:
+   stack[++stack_top] = -96.0f;
+   break;
+case T_N97:
+   stack[++stack_top] = -97.0f;
+   break;
+case T_N98:
+   stack[++stack_top] = -98.0f;
+   break;
+case T_N99:
+   stack[++stack_top] = -99.0f;
+   break;
+case T_N100:
+   stack[++stack_top] = -100.0f;
    break;
