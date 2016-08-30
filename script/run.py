@@ -12,42 +12,75 @@ import subprocess
 # From the build directory (this is required due to the OpenCL kernels which
 # are compiled at runtime):
 #
-#     ./run.py [-h] [-e EXE] -d DATASET -i ISLANDS_FILE -p PORT -n
-#               NUMBER_TARGET_ISLANDS -st STAGNATION_TOLERANCE
-#               [-cl-p CL_PLATFORM] [-cl-d CL_DEVICE]
+# usage: run.py [-h] [-e EXE] -d DATASET [-i ISLANDS_FILE] -p PORT
+#               [-n NUMBER_TARGET_ISLANDS] [-st STAGNATION_TOLERANCE]
+#               [-cl-p CL_PLATFORM_ID] [-cl-d CL_DEVICE_ID]
 #               [-s {PPCU,ppcu,PP,pp,FP,fp}]
+#               ...
+#
+# positional arguments:
+#   args                  Extra arguments to be passed to the executable; use
+#                         after -- (ex: ... -- -error '((X)!=(Y))')
+#
+# optional arguments:
+#   -h, --help            show this help message and exit
+#   -e EXE, --exe EXE     Executable filename [default=./main]
+#   -d DATASET, --dataset DATASET
+#                         Training dataset
+#   -i ISLANDS_FILE, --islands-file ISLANDS_FILE
+#                         Island file
+#   -p PORT, --port PORT  Port number
+#   -n NUMBER_TARGET_ISLANDS, --number-target-islands NUMBER_TARGET_ISLANDS
+#                         Number of islands to send individuals [default=0]
+#   -st STAGNATION_TOLERANCE, --stagnation-tolerance STAGNATION_TOLERANCE
+#                         How many new individuals without improvement until the
+#                         algorithm terminates [default=1000000]
+#   -cl-p CL_PLATFORM_ID, --cl-platform-id CL_PLATFORM_ID
+#                         OpenCL platform id [default=0]
+#   -cl-d CL_DEVICE_ID, --cl-device-id CL_DEVICE_ID
+#                         OpenCL device id [default=0]
+#   -s {PPCU,ppcu,PP,pp,FP,fp}, --strategy {PPCU,ppcu,PP,pp,FP,fp}
+#                         Parallelization strategy [default=PPCU]
 #
 # Example (don't forget to change the port number for each instance):
 #
 #    cd build
-#    ../script/run.py -d ../problem/random/data.csv -i islands.txt -p 9080 -n 3 -st 1000
+#    ../script/run.py -d ../problem/random/data.csv -i islands.txt -p 9080 -n 3 -st 5000000
 ################################################################################
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-e", "--exe", required=False, default="./main", help="Executable filename [default=./main]")
 parser.add_argument("-d", "--dataset", required=True, help="Training dataset")
-parser.add_argument("-i", "--islands-file", required=True, help="Island file")
+parser.add_argument("-i", "--islands-file", required=False, help="Island file")
 parser.add_argument("-p", "--port", required=True, help="Port number")
-parser.add_argument("-n", "--number-target-islands", type=int, default=0, help="Number of islands to send individuals")
-parser.add_argument("-st", "--stagnation-tolerance", type=int, default=1000000, help="How many new individuals without improvement until the algorithm terminates")
+parser.add_argument("-n", "--number-target-islands", type=int, default=0, help="Number of islands to send individuals [default=0]")
+parser.add_argument("-st", "--stagnation-tolerance", type=int, default=1000000, help="How many new individuals without improvement until the algorithm terminates [default=1000000]")
 parser.add_argument("-cl-p", "--cl-platform-id", required=False, default=0, help="OpenCL platform id [default=0]")
 parser.add_argument("-cl-d", "--cl-device-id", required=False, default=0, help="OpenCL device id [default=0]")
-parser.add_argument("-s", "--strategy", required=False, default="PPCU", choices=['PPCU', 'ppcu', 'PP', 'pp', 'FP', 'fp'], help="Parallelization strategy")
+parser.add_argument("-s", "--strategy", required=False, default="PPCU", choices=['PPCU', 'ppcu', 'PP', 'pp', 'FP', 'fp'], help="Parallelization strategy [default=PPCU]")
 parser.add_argument("args", nargs=argparse.REMAINDER, help="Extra arguments to be passed to the executable; use after -- (ex: ... -- -error '((X)!=(Y))')")
 
 args = parser.parse_args()
 
-if args.stagnation_tolerance and args.stagnation_tolerance < 1000000:
-   parser.error("Minimum stagnation tolerance (-st) is 1000000")
+if args.stagnation_tolerance and args.stagnation_tolerance < 500000:
+   parser.error("Minimum stagnation tolerance (-st) is 500000")
 
-try:
-   f = open(args.islands_file,"r")
-except IOError:
-   print "Could not open file '" + args.islands_file + "'"
-lines = f.readlines()
-f.close()
-lines = [s.replace('\n', '') for s in lines]
+lines = []
+if args.number_target_islands > 0:
+   if args.islands_file is None:
+      parser.error("-n is not zero (-n %d) but no islands file (-i) was given" % (args.number_target_islands))
+   try:
+      f = open(args.islands_file,"r")
+   except IOError:
+      print "Could not open file '" + args.islands_file + "'"
+      sys.exit(1)
+   lines = f.readlines()
+   f.close()
+   lines = [s.replace('\n', '') for s in lines]
+#else:
+#   if not args.islands_file is None:
+#      parser.error("Given islands file (-i %s) but the number of target islands (-n) is zero" % (args.islands_file))
 
 i = 0; peers = [];
 while i < args.number_target_islands and len(lines) > 0:
