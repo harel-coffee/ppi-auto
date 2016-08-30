@@ -54,7 +54,8 @@ f.close()
 
 grammar = []
 for i in range(0,len(lines)):
-   grammar += list(lines[i].split())
+   if not lines[i].lstrip().startswith(('#')): # Skip comment lines (they start with '#')
+      grammar += list(lines[i].split())
 
 text0 = []; text1 = []; text2 = []; text3 = []; text4 = []; text5 = []; text6 = []; #text7 = []
 
