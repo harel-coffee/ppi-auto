@@ -459,7 +459,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    Opts.Int.Add( "-cl-d", "--cl-device-id", -1, 0 );
    Opts.Int.Add( "-cl-mls", "--cl-max-local-size", -1 );
    Opts.String.Add( "-type" );
-   Opts.String.Add( "-strategy" );
+   Opts.String.Add( "-strategy", "", "PPCU", "FP", "PP", "PPCU", NULL );
    Opts.Process();
    data.strategy = Opts.String.Get("-strategy");
    data.max_size = size;
