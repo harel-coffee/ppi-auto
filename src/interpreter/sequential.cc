@@ -75,10 +75,12 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
                   stack[++stack_top] = data.inputs[ponto][(int)ephemeral[ind * data.size + i]];
                   //if ( ponto == 1 ) {printf( "T_ATTRIBUTE: %d %f \n", stack_top, stack[stack_top]);}
                   break;
+#ifndef NOT_USING_T_CONST
                case T_CONST:
                   stack[++stack_top] = ephemeral[ind * data.size + i];
                   //if ( ponto == 1 ) {printf( "T_CONST: %d %f \n", stack_top, stack[stack_top]);}
                   break;
+#endif
                default:
                   break;
             }

@@ -125,6 +125,7 @@ int decode( const GENOME_TYPE* genome, int* const allele, Symbol* phenotype, flo
       {
          phenotype[pos] = r->symbols[i];
 
+#ifndef NOT_USING_T_CONST
          // Tratamento especial para constantes efêmeras
          if( r->symbols[i] == T_CONST )
          {
@@ -136,6 +137,7 @@ int decode( const GENOME_TYPE* genome, int* const allele, Symbol* phenotype, flo
             ephemeral[pos] = decode_real( genome, allele );
          }
          else
+#endif
          {
             if( r->symbols[i] >= ATTRIBUTE_MIN )
             {

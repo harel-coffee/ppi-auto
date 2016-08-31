@@ -64,7 +64,11 @@ void pep_init( float** input, int nlin, int argc, char** argv )
          break; // Stops if the actual number of Symbols is less than the informed
 
       data.phenotype[i] = (Symbol)tmp;
-      if( data.phenotype[i] == T_CONST || data.phenotype[i] == T_ATTRIBUTE )
+      if(
+#ifndef NOT_USING_T_CONST
+      data.phenotype[i] == T_CONST ||
+#endif
+      data.phenotype[i] == T_ATTRIBUTE )
       {
          iss >> data.ephemeral[i];
       }

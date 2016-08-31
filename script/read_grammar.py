@@ -374,7 +374,12 @@ icp_tail = r"""
    {
       fprintf(out, ";");
       for( int i = 0; i < size; ++i )
-         if( phenotype[i] == T_CONST || phenotype[i] == T_ATTRIBUTE )
+
+         if(
+#ifndef NOT_USING_T_CONST
+         phenotype[i] == T_CONST ||
+#endif
+         phenotype[i] == T_ATTRIBUTE )
             fprintf( out, "%d %.12f ", phenotype[i], ephemeral[i] );
          else
             fprintf( out, "%d ", phenotype[i] );
