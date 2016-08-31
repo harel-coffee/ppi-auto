@@ -172,8 +172,6 @@ void pee_init( float** input, int nlin, int argc, char** argv )
 
    Opts.Bool.Add( "-acc" );
 
-   Opts.String.Add( "-error", "--function-difference", "fabs((X)-(Y))" );
-
    Opts.Int.Add( "-ncol", "--number-of-columns" );
 
    Opts.Int.Add( "-g", "--generations", 1000, 1, std::numeric_limits<int>::max() );
@@ -301,7 +299,7 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    }
    else
    {
-      seq_interpret_init( Opts.String.Get("-error"), data.max_size_phenotype, input, nlin, Opts.Int.Get("-ncol") );
+      seq_interpret_init( data.max_size_phenotype, input, nlin, Opts.Int.Get("-ncol") );
    }
 
    data.stagnation_tolerance = Opts.Int.Get( "-st" );

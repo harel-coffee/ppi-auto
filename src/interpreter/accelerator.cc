@@ -28,7 +28,7 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string error; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_send; double time_receive; double time_kernel1; double time_kernel2; double time_kernels; double time_overhead; } data; };
+namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_send; double time_receive; double time_kernel1; double time_kernel2; double time_kernels; double time_overhead; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTION *********************** **/
@@ -203,8 +203,7 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
    string program_str = 
       "#define MAX_STACK_SIZE " + util::ToString( max_stack_size ) + "\n" +
       "#define MAX_PHENOTYPE_SIZE " + util::ToString( data.max_size ) + "\n" +
-      "#define ERROR(X,Y) " + util::ToString( data.error ) + "\n"
-      + kernel_str;
+      kernel_str;
    //cerr << program_str << endl;
 
    cl::Program::Sources source( 1, make_pair( program_str.c_str(), program_str.size() ) );
@@ -461,10 +460,8 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    Opts.Int.Add( "-cl-mls", "--cl-max-local-size", -1 );
    Opts.String.Add( "-type" );
    Opts.String.Add( "-strategy" );
-   Opts.String.Add( "-error", "--function-difference", "fabs((X)-(Y))" );
    Opts.Process();
    data.strategy = Opts.String.Get("-strategy");
-   data.error = Opts.String.Get("-error");
    data.max_size = size;
    data.max_arity = max_arity;
    data.nlin = nlin;

@@ -6,7 +6,7 @@
 
 ~~~~~~~~
    cd build/
-   cmake .. -DGRAMMAR=<path to the actual grammar> [-DLABEL=<label>] [-DPoco_DIR=<poco dir>] [-DCMAKE_BUILD_TYPE=<build type>]
+   cmake .. -DGRAMMAR=<path to the actual grammar> [-DLABEL=<label>] [-DPoco_DIR=<poco dir>] [-DCMAKE_BUILD_TYPE=<build type>] [-DEF=<error function>]
 ~~~~~~~~
 
 For instance:
@@ -16,6 +16,7 @@ For instance:
    cmake .. -DGRAMMAR=../problem/random/grammar.bnf -DLABEL=random -DPoco_DIR=/opt/poco -DCMAKE_BUILD_TYPE=RELEASE
 ~~~~~~~~
 
+The `EF` definition is the formula used to compute the "distance" of a predicted value (`X`) to the corresponding observed value (`Y`). By default it is set as `fabs((X)-(Y))`, that is, simply the absolute error. Other useful formulas are `-DEF='((X)!=(Y))'`, for classification problems, and `-DEF='(((X)-(Y))*((X)-(Y)))'`, for obtaining the squared error.
 
 ### Compilation ###
 
@@ -28,7 +29,7 @@ For instance:
 ### Manually (one instance) ###
 
 ~~~~~~~~
-   ./main  -v -e -acc -strategy PP -d ../problem/iris/data.csv -ncol 5 -port 9080 -cl-d 0 -cl-p 0 -ps 30000 -cp 0.6 -mr 0.01 -ts 5 -nb 2000  -error '((X)!=(Y))' -g 1000000 -cl-mls 16 -machine | grep -a '^> [0-9]' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p pareto.front -dup "$CANDIDATE"; done
+   ./main  -v -e -acc -strategy PP -d ../problem/iris/data.csv -ncol 5 -port 9080 -cl-d 0 -cl-p 0 -ps 30000 -cp 0.6 -mr 0.01 -ts 5 -nb 2000  -g 1000000 -cl-mls 16 -machine | grep -a '^> [0-9]' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p pareto.front -dup "$CANDIDATE"; done
 ~~~~~~~~
 
 The `-dup` option allows duplicate candidates (w.r.t. complexity and error) into the Pareto file, provided that they differ in terms of the symbolic solution (model). Since the actual models differ, strictly speaking one doesn't dominate the other, thus using `-dup` option doesn't violate the principle of non-dominance.
@@ -52,7 +53,7 @@ It is possible to pass parameters directly to the PEE's process; in order to do 
 For instance:
 
 ~~~~~~~~
-   ... ../script/run.py ... -- -error '((X)!=(Y))'
+   ... ../script/run.py ... -- -min -5.0 -max 5.0
 ~~~~~~~~
 
 ### Using the Pareto front as a repository ###
@@ -90,12 +91,12 @@ will periodically (each 10s) send a random genome from the pareto.front file ("H
    screen -S pee -X screen -t pareto
 
    # Run each island on a different window
-   screen -S pee -p island-9080 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9080 -n 1 -st 1000000 -cl-p 0 -cl-d 0 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-   screen -S pee -p island-9081 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9081 -n 1 -st 2000000 -cl-p 0 -cl-d 0 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-   screen -S pee -p island-9082 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9082 -n 1 -st 3000000 -cl-p 0 -cl-d 1 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-   screen -S pee -p island-9083 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9083 -n 1 -st 4000000 -cl-p 0 -cl-d 1 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-   screen -S pee -p island-9084 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9084 -n 1 -st 5000000 -cl-p 0 -cl-d 2 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-   screen -S pee -p island-9085 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9085 -n 1 -st 6000000 -cl-p 0 -cl-d 2 -- -error \'((X)!=(Y))\' | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S pee -p island-9080 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9080 -n 1 -st 1000000 -cl-p 0 -cl-d 0 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S pee -p island-9081 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9081 -n 1 -st 2000000 -cl-p 0 -cl-d 0 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S pee -p island-9082 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9082 -n 1 -st 3000000 -cl-p 0 -cl-d 1 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S pee -p island-9083 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9083 -n 1 -st 4000000 -cl-p 0 -cl-d 1 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S pee -p island-9084 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9084 -n 1 -st 5000000 -cl-p 0 -cl-d 2 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S pee -p island-9085 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9085 -n 1 -st 6000000 -cl-p 0 -cl-d 2 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
 
    # Runs the seeder (feedback) and visualize the Pareto front
    screen -S pee -p seeder -X stuff $'while true; do ../script/seeder.py -i iris-pareto.front -p 9080 -p 9081 -p 9082 -p 9083 -p 9084 -p 9085; sleep 5; done\n'

@@ -12,18 +12,14 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { std::string error; unsigned size; float** inputs; int nlin; int ncol; } data;
-
-//#define ERROR(X,Y) data.error
-//#define ERROR(X,Y) fabs((X)-(Y))
+static struct t_data { unsigned size; float** inputs; int nlin; int ncol; } data;
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
 
-void seq_interpret_init( std::string error, const unsigned size, float** input, int nlin, int ncol ) 
+void seq_interpret_init( const unsigned size, float** input, int nlin, int ncol ) 
 {
-   data.error = error;
    data.size = size;
    data.nlin = nlin;
    data.ncol = ncol;
@@ -54,8 +50,6 @@ void seq_interpret_init( std::string error, const unsigned size, float** input, 
 
 void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
 {
-   //std::cerr << data.error << " " << ERROR(10,5) << std::endl;
-
    float stack[data.size]; 
    float sum; 
    int stack_top;
@@ -90,8 +84,7 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
             }
          }
          if( pep_mode && prediction_mode ) {vector[ponto] = stack[stack_top];}
-         //else {sum += ERROR(stack[stack_top], data.inputs[ponto][data.ncol-1]);}
-         else {sum += fabs(stack[stack_top] - data.inputs[ponto][data.ncol-1]);}
+         else {sum += ERROR(stack[stack_top], data.inputs[ponto][data.ncol-1]);}
       }
       if( !prediction_mode )
       {

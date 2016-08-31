@@ -20,7 +20,7 @@ import subprocess
 #
 # positional arguments:
 #   args                  Extra arguments to be passed to the executable; use
-#                         after -- (ex: ... -- -error '((X)!=(Y))')
+#                         after -- (ex: ... -- -min -1.0 -max 1.0)
 #
 # optional arguments:
 #   -h, --help            show this help message and exit
@@ -59,7 +59,7 @@ parser.add_argument("-st", "--stagnation-tolerance", type=int, default=1000000, 
 parser.add_argument("-cl-p", "--cl-platform-id", required=False, default=0, help="OpenCL platform id [default=0]")
 parser.add_argument("-cl-d", "--cl-device-id", required=False, default=0, help="OpenCL device id [default=0]")
 parser.add_argument("-s", "--strategy", required=False, default="PPCU", choices=['PPCU', 'ppcu', 'PP', 'pp', 'FP', 'fp'], help="Parallelization strategy [default=PPCU]")
-parser.add_argument("args", nargs=argparse.REMAINDER, help="Extra arguments to be passed to the executable; use after -- (ex: ... -- -error '((X)!=(Y))')")
+parser.add_argument("args", nargs=argparse.REMAINDER, help="Extra arguments to be passed to the executable; use after -- (ex: ... -- -min -1.0 -max 1.0)")
 
 args = parser.parse_args()
 

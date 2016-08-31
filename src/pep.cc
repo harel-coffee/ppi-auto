@@ -37,7 +37,6 @@ void pep_init( float** input, int nlin, int argc, char** argv )
    Opts.String.Add( "-sol", "--solution" );
    Opts.Bool.Add( "-acc" );
    Opts.Bool.Add( "-pred", "--prediction" );
-   Opts.String.Add( "-error", "--function-difference", "fabs((X)-(Y))" );
    Opts.Int.Add( "-ncol", "--number_of_columns" );
    Opts.Process();
 
@@ -86,7 +85,7 @@ void pep_init( float** input, int nlin, int argc, char** argv )
    }
    else
    {
-      seq_interpret_init( Opts.String.Get("-error"), data.size[0], input, nlin, Opts.Int.Get("-ncol") );
+      seq_interpret_init( data.size[0], input, nlin, Opts.Int.Get("-ncol") );
    }
 }
 

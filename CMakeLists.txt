@@ -16,6 +16,11 @@ if (NOT LABEL)
    set(LABEL "main")
 endif ()
 
+if (NOT EF)
+   set(EF "fabs((X)-(Y))")
+endif ()
+message(STATUS "Using ERROR FUNCTION (EF) as: ${EF}")
+
 set (GRAMMAR_INTERPRETER_DIR "${CMAKE_BINARY_DIR}/${LABEL}-include")
 file (MAKE_DIRECTORY "${GRAMMAR_INTERPRETER_DIR}")
 #message("COMMAND python script/read_grammar.py -o ${CMAKE_BINARY_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/problem/interpreter_core -p ${CMAKE_SOURCE_DIR}/problem/pee_individual_print_function")
@@ -37,5 +42,8 @@ endif ()
 include_directories( "${GRAMMAR_INTERPRETER_DIR}" )
 add_definitions( -DGRAMMAR_INTERPRETER_INCLUDE_DIR=${GRAMMAR_INTERPRETER_DIR} )
 add_definitions( -DLABEL=${LABEL} )
+
+# The 'definitions.h' file holds macros and definitions which are taken from CMake's variables (such as the ERROR(X,Y) functional define)
+configure_file( "${CMAKE_SOURCE_DIR}/src/definitions.h" "${CMAKE_BINARY_DIR}/${LABEL}-include/definitions.h")
 
 add_subdirectory( src )
