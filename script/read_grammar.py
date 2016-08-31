@@ -275,6 +275,15 @@ symbol_head = r"""#ifndef __SYMBOL_H
 typedef enum {"""
 
 symbol_tail = r"""} Symbol;
+"""
+
+
+if "T_CONST" not in text5:
+   symbol_tail = symbol_tail + r"""
+#define NOT_USING_T_CONST 1
+"""
+
+symbol_tail = symbol_tail + r"""
 #endif"""
 
 f = open(os.path.join(args.output_dir, "symbol"), 'w')
