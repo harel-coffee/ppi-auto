@@ -27,9 +27,11 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
                case T_ATTRIBUTE:
                   stack[++stack_top] = inputs[n * ncol + (int)ephemeral[gl_id * MAX_PHENOTYPE_SIZE + i]];
                   break;
+#ifndef NOT_USING_T_CONST
                case T_CONST:
                   stack[++stack_top] = ephemeral[gl_id * MAX_PHENOTYPE_SIZE + i];
                   break;
+#endif
                default:
                   break;
             }
@@ -89,9 +91,11 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
                case T_ATTRIBUTE:
                   stack[++stack_top] = inputs[(gr_id * lo_size + lo_id) + nlin * (int)ephemeral[ind * MAX_PHENOTYPE_SIZE + i]];
                   break;
+#ifndef NOT_USING_T_CONST
                case T_CONST:
                   stack[++stack_top] = ephemeral[ind * MAX_PHENOTYPE_SIZE + i];
                   break;
+#endif
                default:
                   break;
             }
@@ -151,9 +155,11 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
                   case T_ATTRIBUTE:
                      stack[++stack_top] = inputs[n + nlin * (int)ephemeral[gr_id * MAX_PHENOTYPE_SIZE + i]];
                      break;
+#ifndef NOT_USING_T_CONST
                   case T_CONST:
                      stack[++stack_top] = ephemeral[gr_id * MAX_PHENOTYPE_SIZE + i];
                      break;
+#endif
                   default:
                      break;
                }
