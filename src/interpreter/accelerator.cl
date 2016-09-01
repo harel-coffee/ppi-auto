@@ -127,7 +127,7 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
    int gr_id = get_group_id(0);
 
    int lo_size = get_local_size(0);
-   int next_power_of_2 = (pown(2.0f, (int) ceil(log2((float)lo_size))))/2;
+   int next_power_of_2 = pown(2.0f, (int) ceil(log2((float)lo_size)));
    int n;
 
    if( size[gr_id] == 0 && !prediction_mode )
@@ -160,7 +160,13 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
             }
             if( !prediction_mode )
             {
-               PE[lo_id] += ERROR( stack[stack_top], inputs[n + nlin * (ncol - 1)] );
+               float error = ERROR( stack[stack_top], inputs[n + nlin * (ncol - 1)] );
+
+               // Avoid further calculations if the current one has overflown the float
+               // (i.e., it is inf or NaN).
+               if( isinf(error) || isnan(error) ) { PE[lo_id] = MAXFLOAT; break; }
+
+               PE[lo_id] += error;
             }
             else
             {
@@ -170,18 +176,14 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
       }
       if( !prediction_mode )
       {
-         for( int s = next_power_of_2; s > 0; s/=2 )
+         for( int s = next_power_of_2/2; s > 0; s >>= 1 )
          {
             barrier(CLK_LOCAL_MEM_FENCE);
             if( (lo_id < s) && (lo_id + s < lo_size) ) { PE[lo_id] += PE[lo_id + s]; }
          }
          if( lo_id == 0)
-         { 
-            if( isnan( PE[0] ) || isinf( PE[0] ) ) 
-               vector[gr_id] = MAXFLOAT;
-            else 
-               vector[gr_id] = PE[0]/nlin;
-         } 
+            // Check for infinity/NaN
+            vector[gr_id] = ( isinf( PE[0] ) || isnan( PE[0] ) ) ? MAXFLOAT : PE[0]/nlin;
       }
    }
 }
