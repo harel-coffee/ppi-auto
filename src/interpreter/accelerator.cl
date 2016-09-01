@@ -39,7 +39,17 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
          }
          if( !prediction_mode )
          {
-            PE[0] += ERROR( stack[stack_top], inputs[n * ncol + (ncol - 1)] );
+            float error = ERROR( stack[stack_top], inputs[n * ncol + (ncol - 1)] );
+
+            // Avoid further calculations if the current one has overflown the float
+            // (i.e., it is inf or NaN).
+            if( isinf(error) || isnan(error) ) { PE[0] = MAXFLOAT; break; }
+
+#ifdef REDUCEMAX
+            PE[0] = (error*nlin > PE[0]) ? error*nlin : PE[0];
+#else
+            PE[0] += error;
+#endif
          }
          else
          {
@@ -116,11 +126,17 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
          for( int s = next_power_of_2; s > 0; s/=2 )
          {
             barrier(CLK_LOCAL_MEM_FENCE);
-            if( (lo_id < s) && (lo_id + s < lo_size) ) { PE[lo_id] += PE[lo_id + s]; }
+            if( (lo_id < s) && (lo_id + s < lo_size) ) {
+#ifdef REDUCEMAX
+               PE[lo_id] = (PE[lo_id + s] > PE[lo_id]) ? PE[lo_id + s] : PE[lo_id];
+#else
+               PE[lo_id] += PE[lo_id + s];
+#endif
+            }
          }
          if( lo_id == 0) { vector[ind * get_num_groups(0) + gr_id] = PE[0]; }
       }
-   } 
+   }
 }
 
 __kernel void

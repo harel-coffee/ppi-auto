@@ -3,6 +3,7 @@
 #ifndef accelerator_h
 #define accelerator_h
 
+#include <definitions.h>
 #include <symbol>
 #include "../individual"
 

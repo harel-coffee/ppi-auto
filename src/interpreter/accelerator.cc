@@ -630,19 +630,29 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          // The line below maps the contents of 'data_buffer_vector' into 'tmp'.
          // essa linha some
          tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, num_work_groups * nInd * sizeof( float ) );
-         
-         float sum;
-
          // Reduction on host!
+
          for( int i = 0; i < nInd; i++)
          {
-            sum = 0.0;
+            float sum = 0.0f;
             for( int gr_id = 0; gr_id < num_work_groups; gr_id++ ) 
-               sum += tmp[i * num_work_groups + gr_id];
+            {
+               float error = tmp[i * num_work_groups + gr_id];
 
-            if( isnan( sum ) || isinf( sum ) ) 
+               // Avoid further calculations if the current one has overflown the float
+               // (i.e., it is inf or NaN).
+               if( isinf(error) || isnan(error) ) { sum = std::numeric_limits<float>::max(); break; }
+
+#ifdef REDUCEMAX
+               sum = (error*data.nlin > sum) ? error*data.nlin : sum;
+#else
+               sum += error;
+#endif
+            }
+
+            if( isnan( sum ) || isinf( sum ) )
                vector[i] = std::numeric_limits<float>::max();
-            else 
+            else
                vector[i] = sum/data.nlin + alpha * size[i];
          }
 
