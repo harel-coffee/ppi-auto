@@ -106,9 +106,8 @@ try:
    f = open(args.dataset,"r")
 except IOError:
    print "Could not open file '" + dataset + "'"
-lines = f.readlines()
+ncol = len(f.readline().split(','))
 f.close()
-ncol = len(lines[1].split(','))
 
 
 ##############################
