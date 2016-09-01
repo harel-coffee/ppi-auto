@@ -82,6 +82,7 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
                   break;
 #endif
                default:
+                  stack[++stack_top] = NAN; // "Invalidates" the stack (solution) if a non-recognized symbol (terminal) is given
                   break;
             }
          }

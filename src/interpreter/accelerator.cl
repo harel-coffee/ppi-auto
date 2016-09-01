@@ -33,6 +33,7 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
                   break;
 #endif
                default:
+                  stack[++stack_top] = NAN; // "Invalidates" the stack (solution) if a non-recognized symbol (terminal) is given
                   break;
             }
          }
@@ -97,6 +98,7 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
                   break;
 #endif
                default:
+                  stack[++stack_top] = NAN; // "Invalidates" the stack (solution) if a non-recognized symbol (terminal) is given
                   break;
             }
          }
@@ -161,6 +163,7 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
                      break;
 #endif
                   default:
+                     stack[++stack_top] = NAN; // "Invalidates" the stack (solution) if a non-recognized symbol (terminal) is given
                      break;
                }
             }
