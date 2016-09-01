@@ -18,6 +18,8 @@ For instance:
 
 The `EF` definition is the formula used to compute the "distance" of a predicted value (`X`) to the corresponding observed value (`Y`). By default it is set as `fabs((X)-(Y))`, that is, simply the absolute error. Other useful formulas are `-DEF='((X)!=(Y))'`, for classification problems, and `-DEF='(((X)-(Y))*((X)-(Y)))'`, for obtaining the squared error.
 
+In the PPCU strategy, one can also choose between the sum of the errors (the default) or the maximum error. To enable the latter, just add to cmake the option `-DREDUCEMAX=BOOL:ON`
+
 ### Compilation ###
 
 ~~~~~~~~

@@ -172,7 +172,11 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
                // (i.e., it is inf or NaN).
                if( isinf(error) || isnan(error) ) { PE[lo_id] = MAXFLOAT; break; }
 
+#ifdef REDUCEMAX
+               PE[lo_id] = (error*nlin > PE[lo_id]) ? error*nlin : PE[lo_id];
+#else
                PE[lo_id] += error;
+#endif
             }
             else
             {
@@ -185,7 +189,13 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
          for( int s = next_power_of_2/2; s > 0; s >>= 1 )
          {
             barrier(CLK_LOCAL_MEM_FENCE);
-            if( (lo_id < s) && (lo_id + s < lo_size) ) { PE[lo_id] += PE[lo_id + s]; }
+            if( (lo_id < s) && (lo_id + s < lo_size) ) {
+#ifdef REDUCEMAX
+               PE[lo_id] = (PE[lo_id + s] > PE[lo_id]) ? PE[lo_id + s] : PE[lo_id];
+#else
+               PE[lo_id] += PE[lo_id + s];
+#endif
+            }
          }
          if( lo_id == 0)
             // Check for infinity/NaN
