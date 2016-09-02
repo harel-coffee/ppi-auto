@@ -85,6 +85,7 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
       if( iscomment ) { iscomment = false; }
       else { i++; }
    }
+   nlin = i;
    return 0;
 
    //if( scanf(token.c_str(),"%f%*[^\n],",&input[i][j]) != 1 || isnan(input[i][j]) || isinf(input[i][j]) )
