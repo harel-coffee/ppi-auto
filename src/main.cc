@@ -124,7 +124,6 @@ int main(int argc, char** argv)
 
       int error = read( Opts.String.Get("-d"), input, ncol, nlin );
       if ( error ) {return error;}
-      return 0;
 
       if( Opts.String.Found("-sol") )
       {
