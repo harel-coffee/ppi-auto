@@ -30,14 +30,13 @@ namespace { static struct t_data { int nlin; Symbol* phenotype; float* ephemeral
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void pep_init( float** input, int nlin, int argc, char** argv ) 
+void pep_init( float** input, int nlin, int ncol, int argc, char** argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
 
    Opts.String.Add( "-sol", "--solution" );
    Opts.Bool.Add( "-acc" );
    Opts.Bool.Add( "-pred", "--prediction" );
-   Opts.Int.Add( "-ncol", "--number_of_columns" );
    Opts.Process();
 
    std::istringstream iss;
@@ -82,14 +81,14 @@ void pep_init( float** input, int nlin, int argc, char** argv )
 
    if( data.version )
    {
-      if( acc_interpret_init( argc, argv, data.size[0], -1, 1, input, nlin, 1, data.prediction ) )
+      if( acc_interpret_init( argc, argv, data.size[0], -1, 1, input, nlin, ncol, 1, data.prediction ) )
       {
          fprintf(stderr,"Error in initialization phase.\n");
       }
    }
    else
    {
-      seq_interpret_init( data.size[0], input, nlin, Opts.Int.Get("-ncol") );
+      seq_interpret_init( data.size[0], input, nlin, ncol );
    }
 }
 

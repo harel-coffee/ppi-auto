@@ -1,12 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h> 
 #include <cmath>    
-#include "util/CmdLineParser.h"
-#include "util/Exception.h"
-#include "pee.h"
-#include "pep.h"
+#include <fstream>
 #include "server/server.h"
 #include "Poco/Exception.h"
+#include "util/CmdLineParser.h"
+#include "util/Exception.h"
+#include "util/Util.h"
+#include "pee.h"
+#include "pep.h"
 
 //TODO fazer comentários; passar para inglês
 
@@ -14,50 +16,79 @@
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
 /** ****************************************************************** **/
 
-int read( const std::string& dataset, float**& input, int ncol, int& nlin )
+int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
 {
-   char c;
-   FILE *arqentra;
-
-   arqentra = fopen(dataset.c_str(),"r");
-   if(arqentra == NULL) {
-     fprintf(stderr, "Could not open file for reading (%s).\n", dataset.c_str());
-     return 1;
-   }
- 
+   std::ifstream infile( dataset.c_str() );
+   std::string line; std::string token;
+   bool firstline = true; bool iscomment = false;
    nlin = 0;
-   while( (c = fgetc(arqentra)) != EOF )
-       if ( c == '\n' ) {nlin++;}
+   while(std::getline(infile, line, '\n')) 
+   {
+      std::istringstream iss( line );
 
-   input   = new float*[nlin];
+      int j = 0;
+      while( std::getline(iss, token, ',') )
+      {
+         if( token[0] == '#' ) { iscomment = true; break; } 
+         j++;
+      }
+      if( !firstline && !iscomment )
+      {
+         if( ncol != j )
+         {
+            fprintf(stderr,"The line '%d' has '%d' columns. The correct number of columns is '%d'.\n", nlin, j, ncol);
+            return 1;
+         }
+      }
+      if( firstline && !iscomment ) { firstline = false; }
+      if( iscomment ) { iscomment = false; } 
+      else { ncol = j; }
+      nlin++;
+   }
+
+   input = new float*[nlin];
    for( int i = 0; i < nlin; i++ )
      input[i] = new float[ncol];
 
-   rewind(arqentra);
-   for( int i = 0; i < nlin; i++ )
+   infile.clear();
+   infile.seekg(0);
+
+   int i = 0; float tmp;
+   firstline = true; iscomment = false;
+   while(std::getline(infile, line, '\n')) 
    {
-      for( int j = 0; j < ncol; j++ )
+      std::istringstream iss( line );
+
+      int j = 0;
+      while( std::getline(iss, token, ',') )
       {
-         if( j == (ncol-1) )
+         if( firstline )
          {
-            if( fscanf(arqentra,"%f%*[^\n],",&input[i][j]) != 1 || isnan(input[i][j]) || isinf(input[i][j]) )
-            {
-               fprintf(stderr, "Invalid input at line %d and column %d.\n", i, j);
-               return 2;
-            }
+            firstline = false;
+            if ( !util::StringTo<float>(tmp, token) ) { iscomment = true; break; }
          }
-         else
+
+         if( token[0] == '#' ) { iscomment = true; break; } 
+
+         if ( !util::StringTo<float>(input[i][j], token)) 
          {
-            if( fscanf(arqentra,"%f,",&input[i][j]) != 1 || isnan(input[i][j]) || isinf(input[i][j]) )
-            {
-               fprintf(stderr, "Invalid input at line %d and column %d.\n", i, j);
-               return 2;
-            }
+            fprintf(stderr, "Invalid input at line %d and column %d.\n", i, j);
+            return 2;
          }
+         if( isnan(input[i][j]) || isinf(input[i][j]) )
+         {
+            fprintf(stderr, "Invalid input at line %d and column %d.\n", i, j);
+            return 2;
+         }
+         j++;
       }
+      if( iscomment ) { iscomment = false; }
+      else { i++; }
    }
-   fclose (arqentra);
    return 0;
+
+   //if( scanf(token.c_str(),"%f%*[^\n],",&input[i][j]) != 1 || isnan(input[i][j]) || isinf(input[i][j]) )
+   //if( scanf(token.c_str(),"%f,",&input[i][j]) != 1 || isnan(input[i][j]) || isinf(input[i][j]) )
 }
 
 void destroy( float** input, int nlin )
@@ -73,7 +104,6 @@ int main(int argc, char** argv)
    try {
       CmdLine::Parser Opts( argc, argv );
 
-      Opts.Int.Add( "-ncol", "--number_of_columns" );
       Opts.Int.Add( "-port", "--number_of_port" );
       Opts.String.Add( "-d", "--dataset" );
       Opts.String.Add( "-sol", "--solution" );
@@ -82,17 +112,16 @@ int main(int argc, char** argv)
 
       Common::SetupLogger( "information" );
 
-      int ncol = Opts.Int.Get("-ncol");   
-
-      int nlin;
+      int nlin; int ncol;
       float** input;
+
 
       int error = read( Opts.String.Get("-d"), input, ncol, nlin );
       if ( error ) {return error;}
 
       if( Opts.String.Found("-sol") )
       {
-         pep_init( input, nlin, argc, argv );
+         pep_init( input, nlin, ncol, argc, argv );
          pep_interpret();
          pep_print( stdout );
          pep_destroy();
@@ -108,7 +137,7 @@ int main(int argc, char** argv)
          srv.start();
          //sleep(100);
 
-         pee_init( input, nlin, argc, argv );
+         pee_init( input, nlin, ncol, argc, argv );
          int generations = pee_evolve();
          fprintf(stdout, "\n> Overall best:");
          pee_print_best( stdout, generations, 1 );

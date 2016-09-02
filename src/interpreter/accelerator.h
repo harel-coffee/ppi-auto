@@ -12,7 +12,7 @@
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned max_arity, const unsigned population_size, float** input, int nlin, int pep_mode, int prediction_mode );
+int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned max_arity, const unsigned population_size, float** input, int nlin, int ncol, int pep_mode, int prediction_mode );
 
 /** ************************************************************************************************** **/
 /** ************************************** Function interpret **************************************** **/

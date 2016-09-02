@@ -105,7 +105,6 @@ except IOError:
    print "Could not open file '" + dataset + "'"
 lines = f.readlines()
 f.close()
-ncol = len(lines[1].split(','))
 
 
 ##############################
@@ -123,7 +122,7 @@ P['iat'] = random.uniform(0.0,0.8)
 ##############################
 
 cmd = [];
-cmd.append(args.exe + " -v -machine -e -acc -strategy " + args.strategy.upper() + " -d " + args.dataset + " -ncol " + str(ncol) + " -port " + str(args.port) + " -cl-d " + str(args.cl_device_id) + " -cl-p " + str(args.cl_platform_id) + " -ps " + str(P['ps']) + " -g 100000000" + " -cp " + str(P['cp']) + " -mr " + str(P['mr']) + " -ts " + str(P['ts']) + " -nb " + str(P['nb']) + " -is " + str(P['is']) + " -st " + str(P['st']) + " -iat " + str(P['iat']))
+cmd.append(args.exe + " -v -machine -e -acc -strategy " + args.strategy.upper() + " -d " + args.dataset + " -port " + str(args.port) + " -cl-d " + str(args.cl_device_id) + " -cl-p " + str(args.cl_platform_id) + " -ps " + str(P['ps']) + " -g 100000000" + " -cp " + str(P['cp']) + " -mr " + str(P['mr']) + " -ts " + str(P['ts']) + " -nb " + str(P['nb']) + " -is " + str(P['is']) + " -st " + str(P['st']) + " -iat " + str(P['iat']))
 if peers:
    cmd.append(" -peers " + ''.join(peers))
 if args.args: # Adds extra arguments to the executable if any

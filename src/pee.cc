@@ -163,7 +163,7 @@ int decode( const GENOME_TYPE* genome, int* const allele, Symbol* phenotype, flo
 
 #include <interpreter_core_print>
 
-void pee_init( float** input, int nlin, int argc, char** argv ) 
+void pee_init( float** input, int nlin, int ncol, int argc, char** argv ) 
 {
    data.argc = argc; data.argv = argv;
    CmdLine::Parser Opts( argc, argv );
@@ -173,8 +173,6 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    Opts.Bool.Add( "-machine" );
 
    Opts.Bool.Add( "-acc" );
-
-   Opts.Int.Add( "-ncol", "--number-of-columns" );
 
    Opts.Int.Add( "-g", "--generations", 1000, 1, std::numeric_limits<int>::max() );
 
@@ -294,14 +292,14 @@ void pee_init( float** input, int nlin, int argc, char** argv )
    data.version = Opts.Bool.Get("-acc");
    if( data.version )
    {
-      if( acc_interpret_init( argc, argv, data.max_size_phenotype, MAX_QUANT_SIMBOLOS_POR_REGRA, data.population_size, input, nlin, 0, 0 ) )
+      if( acc_interpret_init( argc, argv, data.max_size_phenotype, MAX_QUANT_SIMBOLOS_POR_REGRA, data.population_size, input, nlin, ncol, 0, 0 ) )
       {
          fprintf(stderr,"Error in initialization phase.\n");
       }
    }
    else
    {
-      seq_interpret_init( data.max_size_phenotype, input, nlin, Opts.Int.Get("-ncol") );
+      seq_interpret_init( data.max_size_phenotype, input, nlin, ncol );
    }
 
    data.stagnation_tolerance = Opts.Int.Get( "-st" );
@@ -420,13 +418,13 @@ int pee_receive_individual( GENOME_TYPE* immigrants )
          slot = Server::m_ready.front();
          Server::m_ready.pop();
       }
-      
+
       int offset;
       char *tmp = Server::m_immigrants[slot].data(); 
 
       sscanf( tmp, "%f%n", &Server::m_fitness[slot], &offset );
       tmp += offset + 1; 
-      
+
       //std::cerr << "\nReceive::Receiving[slot=" << slot << "]: " << Server::m_immigrants[slot].data() << std::endl;
       if (data.verbose)
       {

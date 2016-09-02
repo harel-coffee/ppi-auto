@@ -31,7 +31,7 @@ In the PPCU strategy, one can also choose between the sum of the errors (the def
 ### Manually (one instance) ###
 
 ~~~~~~~~
-   ./main  -v -e -acc -strategy PP -d ../problem/iris/data.csv -ncol 5 -port 9080 -cl-d 0 -cl-p 0 -ps 30000 -cp 0.6 -mr 0.01 -ts 5 -nb 2000  -g 1000000 -cl-mls 16 -machine | grep -a '^> [0-9]' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p pareto.front -dup "$CANDIDATE"; done
+   ./main  -v -e -acc -strategy PP -d ../problem/iris/data.csv -port 9080 -cl-d 0 -cl-p 0 -ps 30000 -cp 0.6 -mr 0.01 -ts 5 -nb 2000  -g 1000000 -cl-mls 16 -machine | grep -a '^> [0-9]' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p pareto.front -dup "$CANDIDATE"; done
 ~~~~~~~~
 
 The `-dup` option allows duplicate candidates (w.r.t. complexity and error) into the Pareto file, provided that they differ in terms of the symbolic solution (model). Since the actual models differ, strictly speaking one doesn't dominate the other, thus using `-dup` option doesn't violate the principle of non-dominance.
@@ -110,13 +110,13 @@ will periodically (each 10s) send a random genome from the pareto.front file ("H
 The prediction mode outputs a prediction for each instance of the dataset (`-d`) with respect to the solution given by its phenotype (`-sol`). This mode does not assume that the dataset has the dependent variable (observation). It can process the instances sequentially; e.g.:
 
 ~~~~~~~~
-   ./main -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062' -pred
+   ./main -d ../problem/vento/speed_A305_1.tes -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062' -pred
 ~~~~~~~~
 
 or in parallel if one adds the `-acc` flag and the corresponding strategy (`-strategy`):
 
 ~~~~~~~~
-   ./main -acc -strategy PP -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062' -pred
+   ./main -acc -strategy PP -d ../problem/vento/speed_A305_1.tes -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062' -pred
 ~~~~~~~~
 
 ## Running Testing Solution (example) ##
@@ -124,7 +124,7 @@ or in parallel if one adds the `-acc` flag and the corresponding strategy (`-str
 In this mode, only the MAE is output. Similarly, it can run sequentially or in parallel:
 
 ~~~~~~~~
-   ./main -d ../problem/vento/speed_A305_1.tes -ncol 36 -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062'
+   ./main -d ../problem/vento/speed_A305_1.tes -sol '6 10015 10064 5.000000000000 10035 10015 10064 3.000000000000 10062'
 ~~~~~~~~
 
 Since it computes the error, the dependent variable (observation) is required as the last field of the dataset.

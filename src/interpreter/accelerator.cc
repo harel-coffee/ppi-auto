@@ -450,11 +450,10 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
 /** ****************************************************************** **/
 
 // -----------------------------------------------------------------------------
-int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned max_arity, const unsigned population_size, float** input, int nlin, int pep_mode, int prediction_mode )
+int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned max_arity, const unsigned population_size, float** input, int nlin, int ncol, int pep_mode, int prediction_mode )
 {
    CmdLine::Parser Opts( argc, argv );
 
-   Opts.Int.Add( "-ncol", "--number-of-columns", -1 );
    Opts.Int.Add( "-cl-p", "--cl-platform-id", -1, 0 );
    Opts.Int.Add( "-cl-d", "--cl-device-id", -1, 0 );
    Opts.Int.Add( "-cl-mls", "--cl-max-local-size", -1 );
@@ -494,7 +493,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       }
    }
 
-   if( Opts.Int.Get("-ncol") < 0 )
+   if( ncol < 0 )
    {
       fprintf(stderr, "Missing number of columns of dataset.\n");
       return 1;
@@ -512,7 +511,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       return 1;
    }
 
-   create_buffers( input, Opts.Int.Get("-ncol"), pep_mode, prediction_mode );
+   create_buffers( input, ncol, pep_mode, prediction_mode );
 
 //   try
 //   {
