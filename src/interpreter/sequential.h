@@ -3,8 +3,8 @@
 #ifndef sequential_h
 #define sequential_h
 
-#include <symbol>
 #include <definitions.h>
+#include <symbol>
 
 /** Funcoes exportadas **/
 /** ************************************************************************************************** **/

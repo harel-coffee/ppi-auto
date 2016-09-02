@@ -66,7 +66,6 @@ args = parser.parse_args()
 if args.stagnation_tolerance and args.stagnation_tolerance < 500000:
    parser.error("Minimum stagnation tolerance (-st) is 500000")
 
-lines = []
 if args.number_target_islands > 0:
    if args.islands_file is None:
       parser.error("-n is not zero (-n %d) but no islands file (-i) was given" % (args.number_target_islands))
@@ -77,22 +76,26 @@ if args.number_target_islands > 0:
       sys.exit(1)
    lines = f.readlines()
    f.close()
-   lines = [s.replace('\n', '') for s in lines]
+   islands = []
+   for i in lines:
+      i = i.strip()
+      if not i.startswith('#'):
+         islands.append(i)
 #else:
 #   if not args.islands_file is None:
 #      parser.error("Given islands file (-i %s) but the number of target islands (-n) is zero" % (args.islands_file))
 
 i = 0; peers = [];
-while i < args.number_target_islands and len(lines) > 0:
-   address = random.choice(lines)
+while i < args.number_target_islands and len(islands) > 0:
+   address = random.choice(islands)
    if address != "localhost:"+args.port and address != "127.0.0.1:"+args.port and address != "0.0.0.0:"+args.port:
       peers.append(address + "," + str(random.random()))
-      lines.remove(address)
+      islands.remove(address)
       if i < args.number_target_islands-1:
          peers.append(";")
       i = i + 1
    else:
-      lines.remove(address)
+      islands.remove(address)
 
 # Remove the trailing ';' that might be left in some cases
 if peers and peers[-1] == ';':
@@ -103,7 +106,7 @@ try:
    f = open(args.dataset,"r")
 except IOError:
    print "Could not open file '" + dataset + "'"
-lines = f.readlines()
+ncol = len(f.readline().split(','))
 f.close()
 
 

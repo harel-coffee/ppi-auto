@@ -82,11 +82,26 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
                   break;
 #endif
                default:
+                  stack[++stack_top] = NAN; // "Invalidates" the stack (solution) if a non-recognized symbol (terminal) is given
                   break;
             }
          }
-         if( pep_mode && prediction_mode ) {vector[ponto] = stack[stack_top];}
-         else {sum += ERROR(stack[stack_top], data.inputs[ponto][data.ncol-1]);}
+         if( pep_mode && prediction_mode ) {
+            vector[ponto] = stack[stack_top];
+         }
+         else {
+            float error = ERROR(stack[stack_top], data.inputs[ponto][data.ncol-1]);
+
+            // Avoid further calculations if the current one has overflown the float
+            // (i.e., it is inf or NaN).
+            if( isinf(error) || isnan(error) ) { sum = std::numeric_limits<float>::max(); break; }
+
+#ifdef REDUCEMAX
+            sum = (error*data.nlin > sum) ? error*data.nlin : sum;
+#else
+            sum += error;
+#endif
+         }
       }
       if( !prediction_mode )
       {
