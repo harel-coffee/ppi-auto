@@ -20,7 +20,7 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
 {
    std::ifstream infile( dataset.c_str() );
    std::string line; std::string token;
-   bool firstline = true; bool iscomment = false;
+   bool header = true; bool iscomment = false;
    nlin = 0;
    while(std::getline(infile, line)) 
    {
@@ -32,7 +32,7 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
          if( token[0] == '#' ) { iscomment = true; break; } 
          j++;
       }
-      if( !firstline && !iscomment )
+      if( !header && !iscomment )
       {
          if( ncol != j )
          {
@@ -40,7 +40,7 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
             return 1;
          }
       }
-      if( firstline && !iscomment ) { firstline = false; }
+      if( header && !iscomment ) { header = false; }
       if( iscomment ) { iscomment = false; } 
       else { ncol = j; }
       nlin++;
@@ -53,8 +53,8 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
    infile.clear();
    infile.seekg(0);
 
-   int i = 0; float tmp;
-   firstline = true; iscomment = false;
+   int i = 0; int k = 0; float tmp;
+   header = true; iscomment = false;
    while(std::getline(infile, line, '\n')) 
    {
       std::istringstream iss( line );
@@ -62,9 +62,9 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
       int j = 0;
       while( std::getline(iss, token, ',') )
       {
-         if( firstline )
+         if( header )
          {
-            firstline = false;
+            header = false;
             if ( !util::StringTo<float>(tmp, token) ) { iscomment = true; break; }
          }
 
@@ -72,18 +72,19 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
 
          if ( !util::StringTo<float>(input[i][j], token)) 
          {
-            fprintf(stderr, "Invalid input at line %d, column %d.\n", i+1, j+1);
+            fprintf(stderr, "Invalid input at line %d, column %d.\n", k+1, j+1);
             return 2;
          }
          if( isnan(input[i][j]) || isinf(input[i][j]) )
          {
-            fprintf(stderr, "Invalid input at line %d, column %d.\n", i+1, j+1);
+            fprintf(stderr, "Invalid input at line %d, column %d.\n", k+1, j+1);
             return 2;
          }
          j++;
       }
       if( iscomment ) { iscomment = false; }
       else { i++; }
+      k++;
    }
    nlin = i;
    return 0;
