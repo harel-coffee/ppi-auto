@@ -20,30 +20,24 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
 {
    std::ifstream infile( dataset.c_str() );
    std::string line; std::string token;
-   bool header = true; bool iscomment = false;
-   nlin = 0;
-   while(std::getline(infile, line))
-   {
-      std::istringstream iss( line );
 
-      int j = 0;
-      while( std::getline(iss, token, ',') )
-      {
-         if( token[0] == '#' ) { iscomment = true; break; } 
-         j++;
-      }
-      if( !header && !iscomment )
-      {
-         if( ncol != j )
+   ncol = 0; nlin = 0; float tmp;
+   bool header = true;
+   while( std::getline(infile, line) )
+   {
+      if( !line.empty() && line[0] != '#' ) 
+      { 
+         std::istringstream iss( line );
+
+         if( header )
          {
-            fprintf(stderr,"Line '%d' has '%d' columns but the expected number is '%d'.\n", nlin+1, j, ncol);
-            return 1;
+            while( std::getline(iss, token, ',') ) { ncol++; }
+            if ( util::StringTo<float>(tmp, token) ) { header = false; }
          }
+
+         if( header ) { header = false; } 
+         else { nlin++; }
       }
-      if( header && !iscomment ) { header = false; }
-      if( iscomment ) { iscomment = false; } 
-      else { ncol = j; }
-      nlin++;
    }
 
    input = new float*[nlin];
@@ -53,40 +47,50 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
    infile.clear();
    infile.seekg(0);
 
-   int i = 0; int k = 0; float tmp;
-   header = true; iscomment = false;
-   while(std::getline(infile, line)) 
+   int i = 0; int k = 0;
+   header = true;
+   while( std::getline(infile, line) ) 
    {
-      std::istringstream iss( line );
-
-      int j = 0;
-      while( std::getline(iss, token, ',') )
+      if( !line.empty() && line[0] != '#' ) 
       {
-         if( header )
-         {
-            header = false;
-            if ( !util::StringTo<float>(tmp, token) ) { iscomment = true; break; }
-         }
 
-         if( token[0] == '#' ) { iscomment = true; break; } 
+         std::istringstream iss( line );
 
-         if ( !util::StringTo<float>(input[i][j], token)) 
+         int j = 0;
+         while( std::getline(iss, token, ',') )
          {
-            fprintf(stderr, "Invalid input at line %d, column %d.\n", k+1, j+1);
-            return 2;
+            if( header )
+            {
+               if ( !util::StringTo<float>(tmp, token) ) { break; }
+               else { header = false; }
+            }
+
+            if ( !util::StringTo<float>(input[i][j], token) ) 
+            {
+               fprintf(stderr, "Invalid input at line %d, column %d.\n", k+1, j+1);
+               return 2;
+            }
+            if( isnan( input[i][j]) || isinf(input[i][j]) )
+            {
+               fprintf(stderr, "Invalid input at line %d, column %d.\n", k+1, j+1);
+               return 2;
+            }
+            //std::cout << input[i][j] << " ";
+            j++;
          }
-         if( isnan(input[i][j]) || isinf(input[i][j]) )
+         if( !header )
          {
-            fprintf(stderr, "Invalid input at line %d, column %d.\n", k+1, j+1);
-            return 2;
+            if( ncol != j )
+            {
+               fprintf(stderr,"Line '%d' has '%d' columns but the expected number is '%d'.\n", k+1, j, ncol);
+               return 1;
+            }
          }
-         j++;
+         if( header ) { header = false; }
+         else { i++; ncol = j; }//std::cout << std::endl; }
       }
-      if( iscomment ) { iscomment = false; }
-      else { i++; }
       k++;
    }
-   nlin = i;
    return 0;
 
    //if( scanf(token.c_str(),"%f%*[^\n],",&input[i][j]) != 1 || isnan(input[i][j]) || isinf(input[i][j]) )
@@ -120,6 +124,7 @@ int main(int argc, char** argv)
 
       int error = read( Opts.String.Get("-d"), input, ncol, nlin );
       if ( error ) {return error;}
+      return 0;
 
       if( Opts.String.Found("-sol") )
       {
