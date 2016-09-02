@@ -22,7 +22,7 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
    std::string line; std::string token;
    bool firstline = true; bool iscomment = false;
    nlin = 0;
-   while(std::getline(infile, line, '\n')) 
+   while(std::getline(infile, line)) 
    {
       std::istringstream iss( line );
 
@@ -36,7 +36,7 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
       {
          if( ncol != j )
          {
-            fprintf(stderr,"The line '%d' has '%d' columns. The correct number of columns is '%d'.\n", nlin, j, ncol);
+            fprintf(stderr,"Line '%d' has '%d' columns but the expected number is '%d'.\n", nlin+1, j, ncol);
             return 1;
          }
       }
@@ -72,7 +72,7 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
 
          if ( !util::StringTo<float>(input[i][j], token)) 
          {
-            fprintf(stderr, "Invalid input at line %d and column %d.\n", i, j);
+            fprintf(stderr, "Invalid input at line %d, column %d.\n", i+1, j+1);
             return 2;
          }
          if( isnan(input[i][j]) || isinf(input[i][j]) )

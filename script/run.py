@@ -101,15 +101,6 @@ while i < args.number_target_islands and len(islands) > 0:
 if peers and peers[-1] == ';':
    peers.pop()
 
-
-try:
-   f = open(args.dataset,"r")
-except IOError:
-   print "Could not open file '" + dataset + "'"
-ncol = len(f.readline().split(','))
-f.close()
-
-
 ##############################
 ##### Parameters' values #####
 ##############################
