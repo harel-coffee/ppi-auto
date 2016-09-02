@@ -22,7 +22,7 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
    std::string line; std::string token;
    bool header = true; bool iscomment = false;
    nlin = 0;
-   while(std::getline(infile, line)) 
+   while(std::getline(infile, line))
    {
       std::istringstream iss( line );
 
@@ -55,7 +55,7 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
 
    int i = 0; int k = 0; float tmp;
    header = true; iscomment = false;
-   while(std::getline(infile, line, '\n')) 
+   while(std::getline(infile, line)) 
    {
       std::istringstream iss( line );
 
