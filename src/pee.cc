@@ -70,7 +70,7 @@ struct Peer {
   float frequency;
 };
 
-namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int verbose; int machine; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int parallel_version; double time_total; double time_generate; double time_evaluate; double time_crossover; double time_mutation; double time_clone; double time_tournament; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; int argc; char ** argv;  } data; };
+namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int verbose; int machine; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int parallel_version; double time_total; double time_generate; double time_evaluate; double time_crossover; double time_mutation; double time_clone; double time_tournament; double time_send; double time_receive; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; int argc; char ** argv;  } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -358,6 +358,10 @@ int pee_tournament( const float* fitness )
 
 void pee_send_individual( Population* population )
 {
+#ifdef PROFILING
+   util::Timer t_send;
+#endif
+
    static bool firstcall = true;
    if( firstcall ) {
       firstcall = false;
@@ -421,10 +425,18 @@ void pee_send_individual( Population* population )
          }
       }
    }
+
+#ifdef PROFILING
+   data.time_send += t_send.elapsed();
+#endif
 }
 
 int pee_receive_individual( GENOME_TYPE* immigrants )
 {
+#ifdef PROFILING
+   util::Timer t_receive;
+#endif
+
    int slot; int nImmigrants = 0;
    while( !Server::m_ready.empty() && nImmigrants < data.immigrants_size )
    {
@@ -471,6 +483,11 @@ int pee_receive_individual( GENOME_TYPE* immigrants )
       }
 
    }
+
+#ifdef PROFILING
+   data.time_receive += t_receive.elapsed();
+#endif
+
    return nImmigrants;
 }
 
@@ -675,7 +692,7 @@ void pee_print_best( FILE* out, int generation, int print_mode )
 void pee_print_time() 
 {
 #ifdef PROFILING
-   cout << "; time_evaluate: " << data.time_evaluate << ", time_crossover: " << data.time_crossover << ", time_mutation: " << data.time_mutation << ", time_clone: " << data.time_clone << ", time_tournament: " << data.time_tournament << ", time_total: " << data.time_total << endl;
+   cout << "; time_evaluate: " << data.time_evaluate << ", time_crossover: " << data.time_crossover << ", time_mutation: " << data.time_mutation << ", time_clone: " << data.time_clone << ", time_tournament: " << data.time_tournament << ", time_send: " << data.time_send << ", time_receive: " << data.time_receive << ", time_total: " << data.time_total << endl;
    if( data.parallel_version )
    {
       acc_print_time();
@@ -716,12 +733,16 @@ int pee_evolve()
    */
 
    data.time_total      = 0.0;
+#ifdef PROFILING
    data.time_generate   = 0.0;
    data.time_evaluate   = 0.0;
    data.time_crossover  = 0.0;
    data.time_mutation   = 0.0;
    data.time_clone      = 0.0;
    data.time_tournament = 0.0;
+   data.time_send       = 0.0;
+   data.time_receive    = 0.0;
+#endif
    
    // -----
    util::Timer t_total;

@@ -28,7 +28,7 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_send; double time_receive; double time_kernel1; double time_kernel2; double time_kernels; double time_overhead; } data; };
+namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double time_kernel1; double time_kernel2; double time_communication_send; double time_communication_receive; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTION *********************** **/
@@ -378,8 +378,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
    cl_ulong start, end;
    event.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    event.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_overhead += (end - start)/1.0E9;
-   //cerr << "\ntime_overhead[fixo]: " << (end - start)/1.0E9 << endl;
+   data.time_communication_send += (end - start)/1.0E9;
 
    //inputs = (float*) data.queue.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_READ, 0, data.nlin * ncol * sizeof( float ) );
    //for( int i = 0; i < data.nlin * ncol; i++ )
@@ -465,12 +464,12 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    data.max_arity = max_arity;
    data.nlin = nlin;
    data.population_size = population_size;
-   data.time_send     = 0.0f;
-   data.time_receive  = 0.0f;
-   data.time_kernel1  = 0.0f;
-   data.time_kernel2  = 0.0f;
-   data.time_kernels  = 0.0f;
-   data.time_overhead = 0.0f;
+#ifdef PROFILING
+   data.time_kernel1  = 0.0;
+   data.time_kernel2  = 0.0;
+   data.time_communication_send    = 0.0;
+   data.time_communication_receive = 0.0;
+#endif
 
    cl_device_type type = CL_INVALID_DEVICE_TYPE;
    if( Opts.String.Found("-type") )
@@ -527,11 +526,25 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 // -----------------------------------------------------------------------------
 void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*), Population* migrants, int* nImmigrants, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
 {
-   std::vector<cl::Event> events(5); 
+   std::vector<cl::Event> events(9); 
 
-   data.queue.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, data.max_size * nInd * sizeof( Symbol ), phenotype, NULL, &events[0] );
-   data.queue.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, data.max_size * nInd * sizeof( float ), ephemeral, NULL, &events[1] ); 
-   data.queue.enqueueWriteBuffer( data.buffer_size, CL_TRUE, 0, nInd * sizeof( int ), size, NULL, &events[2] ); 
+   data.queue.enqueueWriteBuffer( data.buffer_phenotype, CL_TRUE, 0, data.max_size * nInd * sizeof( Symbol ), phenotype, NULL
+#ifdef PROFILING
+   , &events[0]
+#endif
+   );
+
+   data.queue.enqueueWriteBuffer( data.buffer_ephemeral, CL_TRUE, 0, data.max_size * nInd * sizeof( float ), ephemeral, NULL
+#ifdef PROFILING
+   , &events[1]
+#endif
+   );
+
+   data.queue.enqueueWriteBuffer( data.buffer_size, CL_TRUE, 0, nInd * sizeof( int ), size, NULL
+#ifdef PROFILING
+   , &events[2]
+#endif
+   );
 
    if( data.strategy == "FP" ) 
    {
@@ -541,7 +554,11 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    //std::cerr << "Global size: " << data.global_size1 << " Local size: " << data.local_size1 << " Work group: " << data.global_size1/data.local_size1 << std::endl;
    try {
       // ---------- begin kernel execution
-      data.queue.enqueueNDRangeKernel( data.kernel1, cl::NDRange(), cl::NDRange( data.global_size1 ), cl::NDRange( data.local_size1 ), NULL, &events[3] );
+      data.queue.enqueueNDRangeKernel( data.kernel1, cl::NDRange(), cl::NDRange( data.global_size1 ), cl::NDRange( data.local_size1 ), NULL
+#ifdef PROFILING
+      , &events[3]
+#endif
+      );
       // ---------- end kernel execution
    }
    catch( cl::Error& e )
@@ -563,7 +580,11 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          try 
          {
             // ---------- begin kernel execution
-            data.queue.enqueueNDRangeKernel( data.kernel2, cl::NDRange(), cl::NDRange( data.global_size2 ), cl::NDRange( data.local_size2 ), NULL, &events[4] );
+            data.queue.enqueueNDRangeKernel( data.kernel2, cl::NDRange(), cl::NDRange( data.global_size2 ), cl::NDRange( data.local_size2 ), NULL
+#ifdef PROFILING
+            , &events[4]
+#endif
+            );
             // ---------- end kernel execution
          }
          catch( cl::Error& e )
@@ -575,29 +596,14 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       data.queue.flush();
    }
 
-   util::Timer t_time; //TODO: Onde colocar essa linha?
-   double time;
-
    if( !pep_mode)
    {
-      util::Timer t_send;
       send( migrants );
-      time = t_send.elapsed();
-      //cerr << "time_send: " << time;
-      data.time_send += time;
-   
-      util::Timer t_receive;
       *nImmigrants = receive( migrants->genome );
-      time = t_receive.elapsed();
-      //cerr << ", time_receive: " << time;
-      data.time_receive += time;
    }
 
    // Wait until the kernel has finished
    data.queue.finish();
-   time = t_time.elapsed();
-   //cerr << ", time_kernels(send+receive): " << time;
-   data.time_kernels += time;
 
 
    // TODO: data.queuetransfer.finish();
@@ -628,9 +634,16 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 
          // The line below maps the contents of 'data_buffer_vector' into 'tmp'.
          // essa linha some
-         tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, num_work_groups * nInd * sizeof( float ) );
-         // Reduction on host!
+         tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, num_work_groups * nInd * sizeof( float ), NULL
+#ifdef PROFILING
+         , &events[5]
+#endif
+         );
 
+         // Reduction on host!
+#ifdef PROFILING
+         util::Timer t_time;
+#endif
          for( int i = 0; i < nInd; i++)
          {
             float sum = 0.0f;
@@ -654,8 +667,21 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
             else
                vector[i] = sum/data.nlin + alpha * size[i];
          }
+#ifdef PROFILING
+         data.time_kernel1 += t_time.elapsed();
+#endif
 
-         data.queue.enqueueWriteBuffer( data.buffer_error, CL_TRUE, 0, data.population_size * sizeof( float ), vector );
+         data.queue.enqueueWriteBuffer( data.buffer_error, CL_TRUE, 0, data.population_size * sizeof( float ), vector, NULL
+#ifdef PROFILING
+         , &events[6]
+#endif
+         );
+#ifdef PROFILING
+         cl_ulong start, end;
+         events[6].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+         events[6].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+         data.time_communication_send += (end - start)/1.0E9;
+#endif
 
          if( !pep_mode )
          {
@@ -663,7 +689,11 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
             try
             {
                // ---------- begin kernel execution
-               data.queue.enqueueNDRangeKernel( data.kernel2, cl::NDRange(), cl::NDRange( data.global_size2 ), cl::NDRange( data.local_size2 ), NULL, &events[4] );
+               data.queue.enqueueNDRangeKernel( data.kernel2, cl::NDRange(), cl::NDRange( data.global_size2 ), cl::NDRange( data.local_size2 ), NULL
+#ifdef PROFILING
+               , &events[4]
+#endif
+               );
                // ---------- end kernel execution
             }
             catch( cl::Error& e )
@@ -680,7 +710,11 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
       {
          if( data.strategy == "PPCU" || data.strategy == "PP" ) 
          {
-            tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ) );
+            tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ), NULL
+#ifdef PROFILING
+         , &events[5]
+#endif
+         );
             for( int i = 0; i < nInd; i++ ) { vector[i] = tmp[i] + alpha * size[i]; }
 
             //printf("%f\n", vector[0]);
@@ -695,11 +729,22 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          const unsigned num_work_groups2 = data.global_size2 / data.local_size2;
    
          // The line below maps the contents of 'data_buffer_pb' and 'data_buffer_pi' into 'PB' and 'PI', respectively.
-         float* PB = (float*) data.queue.enqueueMapBuffer( data.buffer_pb, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( float ) );
-         int* PI = (int*) data.queue.enqueueMapBuffer( data.buffer_pi, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( int ) );
+         float* PB = (float*) data.queue.enqueueMapBuffer( data.buffer_pb, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( float ), NULL
+#ifdef PROFILING
+         , &events[7]
+#endif
+         );
+         int* PI = (int*) data.queue.enqueueMapBuffer( data.buffer_pi, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( int ), NULL
+#ifdef PROFILING
+         , &events[8]
+#endif
+         );
    
          if( *best_size > num_work_groups2 ) { *best_size = num_work_groups2; }
          
+#ifdef PROFILING
+         util::Timer t_time;
+#endif
          std::priority_queue<std::pair<float, int> > q;
          for( int i = 0; i < num_work_groups2; ++i ) 
          {
@@ -715,7 +760,10 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
             q.pop();
          }
          //fprintf(stdout,"\n============================\n");
-   
+#ifdef PROFILING
+         data.time_kernel2 += t_time.elapsed();
+#endif
+
          data.queue.enqueueUnmapMemObject( data.buffer_pb, PB ); 
          data.queue.enqueueUnmapMemObject( data.buffer_pi, PI );
       }
@@ -724,38 +772,47 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
    //essa linha some
    data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp ); 
 
+#ifdef PROFILING
    cl_ulong start, end;
    events[0].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    events[0].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_overhead += (end - start)/1.0E9;
-   time = (end - start)/1.0E9;
+   data.time_communication_send += (end - start)/1.0E9;
+
    events[1].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    events[1].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_overhead += (end - start)/1.0E9; 
-   time += (end - start)/1.0E9;
+   data.time_communication_send += (end - start)/1.0E9; 
+
    events[2].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    events[2].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_overhead += (end - start)/1.0E9; 
-   time += (end - start)/1.0E9;
+   data.time_communication_send += (end - start)/1.0E9; 
    
    events[3].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    events[3].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
    data.time_kernel1 += (end - start)/1.0E9;
-   //cerr << ", time_kernel[1]: " << (end - start)/1.0E9;
 
    if( !pep_mode )
    {
       events[4].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
       events[4].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
       data.time_kernel2 += (end - start)/1.0E9;
-      //cerr << ", time_kernel[2]: " << (end - start)/1.0E9;
    }
 
-   //cerr << ", time_overhead: " << time;
+   events[5].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   events[5].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_communication_receive += (end - start)/1.0E9;
+
+   events[7].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   events[7].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_communication_send += (end - start)/1.0E9;
+
+   events[8].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   events[8].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_communication_send += (end - start)/1.0E9;
+#endif
 }
 
 // -----------------------------------------------------------------------------
 void acc_print_time()
 {
-   printf("time_send: %lf, time_receive: %lf, time_kernels(send+receive): %lf, time_kernel[1]: %lf, time_kernel[2]: %lf, time_overhead: %lf\n", data.time_send, data.time_receive, data.time_kernels, data.time_kernel1, data.time_kernel2, data.time_overhead);
+   printf("time_kernel[1]: %lf, time_kernel[2]: %lf, time_communication_send: %lf, time_communication_receive: %lf\n", data.time_kernel1, data.time_kernel2, data.time_communication_send, data.time_communication_receive);
 }
