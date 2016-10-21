@@ -25,6 +25,11 @@ if (REDUCEMAX)
    message(STATUS "Reduce type: Maximum error")
 endif ()
 
+if (PROFILING)
+   message(STATUS "Enabling time profiling")
+   add_definitions(-DPROFILING)
+endif ()
+
 set (GRAMMAR_INTERPRETER_DIR "${CMAKE_BINARY_DIR}/${LABEL}-include")
 file (MAKE_DIRECTORY "${GRAMMAR_INTERPRETER_DIR}")
 #message("COMMAND python script/read_grammar.py -o ${CMAKE_BINARY_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/problem/interpreter_core -p ${CMAKE_SOURCE_DIR}/problem/pee_individual_print_function")

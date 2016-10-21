@@ -67,8 +67,13 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
 
             if ( !util::StringTo<float>(input[i][j], token) ) 
             {
-               fprintf(stderr, "Invalid input at line %d, column %d.\n", k+1, j+1);
-               return 2;
+               if( header )
+                  header =  false;
+               else 
+               {
+                  fprintf(stderr, "Invalid input at line %d, column %d.\n", k+1, j+1);
+                  return 2;
+               }
             }
             if( isnan( input[i][j]) || isinf(input[i][j]) )
             {

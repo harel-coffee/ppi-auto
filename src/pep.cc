@@ -24,7 +24,7 @@
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int nlin; Symbol* phenotype; float* ephemeral; int* size; float* vector; int prediction; int version; } data; };
+namespace { static struct t_data { int nlin; Symbol* phenotype; float* ephemeral; int* size; float* vector; int prediction; int parallel_version; } data; };
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTIONS ************************* **/
@@ -44,7 +44,7 @@ void pep_init( float** input, int nlin, int ncol, int argc, char** argv )
    iss.str (solution);
 
    data.prediction = Opts.Bool.Get("-pred");
-   data.version = Opts.Bool.Get("-acc");
+   data.parallel_version = Opts.Bool.Get("-acc");
 
    data.size = new int[1];
    // Put the size of the solution (number of Symbols) into the variable data.size[0]
@@ -79,7 +79,7 @@ void pep_init( float** input, int nlin, int ncol, int argc, char** argv )
 
    data.nlin = nlin;
 
-   if( data.version )
+   if( data.parallel_version )
    {
       if( acc_interpret_init( argc, argv, data.size[0], -1, 1, input, nlin, ncol, 1, data.prediction ) )
       {
@@ -97,7 +97,7 @@ void pep_interpret()
    if( data.prediction )
    {
       data.vector = new float[data.nlin];
-      if( data.version )
+      if( data.parallel_version )
       {
          acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, 0 );
       }
@@ -109,7 +109,7 @@ void pep_interpret()
    else
    {
       data.vector = new float[1];
-      if( data.version )
+      if( data.parallel_version )
       {
          acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, 0 );
       }
@@ -138,5 +138,5 @@ void pep_destroy()
    delete[] data.size;
    delete[] data.vector;
 
-   if( !data.version ) {seq_interpret_destroy();}
+   if( !data.parallel_version ) {seq_interpret_destroy();}
 }
