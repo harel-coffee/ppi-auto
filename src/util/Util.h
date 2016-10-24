@@ -29,6 +29,7 @@
 #include <sstream>
 #include <cstring>
 #include <cmath>
+#include <queue>
 
 // -----------------------------------------------------------------------------
 namespace util {
@@ -152,6 +153,23 @@ inline unsigned NextPowerOf2( unsigned n )
    n++;
 
    return n;
+}
+
+void inline PickNBest(int n, int *best, int num_individuals, float *errors, int *indices = 0)
+{
+   /* This reduction makes use of a priority queue in order to sort the individuals
+      according to their errors so that the first ones in the queue are the best. */
+   std::priority_queue<std::pair<float, int> > q;
+   for( int i = 0; i < num_individuals; ++i ) 
+   {
+      q.push( std::pair<float, int>(errors[i]*(-1.0f), i) ); // multiply by -1 so that the ones with less errors are the first ones
+   }
+   for( int i = 0; i < n; ++i ) // pick first the top (best) individuals
+   {
+      // If a mapping is given through 'indices' then use it instead of the sole index provided by q.top().second
+      best[i] = indices ? indices[q.top().second] : q.top().second;
+      q.pop();
+   }
 }
 
 // -----------------------------------------------------------------------------

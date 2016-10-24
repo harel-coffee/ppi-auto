@@ -130,21 +130,16 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, int sum_size
 
    if( !pep_mode )
    {
-      std::priority_queue<std::pair<float, int> > q;
-      for( int i = 0; i < nInd; ++i ) 
-      {
-         q.push( std::pair<float, int>(vector[i]*(-1), i) );
-      }
-      for( int i = 0; i < *best_size; ++i ) 
-      {
-         index[i] = q.top().second;
-         q.pop();
-      }
-   }
 #ifdef PROFILING
-   data.time_total_kernel2  += t_kernel.elapsed();
-   data.time_gen_kernel2     = t_kernel.elapsed();
+      util::Timer t_time;
 #endif
+      /* Reduction to find the best individuals. */
+      util::PickNBest(*best_size, index, nInd, vector);
+#ifdef PROFILING
+      data.time_total_kernel2  += t_time.elapsed();
+      data.time_gen_kernel2     = t_time.elapsed();
+#endif
+   }
 }
 
 void seq_interpret_destroy() 

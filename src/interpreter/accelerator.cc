@@ -9,7 +9,6 @@
 #include <limits>
 #include <string>   
 #include <vector>
-#include <queue>
 #include <utility>
 #include <iostream> 
 #include <fstream> 
@@ -756,21 +755,8 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, int sum_size
 #ifdef PROFILING
          util::Timer t_time;
 #endif
-         std::priority_queue<std::pair<float, int> > q;
-         for( int i = 0; i < num_work_groups2; ++i ) 
-         {
-            //fprintf(stdout,"%f ", PB[i]);
-            q.push( std::pair<float, int>(PB[i]*(-1), i) );
-         }
-         //fprintf(stdout,"\n============================\n");
-         for( int i = 0; i < *best_size; ++i ) 
-         {
-            int idx = q.top().second;
-            //fprintf(stdout,"%f ", PB[idx]);
-            index[i] = PI[idx];
-            q.pop();
-         }
-         //fprintf(stdout,"\n============================\n");
+         /* Reduction on host of the per-group partial reductions performed by kernel2. */
+         util::PickNBest(*best_size, index, num_work_groups2, PB, PI);
 #ifdef PROFILING
          data.time_gen_kernel2   += t_time.elapsed();
          data.time_total_kernel2 += t_time.elapsed();
