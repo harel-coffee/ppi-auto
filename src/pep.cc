@@ -99,11 +99,11 @@ void pep_interpret()
       data.vector = new float[data.nlin];
       if( data.parallel_version )
       {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, 0 );
+         acc_interpret( data.phenotype, data.ephemeral, data.size, 0, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, 0 );
       }
       else
       {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, 1, 1, 0 );
+         seq_interpret( data.phenotype, data.ephemeral, data.size, 0, data.vector, 1, NULL, NULL, 1, 1, 0 );
       }
    }
    else
@@ -111,11 +111,11 @@ void pep_interpret()
       data.vector = new float[1];
       if( data.parallel_version )
       {
-         acc_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, 0 );
+         acc_interpret( data.phenotype, data.ephemeral, data.size, 0, data.vector, 1, NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, 0 );
       }
       else
       {
-         seq_interpret( data.phenotype, data.ephemeral, data.size, data.vector, 1, NULL, NULL, 1, 0, 0 );
+         seq_interpret( data.phenotype, data.ephemeral, data.size, 0, data.vector, 1, NULL, NULL, 1, 0, 0 );
       }
    }
 }

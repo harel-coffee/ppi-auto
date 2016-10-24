@@ -70,7 +70,7 @@ struct Peer {
   float frequency;
 };
 
-namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int verbose; int machine; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int parallel_version; double time_total; double time_total_gen; double time_generate; double time_total_evaluate; double time_gen_evaluate; double gpops_total_evaluate; double gpops_gen_evaluate; double time_total_crossover; double time_gen_crossover; double time_total_mutation; double time_gen_mutation; double time_total_clone; double time_gen_clone; double time_total_tournament; double time_gen_tournament; double time_total_send; double time_gen_send; double time_total_receive; double time_gen_receive; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; int argc; char ** argv;  } data; };
+namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; int sum_size; int verbose; int machine; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int parallel_version; double time_total; double time_total_gen; double time_generate; double time_total_evaluate; double time_gen_evaluate; double gpops_gen_evaluate; double time_total_crossover; double time_gen_crossover; double time_total_mutation; double time_gen_mutation; double time_total_clone; double time_gen_clone; double time_total_tournament; double time_gen_tournament; double time_total_send; double time_gen_send; double time_total_receive; double time_gen_receive; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; int argc; char ** argv;  } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -247,6 +247,7 @@ void pee_init( float** input, int nlin, int ncol, int argc, char** argv )
    data.phenotype = new Symbol[data.population_size * data.max_size_phenotype];
    data.ephemeral = new float[data.population_size * data.max_size_phenotype];
    data.size = new int[data.population_size];
+   data.sum_size = 0;
 
    std::string str = Opts.String.Get("-peers");
    //std::cout << str << std::endl;
@@ -429,7 +430,7 @@ void pee_send_individual( Population* population )
    }
 
 #ifdef PROFILING
-   data.time_gen_send   += t_send.elapsed();
+   data.time_gen_send    = t_send.elapsed();
    data.time_total_send += t_send.elapsed();
 #endif
 }
@@ -488,7 +489,7 @@ int pee_receive_individual( GENOME_TYPE* immigrants )
    }
 
 #ifdef PROFILING
-   data.time_gen_receive   += t_receive.elapsed();
+   data.time_gen_receive    = t_receive.elapsed();
    data.time_total_receive += t_receive.elapsed();
 #endif
 
@@ -499,29 +500,35 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
 {
 #ifdef PROFILING
    util::Timer t_evaluate;
-   int sum_size = 0;
+   int sum_size_gen = 0;
 #endif
 
+#ifdef PROFILING
+#pragma omp parallel for reduction(+:sum_size_gen)
+#else
 #pragma omp parallel for
-#pragma omp+ reduction(+:sum_size)
+#endif
    for( int i = 0; i < data.population_size; i++ )
    {
       int allele = 0;
       data.size[i] = decode( descendentes->genome + (i * data.number_of_bits), &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
 #ifdef PROFILING
-      sum_size += data.size[i];
+      sum_size_gen += data.size[i];
 #endif
    }
+#ifdef PROFILING
+   data.sum_size += sum_size_gen;
+#endif
 
    int index[data.best_size];
 
    if( data.parallel_version )
    {
-      acc_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, &pee_send_individual, &pee_receive_individual, antecedentes, nImmigrants, index, &data.best_size, 0, 0, ALPHA );
+      acc_interpret( data.phenotype, data.ephemeral, data.size, sum_size_gen, descendentes->fitness, data.population_size, &pee_send_individual, &pee_receive_individual, antecedentes, nImmigrants, index, &data.best_size, 0, 0, ALPHA );
    }
    else
    {
-      seq_interpret( data.phenotype, data.ephemeral, data.size, descendentes->fitness, data.population_size, index, &data.best_size, 0, 0, ALPHA );
+      seq_interpret( data.phenotype, data.ephemeral, data.size, sum_size_gen, descendentes->fitness, data.population_size, index, &data.best_size, 0, 0, ALPHA );
       *nImmigrants = pee_receive_individual( antecedentes->genome );
    }
 
@@ -539,10 +546,9 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
    }
 
 #ifdef PROFILING
-   data.time_gen_evaluate    += t_evaluate.elapsed();
+   data.time_gen_evaluate     = t_evaluate.elapsed();
    data.time_total_evaluate  += t_evaluate.elapsed();
-   data.gpops_gen_evaluate   += (sum_size * data.nlin) / t_evaluate.elapsed();
-   data.gpops_total_evaluate += (sum_size * data.nlin) / t_evaluate.elapsed();
+   data.gpops_gen_evaluate    = (sum_size_gen * data.nlin) / t_evaluate.elapsed();
 #endif
 
    return Server::stagnation;
@@ -715,16 +721,16 @@ void pee_print_time( bool total )
    double time_tournament = total ? data.time_total_tournament : data.time_gen_tournament;
    double time_send       = total ? data.time_total_send : data.time_gen_send;
    double time_receive    = total ? data.time_total_receive : data.time_gen_receive;
-   double gpops_evaluate  = total ? data.gpops_total_evaluate : data.gpops_gen_evaluate;
+   double gpops_evaluate  = total ? (data.sum_size * data.nlin) / data.time_total_evaluate : data.gpops_gen_evaluate;
 
    printf(", time_generate: %lf, time_evaluate: %lf, time_crossover: %lf, time_mutation: %lf, time_clone: %lf, time_tournament: %lf, time_send: %lf, time_receive: %lf, time_total: %lf", data.time_generate, time_evaluate, time_crossover, time_mutation, time_clone, time_tournament, time_send, time_receive, time_total);
    if( data.parallel_version )
    {
-      acc_print_time(total);
+      acc_print_time(total, data.sum_size);
    }
    else 
    {
-      seq_print_time(total);
+      seq_print_time(total, data.sum_size);
    }
    printf(";gpops_evaluate: %lf\n", gpops_evaluate);
 #else
@@ -763,13 +769,13 @@ int pee_evolve()
    */
 
 #ifdef PROFILING
-   data.time_total_evaluate   = 0.0;
-   data.time_total_crossover  = 0.0;
-   data.time_total_mutation   = 0.0;
-   data.time_total_clone      = 0.0;
-   data.time_total_tournament = 0.0;
-   data.time_total_send       = 0.0;
-   data.time_total_receive    = 0.0;
+   data.time_total_evaluate    = 0.0;
+   data.time_total_crossover   = 0.0;
+   data.time_total_mutation    = 0.0;
+   data.time_total_clone       = 0.0;
+   data.time_total_tournament  = 0.0;
+   data.time_total_send        = 0.0;
+   data.time_total_receive     = 0.0;
 #endif
    
    // -----
@@ -806,13 +812,10 @@ int pee_evolve()
 #ifdef PROFILING
       util::Timer t_total_gen;
 
-      data.time_gen_evaluate   = 0.0;
       data.time_gen_crossover  = 0.0;
       data.time_gen_mutation   = 0.0;
       data.time_gen_clone      = 0.0;
       data.time_gen_tournament = 0.0;
-      data.time_gen_send       = 0.0;
-      data.time_gen_receive    = 0.0;
 #endif
 
       // 4:
@@ -878,7 +881,7 @@ int pee_evolve()
          if (Server::stagnation == 0 || geracao < 2) {
             if (data.machine) { // Output meant to be consumed by scripts, not humans
                pee_print_best(stdout, geracao, 1);
-               pee_print_time();
+               pee_print_time(false);
             } else
                pee_print_best(stdout, geracao, 0);
 

@@ -19,7 +19,7 @@ void seq_interpret_init( const unsigned size, float** input, int nlin, int ncol 
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha );
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, int sum_size_gen, float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha );
 
 /** ************************************************************************************************** **/
 /** ********************************** Function interpret_destroy ************************************ **/
@@ -28,6 +28,6 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 /** ************************************************************************************************** **/
 void seq_interpret_destroy();
 
-void seq_print_time( bool total=false );
+void seq_print_time( bool total, int sum_size );
 
 #endif
