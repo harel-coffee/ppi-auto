@@ -6,13 +6,14 @@
 #include <limits>
 #include <queue>
 #include "sequential.h"
+#include "../util/Util.h"
 
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-static struct t_data { unsigned size; float** inputs; int nlin; int ncol; } data;
+static struct t_data { unsigned size; float** inputs; int nlin; int ncol; double time_total_kernel1; double time_total_kernel2; double gpops_total_kernel; double time_gen_kernel1; double time_gen_kernel2; double gpops_gen_kernel; int generations; } data;
 
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
@@ -20,6 +21,13 @@ static struct t_data { unsigned size; float** inputs; int nlin; int ncol; } data
 
 void seq_interpret_init( const unsigned size, float** input, int nlin, int ncol ) 
 {
+#ifdef PROFILING
+   data.time_total_kernel1  = 0.0;
+   data.time_total_kernel2  = 0.0;
+   data.gpops_total_kernel  = 0.0;
+   data.generations = 0;
+#endif
+
    data.size = size;
    data.nlin = nlin;
    data.ncol = ncol;
@@ -50,6 +58,10 @@ void seq_interpret_init( const unsigned size, float** input, int nlin, int ncol 
 
 void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
 {
+#ifdef PROFILING
+   util::Timer t_kernel;
+#endif
+
    float stack[data.size]; 
    float sum; 
    int stack_top;
@@ -112,6 +124,18 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          }
       }
    }
+#ifdef PROFILING
+   int sum_size = 0;
+   for( int i = 0; i < nInd; i++ )
+   {
+      sum_size += size[i];
+   }
+   data.time_total_kernel1  += t_kernel.elapsed();
+   data.time_gen_kernel1     = t_kernel.elapsed();
+   data.gpops_total_kernel  += (sum_size * data.nlin) / t_kernel.elapsed();
+   data.gpops_gen_kernel     = (sum_size * data.nlin) / t_kernel.elapsed();
+   data.generations = data.generations + 1;
+#endif
 
    if( !pep_mode )
    {
@@ -126,6 +150,10 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
          q.pop();
       }
    }
+#ifdef PROFILING
+   data.time_total_kernel2  += t_kernel.elapsed();
+   data.time_gen_kernel2     = t_kernel.elapsed();
+#endif
 }
 
 void seq_interpret_destroy() 
@@ -133,4 +161,14 @@ void seq_interpret_destroy()
    for( int i = 0; i < data.nlin; ++i )
      delete [] data.inputs[i];
    delete [] data.inputs;
+}
+
+void seq_print_time( bool total )
+{ 
+   double time_kernel1 = total ? data.time_total_kernel1 : data.time_gen_kernel1;
+   double time_kernel2 = total ? data.time_total_kernel2 : data.time_gen_kernel2;
+   double gpops_kernel = total ? data.gpops_total_kernel/data.generations : data.gpops_gen_kernel;
+
+   printf(", time_kernel[1]: %lf, time_kernel[2]: %lf", time_kernel1, time_kernel2);
+   printf(";gpops_kernel: %lf", gpops_kernel);
 }

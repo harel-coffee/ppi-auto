@@ -27,6 +27,6 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void acc_print_time();
+void acc_print_time( bool total=false );
 
 #endif

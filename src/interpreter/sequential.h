@@ -28,4 +28,6 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, float* vecto
 /** ************************************************************************************************** **/
 void seq_interpret_destroy();
 
+void seq_print_time( bool total=false );
+
 #endif

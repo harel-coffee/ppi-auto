@@ -152,7 +152,7 @@ int main(int argc, char** argv)
          int generations = pee_evolve();
          fprintf(stdout, "\n> Overall best:");
          pee_print_best( stdout, generations, 1 );
-         pee_print_time();
+         pee_print_time(true);
          pee_destroy();
       }
 
