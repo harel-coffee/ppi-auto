@@ -532,7 +532,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 }
 
 // -----------------------------------------------------------------------------
-void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, int sum_size_gen, float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*), Population* migrants, int* nImmigrants, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
+void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, unsigned long sum_size_gen, float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*), Population* migrants, int* nImmigrants, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
 {
 #ifdef PROFILING
    std::vector<cl::Event> events(9); 
@@ -831,7 +831,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, int sum_size
 }
 
 // -----------------------------------------------------------------------------
-void acc_print_time( bool total, int sum_size )
+void acc_print_time( bool total, unsigned long long sum_size )
 {
    double time_kernel1 = total ? data.time_total_kernel1 : data.time_gen_kernel1;
    double time_kernel2 = total ? data.time_total_kernel2 : data.time_gen_kernel2;
@@ -841,5 +841,5 @@ void acc_print_time( bool total, int sum_size )
    double gpops_communication = total ? (sum_size * data.nlin) / (data.time_total_kernel1 + data.time_total_communication1) : data.gpops_gen_communication;
 
    printf(", time_kernel[1]: %lf, time_kernel[2]: %lf, time_communication_send: %lf, time_communication_receive: %lf", time_kernel1, time_kernel2, time_communication_send, time_communication_receive);
-   printf(";gpops_kernel: %lf, gpops_kernel_communication: %lf", gpops_kernel, gpops_communication);
+   printf("; gpops_kernel: %lf, gpops_kernel_communication: %lf", gpops_kernel, gpops_communication);
 }

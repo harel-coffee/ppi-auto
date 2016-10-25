@@ -148,10 +148,13 @@ int main(int argc, char** argv)
          srv.start();
          //sleep(100);
 
+         util::Timer t_total;
          pee_init( input, nlin, ncol, argc, argv );
          int generations = pee_evolve();
+
          fprintf(stdout, "\n> Overall best:");
          pee_print_best( stdout, generations, 1 );
+         printf(";time_total: %lf", t_total.elapsed());
          pee_print_time(true);
          pee_destroy();
       }

@@ -54,7 +54,7 @@ void seq_interpret_init( const unsigned size, float** input, int nlin, int ncol 
 //   }
 }
 
-void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, int sum_size_gen, float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, unsigned long sum_size_gen, float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
 {
 #ifdef PROFILING
    util::Timer t_kernel;
@@ -149,12 +149,12 @@ void seq_interpret_destroy()
    delete [] data.inputs;
 }
 
-void seq_print_time( bool total, int sum_size )
+void seq_print_time( bool total, unsigned long long sum_size )
 { 
    double time_kernel1 = total ? data.time_total_kernel1 : data.time_gen_kernel1;
    double time_kernel2 = total ? data.time_total_kernel2 : data.time_gen_kernel2;
    double gpops_kernel = total ? (sum_size * data.nlin) / data.time_total_kernel1 : data.gpops_gen_kernel;
 
    printf(", time_kernel[1]: %lf, time_kernel[2]: %lf", time_kernel1, time_kernel2);
-   printf(";gpops_kernel: %lf", gpops_kernel);
+   printf("; gpops_kernel: %lf", gpops_kernel);
 }
