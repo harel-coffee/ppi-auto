@@ -40,17 +40,21 @@ def interpreter(terminal):
       else:
          return None
 
+def read_file(filename):
+   try:
+      f = open(filename, "r")
+   except IOError:
+      print "Could not open file '" + filename + "'"
+   lines = f.readlines()
+   f.close()
+   return lines
+
 
 if __name__ == "__main__":
    args = main(sys.argv)
 
 
-try:
-   f = open(args.grammar,"r")
-except IOError:
-   print "Could not open file '" + args.grammar + "'"
-lines = f.readlines()
-f.close()
+lines = read_file(args.grammar)
 
 grammar = []
 for i in range(0,len(lines)):
@@ -227,8 +231,6 @@ f.close()
 symbol_head = r"""#ifndef __SYMBOL_H
 #define __SYMBOL_H
 
-#define UNPROTECTED_FUNCTIONS 1
-
 #ifndef M_PI_F
    #define M_PI_F 3.14159274101257f
 #endif
@@ -291,12 +293,8 @@ f = open(os.path.join(args.output_dir, "symbol"), 'w')
 f.write(symbol_head + text4 + text5 + text6 + symbol_tail)
 f.close()
 
-try:
-   f = open(args.interpreter,"r")
-except IOError:
-   print "Could not open file '" + args.interpreter + "'"
-lines = f.readlines()
-f.close()
+lines = read_file(args.interpreter)
+lines += read_file(args.interpreter+'-unprotected')
 
 lst = list(text5.split())
 lst = [s.replace(',', '') for s in lst]
@@ -325,12 +323,7 @@ for i in range(0,len(missing)):
    if missing[i] != "T_CONST":
       print "Missing terminal:", missing[i], "\nPlease check the '" + args.interpreter + "' file"
 
-try:
-   f = open(args.interpreter_print,"r")
-except IOError:
-   print "Could not open file '" + args.interpreter_print + "'"
-lines = f.readlines()
-f.close()
+lines = read_file(args.interpreter_print)
 
 lst = list(text5.split())
 lst = [s.replace(',', '') for s in lst]
