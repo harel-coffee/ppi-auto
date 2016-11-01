@@ -15,3 +15,16 @@
  - Implements the genome vector as a truly binary vector. In other words, it
    would be represented as a vector of 32/64-bit numbers and bit masks would be
 used to access individual bits.
+
+ - Make the phenotype/ephemeral arrays dynamic w.r.t. their sizes. This would
+   require that be allocated enough memory for the buffers--in order to not
+require them to be recreated--and the actual size (current maximum) be passed
+as a kernel argument. This optimization is welcome because if a grammar has a
+reasonable amount of symbols per rule then the phenotype/ephemeral arrays would
+be too big (because in theory the sentence size could be proportional to the
+maximum number of symbols per rule). Using a dynamic container (such as C++'s
+vector) would make this optimization easier, but the challenge is how to
+properly initially allocate the buffers (using all the device's global memory?).
+NB: To compute the maximum stack size of the interpreter it suffices to know
+the maximum arity of the functions in the interpreter core files. This could
+be given by hints, such as "// ARITY=3".
