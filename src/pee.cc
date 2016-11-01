@@ -502,25 +502,25 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
 #ifdef PROFILING
    util::Timer t_evaluate;
    unsigned long sum_size_gen = 0;
-   int max_size = 0;
+   //int max_size = 0;
 #endif
 
-//#ifdef PROFILING
-//#pragma omp parallel for reduction(+:sum_size_gen)
-//#else
-//#pragma omp parallel for
-//#endif
+#ifdef PROFILING
+#pragma omp parallel for reduction(+:sum_size_gen)
+#else
+#pragma omp parallel for
+#endif
    for( int i = 0; i < data.population_size; i++ )
    {
       int allele = 0;
       data.size[i] = decode( descendentes->genome + (i * data.number_of_bits), &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
 #ifdef PROFILING
       sum_size_gen += data.size[i];
-      if( max_size < data.size[i] ) max_size = data.size[i];
+      //if( max_size < data.size[i] ) max_size = data.size[i];
 #endif
    }
 #ifdef PROFILING
-   std::cout << sum_size_gen/(double)data.population_size << " " << max_size << std::endl;
+   //std::cout << sum_size_gen/(double)data.population_size << " " << max_size << std::endl;
    data.sum_size += sum_size_gen;
 #endif
 
