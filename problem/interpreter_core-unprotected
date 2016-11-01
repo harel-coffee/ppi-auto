@@ -1,19 +1,19 @@
 case T_DIV:
-   stack[stack_top - 1] = stack[stack_top] / stack[stack_top - 1];
+   stack[stack_top - 1] = native_divide(stack[stack_top], stack[stack_top - 1]);
    --stack_top;
    break;
 case T_SQRT:
-   stack[stack_top] = sqrt(stack[stack_top]);
+   stack[stack_top] = native_sqrt(stack[stack_top]);
    break;
 case T_LOG:
-   stack[stack_top] = log(stack[stack_top]);
+   stack[stack_top] = native_log(stack[stack_top]);
    break;
 case T_LOG10:
-   stack[stack_top] = log10(stack[stack_top]);
+   stack[stack_top] = native_log10(stack[stack_top]);
    break;
 case T_LOG2:
-   stack[stack_top] = log2(stack[stack_top]);
+   stack[stack_top] = native_log2(stack[stack_top]);
    break;
 case T_TAN:
-   stack[stack_top] = tan(stack[stack_top]);
+   stack[stack_top] = native_tan(stack[stack_top]);
    break;

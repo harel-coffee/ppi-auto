@@ -19,7 +19,11 @@ void seq_interpret_init( const unsigned size, float** input, int nlin, int ncol 
 /** ************************************************************************************************** **/
 /**                                                                                                    **/
 /** ************************************************************************************************** **/
-void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, unsigned long sum_size_gen, float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha );
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, 
+#ifdef PROFILING
+unsigned long sum_size_gen, 
+#endif
+float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha );
 
 /** ************************************************************************************************** **/
 /** ********************************** Function interpret_destroy ************************************ **/
@@ -28,6 +32,8 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, unsigned lon
 /** ************************************************************************************************** **/
 void seq_interpret_destroy();
 
+#ifdef PROFILING
 void seq_print_time( bool total, unsigned long long sum_size );
+#endif
 
 #endif

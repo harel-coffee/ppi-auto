@@ -27,7 +27,7 @@ using namespace std;
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double gpops_gen_kernel; double gpops_gen_communication; double time_gen_kernel1; double time_gen_kernel2; double time_gen_communication_send; double time_gen_communication_receive; double time_total_kernel1; double time_total_kernel2; double time_total_communication_send; double time_total_communication_receive; double time_total_communication1; } data; };
+namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double gpops_gen_kernel; double gpops_gen_communication; double time_gen_kernel1; double time_gen_kernel2; double time_gen_communication_send; double time_gen_communication_receive; double time_total_kernel1; double time_total_kernel2; double time_communication_dataset; double time_total_communication_send; double time_total_communication_receive; double time_total_communication1; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTION *********************** **/
@@ -159,7 +159,11 @@ int opencl_init( int platform_id, int device_id, cl_device_type type )
 
    data.context = cl::Context( devices );
 
-   data.queue = cl::CommandQueue( data.context, data.device, CL_QUEUE_PROFILING_ENABLE );
+   data.queue = cl::CommandQueue( data.context, data.device
+#ifdef PROFILING
+   , CL_QUEUE_PROFILING_ENABLE 
+#endif
+   );
 
 
    return 0;
@@ -384,7 +388,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
    cl_ulong start, end;
    event.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    event.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_total_communication_send += (end - start)/1.0E9;
+   data.time_communication_dataset = (end - start)/1.0E9;
 #endif
 
    //inputs = (float*) data.queue.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_READ, 0, data.nlin * ncol * sizeof( float ) );
@@ -532,7 +536,11 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
 }
 
 // -----------------------------------------------------------------------------
-void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, unsigned long sum_size_gen, float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*), Population* migrants, int* nImmigrants, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
+void acc_interpret( Symbol* phenotype, float* ephemeral, int* size,
+#ifdef PROFILING
+unsigned long sum_size_gen,
+#endif
+float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*), Population* migrants, int* nImmigrants, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
 {
 #ifdef PROFILING
    std::vector<cl::Event> events(9); 
@@ -774,7 +782,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, unsigned lon
    cl_ulong start, end;
    events[0].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    events[0].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_gen_communication_send   += (end - start)/1.0E9;
+   data.time_gen_communication_send    = (end - start)/1.0E9;
    data.time_total_communication_send += (end - start)/1.0E9;
 
    events[1].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
@@ -831,6 +839,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size, unsigned lon
 }
 
 // -----------------------------------------------------------------------------
+#ifdef PROFILING
 void acc_print_time( bool total, unsigned long long sum_size )
 {
    double time_kernel1 = total ? data.time_total_kernel1 : data.time_gen_kernel1;
@@ -840,6 +849,7 @@ void acc_print_time( bool total, unsigned long long sum_size )
    double gpops_kernel = total ? (sum_size * data.nlin) / data.time_total_kernel1 : data.gpops_gen_kernel;
    double gpops_communication = total ? (sum_size * data.nlin) / (data.time_total_kernel1 + data.time_total_communication1) : data.gpops_gen_communication;
 
-   printf(", time_kernel[1]: %lf, time_kernel[2]: %lf, time_communication_send: %lf, time_communication_receive: %lf", time_kernel1, time_kernel2, time_communication_send, time_communication_receive);
+   printf(", time_kernel[1]: %lf, time_kernel[2]: %lf, time_communication_dataset: %lf, time_communication_send: %lf, time_communication_receive: %lf", time_kernel1, time_kernel2, data.time_communication_dataset, time_communication_send, time_communication_receive);
    printf("; gpops_kernel: %lf, gpops_kernel_communication: %lf", gpops_kernel, gpops_communication);
 }
+#endif

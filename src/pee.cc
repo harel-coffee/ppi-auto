@@ -240,8 +240,9 @@ void pee_init( float** input, int nlin, int ncol, int argc, char** argv )
    data.best_size = 1;
    data.best_individual.genome = NULL;
    data.best_individual.fitness = NULL;
-
+   
    data.max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * data.number_of_bits/data.bits_per_gene;
+
    data.nlin = nlin;
 
    data.phenotype = new Symbol[data.population_size * data.max_size_phenotype];
@@ -501,22 +502,25 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
 #ifdef PROFILING
    util::Timer t_evaluate;
    unsigned long sum_size_gen = 0;
+   int max_size = 0;
 #endif
 
-#ifdef PROFILING
-#pragma omp parallel for reduction(+:sum_size_gen)
-#else
-#pragma omp parallel for
-#endif
+//#ifdef PROFILING
+//#pragma omp parallel for reduction(+:sum_size_gen)
+//#else
+//#pragma omp parallel for
+//#endif
    for( int i = 0; i < data.population_size; i++ )
    {
       int allele = 0;
       data.size[i] = decode( descendentes->genome + (i * data.number_of_bits), &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
 #ifdef PROFILING
       sum_size_gen += data.size[i];
+      if( max_size < data.size[i] ) max_size = data.size[i];
 #endif
    }
 #ifdef PROFILING
+   std::cout << sum_size_gen/(double)data.population_size << " " << max_size << std::endl;
    data.sum_size += sum_size_gen;
 #endif
 
@@ -524,11 +528,20 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
 
    if( data.parallel_version )
    {
-      acc_interpret( data.phenotype, data.ephemeral, data.size, sum_size_gen, descendentes->fitness, data.population_size, &pee_send_individual, &pee_receive_individual, antecedentes, nImmigrants, index, &data.best_size, 0, 0, ALPHA );
+      acc_interpret( data.phenotype, data.ephemeral, data.size, 
+#ifdef PROFILING
+      sum_size_gen, 
+#endif
+      descendentes->fitness, data.population_size, &pee_send_individual, &pee_receive_individual, antecedentes, nImmigrants, index, &data.best_size, 0, 0, ALPHA );
    }
    else
    {
-      seq_interpret( data.phenotype, data.ephemeral, data.size, sum_size_gen, descendentes->fitness, data.population_size, index, &data.best_size, 0, 0, ALPHA );
+      seq_interpret( data.phenotype, data.ephemeral, data.size, 
+#ifdef PROFILING
+      sum_size_gen, 
+#endif
+      descendentes->fitness, data.population_size, index, &data.best_size, 0, 0, ALPHA );
+
       *nImmigrants = pee_receive_individual( antecedentes->genome );
    }
 
@@ -709,9 +722,9 @@ void pee_print_best( FILE* out, int generation, int print_mode )
    pee_individual_print( &data.best_individual, 0, out, generation, data.argc, data.argv, print_mode );
 }
 
+#ifdef PROFILING
 void pee_print_time( bool total ) 
 {
-#ifdef PROFILING
 
    double time_evolve     = total ? data.time_total_evolve : data.time_gen_evolve;
    double time_evaluate   = total ? data.time_total_evaluate : data.time_gen_evaluate;
@@ -733,10 +746,8 @@ void pee_print_time( bool total )
       seq_print_time(total, data.sum_size);
    }
    printf(", gpops_evaluate: %lf\n", gpops_evaluate);
-#else
-   printf(";time_total: %lf\n", data.time_total);
-#endif
 }
+#endif
 
 int pee_evolve()
 {
@@ -886,7 +897,9 @@ int pee_evolve()
          if (Server::stagnation == 0 || geracao < 2) {
             if (data.machine) { // Output meant to be consumed by scripts, not humans
                pee_print_best(stdout, geracao, 1);
+#ifdef PROFILING
                pee_print_time(false);
+#endif
             } else
                pee_print_best(stdout, geracao, 0);
 
