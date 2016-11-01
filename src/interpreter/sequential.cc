@@ -15,6 +15,50 @@
 
 static struct t_data { unsigned size; float** inputs; int nlin; int ncol; double time_total_kernel1; double time_total_kernel2; double time_gen_kernel1; double time_gen_kernel2; double gpops_gen_kernel; } data;
 
+float native_divide(float x, float y) {
+   return x / y;
+}
+
+float native_sin(float x) {
+   return sin(x);
+}
+
+float native_cos(float x) {
+   return cos(x);
+}
+
+float native_tan(float x) {
+   return tan(x);
+}
+
+float native_sqrt(float x) {
+   return sqrt(x);
+}
+
+float native_exp(float x) {
+   return exp(x);
+}
+
+float native_exp10(float x) {
+   return exp10(x);
+}
+
+float native_exp2(float x) {
+   return exp2(x);
+}
+
+float native_log(float x) {
+   return log(x);
+}
+
+float native_log10(float x) {
+   return log10(x);
+}
+
+float native_log2(float x) {
+   return log2(x);
+}
+
 /** ****************************************************************** **/
 /** ************************* MAIN FUNCTION ************************** **/
 /** ****************************************************************** **/
@@ -54,7 +98,11 @@ void seq_interpret_init( const unsigned size, float** input, int nlin, int ncol 
 //   }
 }
 
-void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, unsigned long sum_size_gen, float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
+void seq_interpret( Symbol* phenotype, float* ephemeral, int* size, 
+#ifdef PROFILING
+unsigned long sum_size_gen, 
+#endif
+float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
 {
 #ifdef PROFILING
    util::Timer t_kernel;
@@ -149,6 +197,7 @@ void seq_interpret_destroy()
    delete [] data.inputs;
 }
 
+#ifdef PROFILING
 void seq_print_time( bool total, unsigned long long sum_size )
 { 
    double time_kernel1 = total ? data.time_total_kernel1 : data.time_gen_kernel1;
@@ -158,3 +207,4 @@ void seq_print_time( bool total, unsigned long long sum_size )
    printf(", time_kernel[1]: %lf, time_kernel[2]: %lf", time_kernel1, time_kernel2);
    printf("; gpops_kernel: %lf", gpops_kernel);
 }
+#endif

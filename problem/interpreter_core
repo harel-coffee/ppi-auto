@@ -100,19 +100,19 @@ case T_FLOOR:
    stack[stack_top] = floor(stack[stack_top]);
    break;
 case T_EXP:
-   stack[stack_top] = exp(stack[stack_top]);
+   stack[stack_top] = native_exp(stack[stack_top]);
    break;
 case T_EXP10:
-   stack[stack_top] = exp10(stack[stack_top]);
+   stack[stack_top] = native_exp10(stack[stack_top]);
    break;
 case T_EXP2:
-   stack[stack_top] = exp2(stack[stack_top]);
+   stack[stack_top] = native_exp2(stack[stack_top]);
    break;
 case T_SIN:
-   stack[stack_top] = sin(stack[stack_top]);
+   stack[stack_top] = native_sin(stack[stack_top]);
    break;
 case T_COS:
-   stack[stack_top] = cos(stack[stack_top]);
+   stack[stack_top] = native_cos(stack[stack_top]);
    break;
 case T_STEP:
    stack[stack_top] = (stack[stack_top] >= 0.0f);
@@ -121,13 +121,13 @@ case T_SIGN:
    stack[stack_top] = (stack[stack_top] > 0.0f ? 1.0f : (stack[stack_top] < 0.0f ? -1.0f : 0.0f));
    break;
 case T_LOGISTIC:
-   stack[stack_top] = (1.0f/(1.0f + exp(-stack[stack_top])));
+   stack[stack_top] = (1.0f/(1.0f + native_exp(-stack[stack_top])));
    break;
 case T_GAMMA:
-   stack[stack_top] = pow((stack[stack_top]/M_E_F)*sqrt(stack[stack_top]*sinh(1/stack[stack_top])),stack[stack_top])*sqrt(2.0f*M_PI_F/stack[stack_top]);
+   stack[stack_top] = pow((stack[stack_top]/M_E_F)*native_sqrt(stack[stack_top]*sinh(1/stack[stack_top])),stack[stack_top])*native_sqrt(2.0f*M_PI_F/stack[stack_top]);
    break;
 case T_GAUSS:
-   stack[stack_top] = exp(-stack[stack_top]*stack[stack_top]);
+   stack[stack_top] = native_exp(-stack[stack_top]*stack[stack_top]);
    break;
 case T_PI:
    stack[++stack_top] = M_PI_F;
@@ -198,7 +198,6 @@ case T_8:
 case T_9:
    stack[++stack_top] = 9.0f;
    break;
-
 case T_10:
    stack[++stack_top] = 10.0f;
    break;
