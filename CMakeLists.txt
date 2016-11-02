@@ -43,17 +43,17 @@ endif ()
 set (GRAMMAR_INTERPRETER_DIR "${CMAKE_BINARY_DIR}/${LABEL}-include")
 file (MAKE_DIRECTORY "${GRAMMAR_INTERPRETER_DIR}")
 #message("COMMAND python script/read_grammar.py -o ${CMAKE_BINARY_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/problem/interpreter_core -p ${CMAKE_SOURCE_DIR}/problem/pee_individual_print_function")
-execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/script/read_grammar.py -o "${GRAMMAR_INTERPRETER_DIR}" -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/problem/interpreter_core -p ${CMAKE_SOURCE_DIR}/problem/pee_individual_print_function
+execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/script/read_grammar.py -o "${GRAMMAR_INTERPRETER_DIR}" -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/src/interpreter/interpreter_core -p ${CMAKE_SOURCE_DIR}/src/interpreter/pee_individual_print_function
    OUTPUT_VARIABLE OUTPUT
    ERROR_VARIABLE ERROR
    RESULT_VARIABLE RESULT)
 
 if (OUTPUT)
-   message("\nOutput from [python ${CMAKE_SOURCE_DIR}/script/read_grammar.py -o ${GRAMMAR_INTERPRETER_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/problem/interpreter_core -p ${CMAKE_SOURCE_DIR}/problem/pee_individual_print_function]:\n ${OUTPUT}")
+   message("\nOutput from [python ${CMAKE_SOURCE_DIR}/script/read_grammar.py -o ${GRAMMAR_INTERPRETER_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/src/interpreter/interpreter_core -p ${CMAKE_SOURCE_DIR}/src/interpreter/pee_individual_print_function]:\n ${OUTPUT}")
 endif ()
 
 if (NOT RESULT EQUAL 0)
-   message(FATAL_ERROR "\nError, failed to run the script to build the grammar [python ${CMAKE_SOURCE_DIR}/script/read_grammar.py -o ${GRAMMAR_INTERPRETER_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/problem/interpreter_core -p ${CMAKE_SOURCE_DIR}/problem/pee_individual_print_function]:\n ${ERROR}")
+   message(FATAL_ERROR "\nError, failed to run the script to build the grammar [python ${CMAKE_SOURCE_DIR}/script/read_grammar.py -o ${GRAMMAR_INTERPRETER_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/src/interpreter/interpreter_core -p ${CMAKE_SOURCE_DIR}/src/interpreter/pee_individual_print_function]:\n ${ERROR}")
 endif ()
 
 # Add the CMAKE_BINARY_DIR to the include path in order to make it easy to the
