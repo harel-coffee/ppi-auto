@@ -37,5 +37,5 @@ add_library(interpreter sequential.cc accelerator.cc)
 
 # Copy to the binary directory all the individual OpenCL kernels (they are compiled on-the-fly)
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/accelerator.cl ${CMAKE_BINARY_DIR}/${LABEL}-accelerator.cl COPYONLY)
-#configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/../symbol ${CMAKE_BINARY_DIR}/symbol COPYONLY)
-#configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/interpreter_core ${CMAKE_BINARY_DIR}/interpreter_core COPYONLY)
+# Copy the file 'functions.h', which contains many function definitions, to the binary dir so that OpenCL kernels compiled at runtime can find it
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/functions.h" "${CMAKE_BINARY_DIR}/${LABEL}-include/functions.h" COPYONLY)

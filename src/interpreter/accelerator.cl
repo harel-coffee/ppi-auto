@@ -1,5 +1,6 @@
 #include <symbol>
 #include <definitions.h>
+#include <functions.h>
 
 __kernel void
 evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, __local float* PE, int nlin, int ncol, int prediction_mode )

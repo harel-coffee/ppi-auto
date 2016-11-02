@@ -294,7 +294,6 @@ f.write(symbol_head + text4 + text5 + text6 + symbol_tail)
 f.close()
 
 lines = read_file(args.interpreter)
-lines += read_file(args.interpreter+'-unprotected')
 
 lst = list(text5.split())
 lst = [s.replace(',', '') for s in lst]

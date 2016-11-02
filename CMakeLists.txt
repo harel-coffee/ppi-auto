@@ -30,6 +30,16 @@ if (PROFILING)
    add_definitions(-DPROFILING)
 endif ()
 
+if (PROTECTED)
+   message(STATUS "Enabling protected functions")
+   add_definitions(-DPROTECTED)
+endif ()
+
+if (NATIVE)
+   message(STATUS "Enabling OpenCL native functions")
+   add_definitions(-DNATIVE)
+endif ()
+
 set (GRAMMAR_INTERPRETER_DIR "${CMAKE_BINARY_DIR}/${LABEL}-include")
 file (MAKE_DIRECTORY "${GRAMMAR_INTERPRETER_DIR}")
 #message("COMMAND python script/read_grammar.py -o ${CMAKE_BINARY_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/problem/interpreter_core -p ${CMAKE_SOURCE_DIR}/problem/pee_individual_print_function")
