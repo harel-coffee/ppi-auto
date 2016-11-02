@@ -20,6 +20,11 @@ The `EF` definition is the formula used to compute the "distance" of a predicted
 
 In the PPCU strategy, one can also choose between the sum of the errors (the default) or the maximum error. To enable the latter, just add to cmake the option `-DREDUCEMAX=YES`
 
+#### Other options (definitions) ###
+
+ - `-DPROTECTED=ON`: use protected functions (do not generate NaN) instead of unprotected ones
+ - `-DNATIVE=ON`: use OpenCL native functions (faster but less precise)
+
 ### Compilation ###
 
 ~~~~~~~~
