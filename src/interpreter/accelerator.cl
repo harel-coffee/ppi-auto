@@ -3,7 +3,7 @@
 #include <functions.h>
 
 __kernel void
-evaluate_pppe( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, __local float* PE, int nlin, int ncol, int prediction_mode, int population_size )
+evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, int nlin, int ncol, int prediction_mode, int population_size )
 {
    float stack[MAX_STACK_SIZE];
    int stack_top;
@@ -19,7 +19,7 @@ evaluate_pppe( __global const Symbol* phenotype, __global const float* ephemeral
       }
       else
       {
-         PE[0] = 0.0f;
+         float PE = 0.0f;
          for( int n = 0; n < nlin; ++n )
          {
             stack_top = -1;
@@ -29,6 +29,7 @@ evaluate_pppe( __global const Symbol* phenotype, __global const float* ephemeral
                {
                   #include <interpreter_core>
                   case T_ATTRIBUTE:
+                     //stack[++stack_top] = inputs[n + nlin * (int)ephemeral[gl_id * MAX_PHENOTYPE_SIZE + i]];
                      stack[++stack_top] = inputs[n * ncol + (int)ephemeral[gl_id * MAX_PHENOTYPE_SIZE + i]];
                      break;
 #ifndef NOT_USING_T_CONST
@@ -43,16 +44,17 @@ evaluate_pppe( __global const Symbol* phenotype, __global const float* ephemeral
             }
             if( !prediction_mode )
             {
+               //float error = ERROR( stack[stack_top], inputs[n + nlin * (ncol - 1)] );
                float error = ERROR( stack[stack_top], inputs[n * ncol + (ncol - 1)] );
    
                // Avoid further calculations if the current one has overflown the float
                // (i.e., it is inf or NaN).
-               if( isinf(error) || isnan(error) ) { PE[0] = MAXFLOAT; break; }
+               if( isinf(error) || isnan(error) ) { PE = MAXFLOAT; break; }
    
 #ifdef REDUCEMAX
-               PE[0] = (error*nlin > PE[0]) ? error*nlin : PE[0];
+               PE = (error*nlin > PE) ? error*nlin : PE;
 #else
-               PE[0] += error;
+               PE += error;
 #endif
             }
             else
@@ -62,17 +64,17 @@ evaluate_pppe( __global const Symbol* phenotype, __global const float* ephemeral
          }
          if( !prediction_mode )
          {
-            if( isnan( PE[0] ) || isinf( PE[0] ) ) 
+            if( isnan( PE ) || isinf( PE ) ) 
                vector[gl_id] = MAXFLOAT;
             else 
-               vector[gl_id] = PE[0]/nlin;
+               vector[gl_id] = PE/nlin;
          }
       }
    }
 }
 
 __kernel void
-evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, __local float* PE, int nlin, int ncol, int prediction_mode, int nInd )
+evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, int nlin, int ncol, int prediction_mode, __local float* PE, int nInd )
 {
    float stack[MAX_STACK_SIZE];
    int stack_top;
@@ -145,7 +147,7 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
 }
 
 __kernel void
-evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, __local float* PE, int nlin, int ncol, int prediction_mode )
+evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, int nlin, int ncol, int prediction_mode, __local float* PE )
 {
    float stack[MAX_STACK_SIZE];
    int stack_top;
