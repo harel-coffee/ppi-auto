@@ -46,12 +46,14 @@ parser.add_argument("-t", "--fig-title", default="", help="Title of the figure")
 parser.add_argument("-x", "--fig-xlabel", default="", help="Label of the x-axis")
 parser.add_argument("-y", "--fig-ylabel", default="", help="Label of the y-axis")
 parser.add_argument("-out", "--out-file", default="plot.pdf", help="Figure output filename")
+parser.add_argument("-dup", "--plot-duplicate", action='store_true', default=False, help="Plot duplicate entries instead of taking their mean")
 args = parser.parse_args()
 
 try:
    f = open(args.front_file,"r")
 except IOError:
-   print "Could not open file '" + args.front_file + "'"
+   print >> sys.stderr, "Could not open file '" + args.front_file + "'"
+   sys.exit(1)
 lines = f.readlines()
 f.close()
 
@@ -68,7 +70,8 @@ size = size.astype(int)
 try:
    f = open(args.test_dataset,"r")
 except IOError:
-   print "Could not open file '" + args.test_dataset + "'"
+   print >> sys.stderr, "Could not open file '" + args.test_dataset + "'"
+   sys.exit(1)
 lines = f.readlines()
 f.close()
 
@@ -88,15 +91,26 @@ width = 0.4
 
 vector = []; marks = []
 for i in range(1,max(size[tes_error<1.e+30])+1):
-    if len(tra_error[(tes_error<1.e+30) & (size==i)]) > 0:
-        marks.append(i)
-        vector.append(np.mean(tra_error[(tes_error<1.e+30) & (size==i)]))
+   if args.plot_duplicate:
+       if len(tra_error[(tes_error<1.e+30)]) > 0:
+           for complexity in tra_error[(tes_error<1.e+30) & (size==i)]:
+              marks.append(i)
+              vector.append(complexity)
+   else:
+       if len(tra_error[(tes_error<1.e+30) & (size==i)]) > 0:
+           marks.append(i)
+           vector.append(np.mean(tra_error[(tes_error<1.e+30) & (size==i)]))
 ax.bar(range(1,len(marks)+1), vector, width, color='b', label='Training set')
 
 vector = []
 for i in range(1,max(size[tes_error<1.e+30])+1):
-    if len(tes_error[(tes_error<1.e+30) & (size==i)]) > 0:
-        vector.append(np.mean(tes_error[(tes_error<1.e+30) & (size==i)]))
+   if args.plot_duplicate:
+       if len(tes_error[(tes_error<1.e+30)]) > 0:
+           for complexity in tes_error[(tes_error<1.e+30) & (size==i)]:
+              vector.append(complexity)
+   else:
+       if len(tes_error[(tes_error<1.e+30) & (size==i)]) > 0:
+           vector.append(np.mean(tes_error[(tes_error<1.e+30) & (size==i)]))
 ax.bar([x + width for x in range(1,len(marks)+1)], vector, width, color='r', label='Test set')
 
 if min(tra_error) < min_value: min_value = min(tra_error)
@@ -113,6 +127,3 @@ plt.setp(xtickNames, rotation=45, fontsize=8)
 ax.legend(loc='upper right', scatterpoints=1, ncol=1, fontsize=12)
 fig.savefig(args.out_file, dpi=300, facecolor='w', edgecolor='w', orientation='portrait', papertype='letter', bbox_inches='tight')
 #plt.show()
-
-
-
