@@ -231,9 +231,12 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
    try {
       /* Pass the following definition to the OpenCL compiler:
        *    -IGRAMMAR_INTERPRETER_INCLUDE_DIR
+            -I<executable_absolute_directory>/LABEL-include
          where GRAMMAR_INTERPRETER_INCLUDE_DIR is a subdirectory under the
-         build directory, defined by CMake. */
-      std::string flags = std::string(" -I" + std::string(xstr(GRAMMAR_INTERPRETER_INCLUDE_DIR)));
+         build directory, defined by CMake,
+         and <executable_absolute_directory> is the current directory
+         of the executable binary. */
+      std::string flags = std::string(" -I" + std::string(xstr(GRAMMAR_INTERPRETER_INCLUDE_DIR)) + " -I" + data.executable_directory + xstr(LABEL) + "-include");
       program.build( device, flags.c_str() );
    }
    catch( cl::Error& e )
