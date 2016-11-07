@@ -259,11 +259,11 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
       max_local_size = fmin( max_local_size, data.device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>() / 8 );
    }
 
-   if( data.strategy == "PP" )  // Population-parallel
+   if( data.strategy == "PPPE" )  // Population-parallel
    {
-      data.local_size1 = 1;
-      data.global_size1 = data.population_size;
-      data.kernel1 = cl::Kernel( program, "evaluate_pp" );
+      data.local_size1 = fmin( max_local_size, (unsigned) ceil( data.population_size/(float) max_cu ) );
+      data.global_size1 = (unsigned) ( ceil( data.population_size/(float) data.local_size1 ) * data.local_size1 );
+      data.kernel1 = cl::Kernel( program, "evaluate_pppe" );
    }
    else
    {
@@ -296,7 +296,7 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
          }
          else
          {
-            fprintf(stderr, "Valid strategy: PP, FP and PPCU.\n");
+            fprintf(stderr, "Valid strategy: PPPE, FP and PPCU.\n");
             return 1;
          }
       }
@@ -335,7 +335,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
 #endif
    );
 
-   if( data.strategy == "PP" ) 
+   if( data.strategy == "PPPE" ) 
    {
       for( int i = 0; i < data.nlin; i++ )
       {
@@ -391,7 +391,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
       }
       else
       {
-         fprintf(stderr, "Valid strategy: PP, FP and PPCU.\n");
+         fprintf(stderr, "Valid strategy: PPPE, FP and PPCU.\n");
       }
    }
 
@@ -433,7 +433,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
       }
       else
       {
-         if( data.strategy == "PPCU" || data.strategy == "PP" ) // (one por program)
+         if( data.strategy == "PPCU" || data.strategy == "PPPE" ) // (one por program)
          {
             // The evaluate's kernels WRITE in the vector; while the best_individual's kernel READ the vector
             data.buffer_vector = cl::Buffer( data.context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, data.population_size * sizeof( float ) );
@@ -452,6 +452,11 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
    data.kernel1.setArg( 6, data.nlin );
    data.kernel1.setArg( 7, ncol );
    data.kernel1.setArg( 8, prediction_mode );
+   if( data.strategy == "PPPE" ) 
+   {
+      data.kernel1.setArg( 9, data.population_size );
+   }
+
 
    if ( !pep_mode )
    {
@@ -486,7 +491,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    Opts.Int.Add( "-cl-d", "--cl-device-id", -1, 0 );
    Opts.Int.Add( "-cl-mls", "--cl-max-local-size", -1 );
    Opts.String.Add( "-type" );
-   Opts.String.Add( "-strategy", "", "PPCU", "FP", "PP", "PPCU", NULL );
+   Opts.String.Add( "-strategy", "", "PPCU", "FP", "PPPE", "PPCU", NULL );
    Opts.Process();
    data.strategy = Opts.String.Get("-strategy");
    data.max_size = size;
@@ -592,6 +597,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
       data.kernel1.setArg( 9, nInd );
    }
 
+   std::cout << "Passou-0\n" << std::endl;
    //std::cerr << "Global size: " << data.global_size1 << " Local size: " << data.local_size1 << " Work group: " << data.global_size1/data.local_size1 << std::endl;
    try {
       // ---------- begin kernel execution
@@ -607,6 +613,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
       cerr << "\nERROR(kernel1): " << e.what() << " ( " << e.err() << " )\n";
       throw;
    }
+   std::cout << "Passou-1\n" << std::endl;
 
    // substitui os três enqueueMapBuffer
    // event4 começa depois que o evento0 terminar
@@ -615,8 +622,9 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
 
    if ( !pep_mode )
    {
-      if( data.strategy == "PPCU" || data.strategy == "PP" ) 
+      if( data.strategy == "PPCU" || data.strategy == "PPPE" ) 
       {
+         std::cout << "Passou-2\n" << std::endl;
          //std::cerr << "Global size: " << data.global_size2 << " Local size: " << data.local_size2 << " Work group: " << data.global_size2/data.local_size2 << std::endl;
          try 
          {
@@ -634,17 +642,20 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
             throw;
          }
       }
+      std::cout << "Passou-3\n" << std::endl;
       data.queue.flush();
    }
 
-   if( !pep_mode )
-   {
-      send( migrants );
-      *nImmigrants = receive( migrants->genome );
-   }
+   std::cout << "Passou-4\n" << std::endl;
+   //if( !pep_mode )
+   //{
+   //   send( migrants );
+   //   *nImmigrants = receive( migrants->genome );
+   //}
 
    // Wait until the kernel has finished
    data.queue.finish();
+   std::cout << "Passou-5\n" << std::endl;
 
 
    // TODO: data.queuetransfer.finish();
@@ -744,7 +755,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
       }
       else
       {
-         if( data.strategy == "PPCU" || data.strategy == "PP" ) 
+         if( data.strategy == "PPCU" || data.strategy == "PPPE" ) 
          {
             tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ), NULL
 #ifdef PROFILING
