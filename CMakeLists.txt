@@ -40,7 +40,10 @@ if (NATIVE)
    add_definitions(-DNATIVE)
 endif ()
 
-set (GRAMMAR_INTERPRETER_DIR "${CMAKE_BINARY_DIR}/${LABEL}-include")
+# In the following relative directory the assembled include files will be put in
+set (INCLUDE_RELATIVE_DIR "${LABEL}-include")
+
+set (GRAMMAR_INTERPRETER_DIR "${CMAKE_BINARY_DIR}/${INCLUDE_RELATIVE_DIR}")
 file (MAKE_DIRECTORY "${GRAMMAR_INTERPRETER_DIR}")
 #message("COMMAND python script/read_grammar.py -o ${CMAKE_BINARY_DIR} -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/problem/interpreter_core -p ${CMAKE_SOURCE_DIR}/problem/pee_individual_print_function")
 execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/script/read_grammar.py -o "${GRAMMAR_INTERPRETER_DIR}" -g ${GRAMMAR} -i ${CMAKE_SOURCE_DIR}/src/interpreter/interpreter_core -p ${CMAKE_SOURCE_DIR}/src/interpreter/pee_individual_print_function
@@ -59,7 +62,7 @@ endif ()
 # Add the CMAKE_BINARY_DIR to the include path in order to make it easy to the
 # source code to find the generated grammar and interpreter files
 include_directories( "${GRAMMAR_INTERPRETER_DIR}" )
-add_definitions( -DGRAMMAR_INTERPRETER_INCLUDE_DIR=${GRAMMAR_INTERPRETER_DIR} )
+add_definitions( -DINCLUDE_RELATIVE_DIR=${INCLUDE_RELATIVE_DIR} )
 add_definitions( -DLABEL=${LABEL} )
 
 # The 'definitions.h' file holds macros and definitions which are taken from CMake's variables (such as the ERROR(X,Y) functional define)
