@@ -16,6 +16,7 @@
 #include "../server/server.h"
 #include "../util/CmdLineParser.h"
 #include "../util/Util.h"
+#include <Poco/Path.h>
 
 /* Macros to stringify an expansion of a macro/definition */
 #define xstr(a) str(a)
@@ -23,11 +24,22 @@
 
 using namespace std;
 
+std::string getAbsoluteDirectory(std::string filepath) {
+   Poco::Path p(filepath);
+   string filename = p.getFileName();
+   p.makeAbsolute();
+   string absolute_path = p.toString();
+
+   /* The absolute_path consists of: directory + filename; so, to get
+      only the directory, it suffices to do: absolute_path - filename */
+   return std::string(absolute_path, 0, absolute_path.length() - filename.length());
+}
+
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double gpops_gen_kernel; double gpops_gen_communication; double time_gen_kernel1; double time_gen_kernel2; double time_gen_communication_send; double time_gen_communication_receive; double time_total_kernel1; double time_total_kernel2; double time_communication_dataset; double time_total_communication_send; double time_total_communication_receive; double time_total_communication1; } data; };
+namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double gpops_gen_kernel; double gpops_gen_communication; double time_gen_kernel1; double time_gen_kernel2; double time_gen_communication_send; double time_gen_communication_receive; double time_total_kernel1; double time_total_kernel2; double time_communication_dataset; double time_total_communication_send; double time_total_communication_receive; double time_total_communication1; std::string executable_directory; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTION *********************** **/
@@ -198,8 +210,10 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
    }
 
    /* Use a prefix (the given label) to minimize the likelihood of collisions
-    * when two or more problems are built into the same build directory. */
-   std::string opencl_file = std::string(std::string(xstr(LABEL)) + "-accelerator.cl");
+    * when two or more problems are built into the same build directory.
+      The directory of the executable binary is prefixed here so that OpenCL
+      will find the kernels regardless of user's current directory. */
+   std::string opencl_file = data.executable_directory + std::string(std::string(xstr(LABEL)) + "-accelerator.cl");
    ifstream file(opencl_file.c_str());
    string kernel_str( istreambuf_iterator<char>(file), ( istreambuf_iterator<char>()) );
 
@@ -463,6 +477,10 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
 int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned max_arity, const unsigned population_size, float** input, int nlin, int ncol, int pep_mode, int prediction_mode )
 {
    CmdLine::Parser Opts( argc, argv );
+
+   // Get the executable directory so we can find the kernels later, regardless
+   // of the current directory (user directory).
+   data.executable_directory = getAbsoluteDirectory(argv[0]);
 
    Opts.Int.Add( "-cl-p", "--cl-platform-id", -1, 0 );
    Opts.Int.Add( "-cl-d", "--cl-device-id", -1, 0 );
