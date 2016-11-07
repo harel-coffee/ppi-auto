@@ -598,7 +598,6 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
       data.kernel1.setArg( 9, nInd );
    }
 
-   std::cout << "Passou-0\n" << std::endl;
    //std::cerr << "Global size: " << data.global_size1 << " Local size: " << data.local_size1 << " Work group: " << data.global_size1/data.local_size1 << std::endl;
    try {
       // ---------- begin kernel execution
@@ -614,7 +613,6 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
       cerr << "\nERROR(kernel1): " << e.what() << " ( " << e.err() << " )\n";
       throw;
    }
-   std::cout << "Passou-1\n" << std::endl;
 
    // substitui os três enqueueMapBuffer
    // event4 começa depois que o evento0 terminar
@@ -625,7 +623,6 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
    {
       if( data.strategy == "PPCU" || data.strategy == "PPPE" ) 
       {
-         std::cout << "Passou-2\n" << std::endl;
          //std::cerr << "Global size: " << data.global_size2 << " Local size: " << data.local_size2 << " Work group: " << data.global_size2/data.local_size2 << std::endl;
          try 
          {
@@ -643,11 +640,9 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
             throw;
          }
       }
-      std::cout << "Passou-3\n" << std::endl;
       data.queue.flush();
    }
 
-   std::cout << "Passou-4\n" << std::endl;
    //if( !pep_mode )
    //{
    //   send( migrants );
@@ -656,7 +651,6 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
 
    // Wait until the kernel has finished
    data.queue.finish();
-   std::cout << "Passou-5\n" << std::endl;
 
 
    // TODO: data.queuetransfer.finish();
