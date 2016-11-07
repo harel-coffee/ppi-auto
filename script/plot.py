@@ -44,10 +44,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-e", "--exe", required=True, help="Executable filename")
 parser.add_argument("-f", "--front-file", required=True, help="Pareto-front file")
 parser.add_argument("-d", "--test-dataset", required=True, help="Test dataset")
-parser.add_argument("-t", "--fig-title", required=True, help="Title of figure")
-parser.add_argument("-x", "--fig-xlabel", required=True, help="X-label of figure")
-parser.add_argument("-y", "--fig-ylabel", required=True, help="Y-label of figure")
-parser.add_argument("-out", "--fig-file", required=True, help="Figure file")
+parser.add_argument("-t", "--fig-title", default="", help="Title of the figure")
+parser.add_argument("-x", "--fig-xlabel", default="", help="Label of the x-axis")
+parser.add_argument("-y", "--fig-ylabel", default="", help="Label of the y-axis")
+parser.add_argument("-out", "--out-file", default="plot.pdf", help="Figure output filename")
 args = parser.parse_args()
 
 try:
@@ -113,7 +113,7 @@ xtickNames = ax.set_xticklabels(marks)
 plt.setp(xtickNames, rotation=45, fontsize=8)
 
 ax.legend(loc='upper right', scatterpoints=1, ncol=1, fontsize=12)
-fig.savefig(args.fig_file, dpi=300, facecolor='w', edgecolor='w', orientation='portrait', papertype='letter', bbox_inches='tight')
+fig.savefig(args.out_file, dpi=300, facecolor='w', edgecolor='w', orientation='portrait', papertype='letter', bbox_inches='tight')
 #plt.show()
 
 

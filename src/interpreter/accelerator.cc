@@ -230,10 +230,11 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
    vector<cl::Device> device; device.push_back( data.device );
    try {
       /* Pass the following definition to the OpenCL compiler:
-       *    -IGRAMMAR_INTERPRETER_INCLUDE_DIR
-         where GRAMMAR_INTERPRETER_INCLUDE_DIR is a subdirectory under the
-         build directory, defined by CMake. */
-      std::string flags = std::string(" -I" + std::string(xstr(GRAMMAR_INTERPRETER_INCLUDE_DIR)));
+            -I<executable_absolute_directory>/INCLUDE_RELATIVE_DIR
+         where <executable_absolute_directory> is the current directory
+         of the executable binary and INCLUDE_RELATIVE_DIR is a relative
+         subdirectory where the assembled source files will be put by CMake. */
+      std::string flags = std::string(" -I" + data.executable_directory + std::string(xstr(INCLUDE_RELATIVE_DIR)));
       program.build( device, flags.c_str() );
    }
    catch( cl::Error& e )
