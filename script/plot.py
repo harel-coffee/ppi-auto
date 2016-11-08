@@ -9,6 +9,35 @@ import argparse
 
 from matplotlib.cbook import get_sample_data
 
+################################################################################
+# Usage:
+################################################################################
+#
+#usage: plot.py [-h] -e EXE -f FRONT_FILE -d TEST_DATASET -t FIG_TITLE -x
+#               FIG_XLABEL -y FIG_YLABEL -out FIG_FILE
+#
+#optional arguments:
+#  -h, --help            show this help message and exit
+#  -e EXE, --exe EXE     Executable filename
+#  -f FRONT_FILE, --front-file FRONT_FILE
+#                        Pareto-front file
+#  -d TEST_DATASET, --test-dataset TEST_DATASET
+#                        Test dataset
+#  -t FIG_TITLE, --fig-title FIG_TITLE
+#                        Title of figure
+#  -x FIG_XLABEL, --fig-xlabel FIG_XLABEL
+#                        X-label of figure
+#  -y FIG_YLABEL, --fig-ylabel FIG_YLABEL
+#                        Y-label of figure
+#  -out FIG_FILE, --fig-file FIG_FILE
+#                        Figure file
+#
+# Example:
+#
+#    python script/plot.py -e build/speed_A305_1-mse-semantic -f build/speed_A305_1-mse-semantic.front -d ../vento/problem/speed_A305_1-fullyear.tes -t 'Title' -x 'xlabel' -y 'ylabel' -out '../vento/problem/figs/fig.pdf'
+################################################################################
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-e", "--exe", required=True, help="Executable filename")
 parser.add_argument("-f", "--front-file", required=True, help="Pareto-front file")
@@ -30,7 +59,7 @@ f.close()
 
 size      = np.empty(len(lines)); 
 tra_error = np.empty(len(lines))
-solution = [];
+solution  = [];
 
 for i in range(len(lines)):
     size[i] = lines[i].split(';')[1]
@@ -90,7 +119,7 @@ if min(tes_error) < min_value: min_value = min(tes_error)
 if max(tes_error[tes_error<1.e+30]) > max_value: max_value = max(tes_error[tes_error<1.e+30])
 
 ax.set_ylim(min_value-0.03*min_value,max_value+0.03*max_value)
-ax.set_xlim(marks[0]-3*width,len(marks)+3*width)
+ax.set_xlim(width,len(marks)+4*width)
 ax.set_xticks([x + width for x in range(1,len(marks)+1)])  
 xtickNames = ax.set_xticklabels(marks)
 plt.setp(xtickNames, rotation=45, fontsize=8)
