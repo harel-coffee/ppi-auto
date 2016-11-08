@@ -77,8 +77,11 @@ f.close()
 
 
 tes_error = np.empty(len(solution)); 
+print "ID    size :: training error :: test error     :: solution (encoded terminals)"
+print "--    ----    --------------    --------------    ----------------------------"
 for i in range(len(solution)):
     tes_error[i] = subprocess.check_output(["./" + args.exe, "-d", args.test_dataset, "-sol", str(size[i]) + " " + str(solution[i].rstrip())])
+    print "[%-3d] %-4s :: %-14s :: %-14s :: %s" % (i+1, size[i], tra_error[i], tes_error[i], str(solution[i].rstrip()))
 
 min_value = sys.float_info.max; max_value = 0.
 
@@ -126,4 +129,6 @@ plt.setp(xtickNames, rotation=45, fontsize=8)
 
 ax.legend(loc='upper right', scatterpoints=1, ncol=1, fontsize=12)
 fig.savefig(args.out_file, dpi=300, facecolor='w', edgecolor='w', orientation='portrait', papertype='letter', bbox_inches='tight')
+
+print "\nPlotted to file '%s'" % (args.out_file)
 #plt.show()
