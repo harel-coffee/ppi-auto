@@ -78,7 +78,7 @@ while i < len(grammar):
       text1.append("\nt_rule* regras_INICIAL[] = { &INICIAL_0")
       text2.append("\nt_rule** gramatica[] = { regras_INICIAL")
       text3.append("\nunsigned tamanhos[] = { sizeof(regras_INICIAL) / sizeof(t_rule*),")
-      text4.append("NT_INICIAL"); text4.append(", ")
+      text4.append("NT_INICIAL"); 
 
       if( rule > maxrule ): maxrule = rule;
       text0.append("t_rule INICIAL_0 = { " + str(rule) + ", {NT_" + grammar[ini][1 : 1 + (len(grammar[ini])-2)].upper())
@@ -103,7 +103,7 @@ while i < len(grammar):
             text2.append(", regras_" + nterminal)
             text3.append(" sizeof(regras_" + nterminal + ")/sizeof(t_rule*),")
             if "NT_"+nterminal not in text4:
-               text4.append("NT_" + nterminal); text4.append(", ")
+               text4.append(", NT_" + nterminal); 
 
             n = 0; i = i + 1; flag = 1
             while flag and i < len(grammar):
@@ -137,7 +137,7 @@ while i < len(grammar):
                      else:
                         text0.append("t_rule " + nterminal + "_" + str(n) + " = { " + str(rule) + ", {T_" + value)
                         if not text5:
-                           text5.append("T_" + value); text5.append(" = TERMINAL_MIN")
+                           text5.append(", T_" + value); text5.append(" = TERMINAL_MIN")
                         else:
                            if "T_"+value not in text5:
                               text5.append(", "); text5.append("T_" + value)
@@ -154,7 +154,7 @@ while i < len(grammar):
                            #text7.append(grammar[ini][4:].upper())
                      else:
                         if not text5:
-                           text5.append("T_" + grammar[ini].upper()); text5.append(" = TERMINAL_MIN")
+                           text5.append(", T_" + grammar[ini].upper()); text5.append(" = TERMINAL_MIN")
                         else:
                            if "T_"+grammar[ini].upper() not in text5:
                               text5.append(", "); text5.append("T_" + grammar[ini].upper())
@@ -171,7 +171,7 @@ while i < len(grammar):
                         else:
                            text0.append(", T_" + value)
                         if not text5:
-                           text5.append("T_" + value); text5.append(" = TERMINAL_MIN")
+                           text5.append(", T_" + value); text5.append(" = TERMINAL_MIN")
                         else:
                            if "T_"+value not in text5:
                               text5.append(", "); text5.append("T_" + value)
@@ -180,7 +180,7 @@ while i < len(grammar):
                         if "ATTR" in  grammar[j].upper():
                            if not text6:
                               text6.append(", "); text6.append("T_ATTRIBUTE"); text6.append(", ");
-                              text6.append("T_" + grammar[j].upper()); text6.append(" = ATTRIBUTE_MIN + " + grammar[j][4:]);
+                              text6.append(", T_" + grammar[j].upper()); text6.append(" = ATTRIBUTE_MIN + " + grammar[j][4:]);
                            else:
                               if "T_"+grammar[j].upper() not in text6:
                                  text6.append(", "); text6.append("T_" + grammar[j].upper()); text6.append(" = ATTRIBUTE_MIN + " + grammar[j][4:]);
@@ -188,7 +188,7 @@ while i < len(grammar):
                               #text7.append(grammar[j][4:].upper())
                         else:
                            if not text5:
-                              text5.append("T_" + grammar[j].upper()); text5.append(" = TERMINAL_MIN")
+                              text5.append(", T_" + grammar[j].upper()); text5.append(" = TERMINAL_MIN")
                            else:
                               if "T_"+grammar[j].upper() not in text5:
                                  text5.append(", "); text5.append("T_" + grammar[j].upper())
