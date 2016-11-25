@@ -174,7 +174,7 @@ void pee_init( float** input, int nlin, int ncol, int argc, char** argv )
 
    Opts.Bool.Add( "-acc" );
 
-   Opts.Int.Add( "-g", "--generations", 1000, 1, std::numeric_limits<int>::max() );
+   Opts.Int.Add( "-g", "--generations", 1000, 0, std::numeric_limits<int>::max() );
 
    Opts.Int.Add( "-s", "--seed", 0, 0, std::numeric_limits<long>::max() );
 
