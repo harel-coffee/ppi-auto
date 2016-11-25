@@ -39,7 +39,7 @@ std::string getAbsoluteDirectory(std::string filepath) {
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double gpops_gen_kernel; double gpops_gen_communication; double time_gen_kernel1; double time_gen_kernel2; double time_gen_communication_send; double time_gen_communication_receive; double time_total_kernel1; double time_total_kernel2; double time_communication_dataset; double time_total_communication_send; double time_total_communication_receive; double time_total_communication1; std::string executable_directory; bool verbose; } data; };
+namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double gpops_gen_kernel; double gpops_gen_communication; double time_gen_kernel1; double time_gen_kernel2; double time_gen_communication_send; double time_gen_communication_receive; double time_total_kernel1; double time_total_kernel2; double time_communication_dataset; double time_total_communication_send; double time_total_communication_receive; double time_total_communication1; std::string executable_directory; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTION *********************** **/
@@ -302,12 +302,8 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
          }
       }
    }
-
-   if (data.verbose) {
-      std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
-      std::cout << "Local size: " << data.local_size1 << ", Global size: " << data.global_size1 << ", Work groups: " << data.global_size1/data.local_size1 << std::endl;
-   }
-
+   std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
+   std::cout << "Local size: " << data.local_size1 << ", Global size: " << data.global_size1 << ", Work groups: " << data.global_size1/data.local_size1 << std::endl;
    if( !pep_mode )
    {
       // Evenly distribute the workload among the compute units (but avoiding local size
@@ -316,9 +312,7 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
       // It is better to have global size divisible by local size
       data.global_size2 = (unsigned) ( ceil( data.population_size/(float) data.local_size2 ) * data.local_size2 );
       data.kernel2 = cl::Kernel( program, "best_individual" );
-      if (data.verbose) {
-         std::cout << "Local size: " << data.local_size2 << ", Global size: " << data.global_size2 << ", Work groups: " << data.global_size2/data.local_size2 << std::endl;
-      }
+      std::cout << "Local size: " << data.local_size2 << ", Global size: " << data.global_size2 << ", Work groups: " << data.global_size2/data.local_size2 << std::endl;
    }
 
 
@@ -330,7 +324,7 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
 void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode )
 {
 #ifdef PROFILING
-   cl::Event event; 
+   std::vector<cl::Event> events(2); 
 #endif
 
    // Buffer (memory on the device) of training points (input, model and obs)
@@ -338,7 +332,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
 
    float* inputs = (float*) data.queue.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_WRITE, 0, data.nlin * ncol * sizeof( float ), NULL
 #ifdef PROFILING
-   , &event
+   , &events[0]
 #endif
    );
 
@@ -402,15 +396,14 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
       }
    }
 
-   // Unmapping
-   data.queue.enqueueUnmapMemObject( data.buffer_inputs, inputs ); 
 
+
+   // Unmapping
+   data.queue.enqueueUnmapMemObject( data.buffer_inputs, inputs, NULL
 #ifdef PROFILING
-   cl_ulong start, end;
-   event.getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-   event.getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_communication_dataset = (end - start)/1.0E9;
+   , &events[1]
 #endif
+   );
 
    //inputs = (float*) data.queue.enqueueMapBuffer( data.buffer_inputs, CL_TRUE, CL_MAP_READ, 0, data.nlin * ncol * sizeof( float ) );
    //for( int i = 0; i < data.nlin * ncol; i++ )
@@ -481,6 +474,19 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
       data.kernel2.setArg( 4, sizeof( int ) * data.local_size2, NULL );
       data.kernel2.setArg( 5, data.population_size );
    }
+
+#ifdef PROFILING
+   {
+      std::vector<cl::Event> e(1, events[1]); 
+      cl::Event::waitForEvents(e);
+   }
+
+   cl_ulong start, end;
+   events[0].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+   events[1].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   data.time_communication_dataset = (end - start)/1.0E9;
+#endif
+
 }
 
 
@@ -497,14 +503,12 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    // of the current directory (user directory).
    data.executable_directory = getAbsoluteDirectory(argv[0]);
 
-   Opts.Bool.Add( "-v", "--verbose" );
    Opts.Int.Add( "-cl-p", "--cl-platform-id", -1, 0 );
    Opts.Int.Add( "-cl-d", "--cl-device-id", -1, 0 );
    Opts.Int.Add( "-cl-mls", "--cl-max-local-size", -1 );
    Opts.String.Add( "-type" );
    Opts.String.Add( "-strategy", "", "PPCU", "FP", "PP", "PPCU", NULL );
    Opts.Process();
-   data.verbose = Opts.Bool.Get("-v");
    data.strategy = Opts.String.Get("-strategy");
    data.max_size = size;
    data.max_arity = max_arity;
@@ -578,7 +582,7 @@ unsigned long sum_size_gen,
 float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*), Population* migrants, int* nImmigrants, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
 {
 #ifdef PROFILING
-   std::vector<cl::Event> events(9); 
+   std::vector<cl::Event> events(12); 
 
    data.time_gen_kernel1  = 0.0;
    data.time_gen_kernel2  = 0.0;
@@ -805,13 +809,25 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
          data.time_total_kernel2 += t_time.elapsed();
 #endif
 
-         data.queue.enqueueUnmapMemObject( data.buffer_pb, PB ); 
-         data.queue.enqueueUnmapMemObject( data.buffer_pi, PI );
+         data.queue.enqueueUnmapMemObject( data.buffer_pb, PB, NULL 
+#ifdef PROFILING
+         , &events[9]
+#endif
+         );
+         data.queue.enqueueUnmapMemObject( data.buffer_pi, PI, NULL
+#ifdef PROFILING
+         , &events[10]
+#endif
+         );
       }
    }
 
    //essa linha some
-   data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp ); 
+   data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp, NULL
+#ifdef PROFILING
+   , &events[11]
+#endif
+   );
 
 #ifdef PROFILING
    cl_ulong start, end;
@@ -843,8 +859,12 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
       data.time_total_kernel2 += (end - start)/1.0E9;
    }
 
+   {
+      std::vector<cl::Event> e(1, events[11]); 
+      cl::Event::waitForEvents(e);
+   }
    events[5].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-   events[5].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   events[11].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
    data.time_gen_communication_receive   += (end - start)/1.0E9;
    data.time_total_communication_receive += (end - start)/1.0E9;
 
@@ -861,13 +881,21 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
       data.time_total_communication_send += (end - start)/1.0E9;
    }
 
+   {
+      std::vector<cl::Event> e(1, events[9]); 
+      cl::Event::waitForEvents(e);
+   }
    events[7].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-   events[7].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   events[9].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
    data.time_gen_communication_receive   += (end - start)/1.0E9;
    data.time_total_communication_receive += (end - start)/1.0E9;
 
+   {
+      std::vector<cl::Event> e(1, events[10]); 
+      cl::Event::waitForEvents(e);
+   }
    events[8].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-   events[8].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+   events[10].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
    data.time_gen_communication_receive   += (end - start)/1.0E9;
    data.time_total_communication_receive += (end - start)/1.0E9;
 #endif
