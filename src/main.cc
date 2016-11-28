@@ -163,6 +163,8 @@ int main(int argc, char** argv)
          printf(";time_total: %lf", t_total.elapsed());
 #ifdef PROFILING
          pee_print_time(true);
+#else
+         printf("\n");
 #endif
          pee_destroy();
       }
