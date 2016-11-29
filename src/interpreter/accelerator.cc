@@ -39,7 +39,7 @@ std::string getAbsoluteDirectory(std::string filepath) {
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double gpops_gen_kernel; double gpops_gen_communication; double time_gen_kernel1; double time_gen_kernel2; double time_gen_communication_send; double time_gen_communication_receive; double time_total_kernel1; double time_total_kernel2; double time_communication_dataset; double time_total_communication_send; double time_total_communication_receive; double time_total_communication1; std::string executable_directory; } data; };
+namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double gpops_gen_kernel; double gpops_gen_communication; double time_gen_kernel1; double time_gen_kernel2; double time_gen_communication_send; double time_gen_communication_receive; double time_total_kernel1; double time_total_kernel2; double time_communication_dataset; double time_total_communication_send; double time_total_communication_receive; double time_total_communication_kernel1; std::string executable_directory; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTION *********************** **/
@@ -519,7 +519,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    data.time_total_kernel2  = 0.0;
    data.time_total_communication_send    = 0.0;
    data.time_total_communication_receive = 0.0;
-   data.time_total_communication1        = 0.0;
+   data.time_total_communication_kernel1 = 0.0;
 #endif
 
    cl_device_type type = CL_INVALID_DEVICE_TYPE;
@@ -868,10 +868,10 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*)
    data.time_gen_communication_receive   += (end - start)/1.0E9;
    data.time_total_communication_receive += (end - start)/1.0E9;
 
-   data.time_total_communication1 += data.time_gen_communication_send + data.time_gen_communication_receive;
+   data.time_total_communication_kernel1 += data.time_gen_communication_send + data.time_gen_communication_receive;
 
    data.gpops_gen_kernel = (sum_size_gen * data.nlin) / data.time_gen_kernel1;
-   data.gpops_gen_communication = (sum_size_gen * data.nlin) / (data.time_gen_kernel1 + data.time_gen_communication_send + data.time_gen_communication_receive);
+   data.gpops_gen_communication = (sum_size_gen * data.nlin) / (data.time_gen_communication_send + data.time_gen_communication_receive);
 
    if( !pep_mode && data.strategy == "FP" ) 
    {
@@ -909,10 +909,10 @@ void acc_print_time( bool total, unsigned long long sum_size )
    double time_kernel2 = total ? data.time_total_kernel2 : data.time_gen_kernel2;
    double time_communication_send = total ? data.time_total_communication_send : data.time_gen_communication_send;
    double time_communication_receive = total ? data.time_total_communication_receive : data.time_gen_communication_receive;
-   double gpops_kernel = total ? (sum_size * data.nlin) / data.time_total_kernel1 : data.gpops_gen_kernel;
-   double gpops_communication = total ? (sum_size * data.nlin) / (data.time_total_kernel1 + data.time_total_communication1) : data.gpops_gen_communication;
+   double gpops_kernel1 = total ? (sum_size * data.nlin) / data.time_total_kernel1 : data.gpops_gen_kernel;
+   double gpops_communication_kernel1 = total ? (sum_size * data.nlin) / data.time_total_communication_kernel1 : data.gpops_gen_communication;
 
-   printf(", time_kernel[1]: %lf, time_kernel[2]: %lf, time_communication_dataset: %lf, time_communication_send: %lf, time_communication_receive: %lf", time_kernel1, time_kernel2, data.time_communication_dataset, time_communication_send, time_communication_receive);
-   printf("; gpops_kernel: %lf, gpops_kernel_communication: %lf", gpops_kernel, gpops_communication);
+   printf(", time_kernel1: %lf, time_kernel2: %lf, time_communication_dataset: %lf, time_communication_send: %lf, time_communication_receive: %lf", time_kernel1, time_kernel2, data.time_communication_dataset, time_communication_send, time_communication_receive);
+   printf("; gpops_kernel1: %lf, gpops_communication_kernel1: %lf", gpops_kernel1, gpops_communication_kernel1);
 }
 #endif
