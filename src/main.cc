@@ -19,6 +19,12 @@
 int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
 {
    std::ifstream infile( dataset.c_str() );
+
+   if (!infile) {
+      fprintf(stderr, "Failed to open dataset file '%s' (use '-d dataset', where dataset is the path of the training CSV file)\n", dataset.c_str());
+      return 2;
+   }
+
    std::string line; std::string token;
 
    ncol = 0; nlin = 0; float tmp;
@@ -157,6 +163,8 @@ int main(int argc, char** argv)
          printf(";time_total: %lf", t_total.elapsed());
 #ifdef PROFILING
          pee_print_time(true);
+#else
+         printf("\n");
 #endif
          pee_destroy();
       }

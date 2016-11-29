@@ -899,6 +899,8 @@ int pee_evolve()
                pee_print_best(stdout, geracao, 1);
 #ifdef PROFILING
                pee_print_time(false);
+#else
+               fprintf(stdout, "\n");
 #endif
             } else
                pee_print_best(stdout, geracao, 0);
