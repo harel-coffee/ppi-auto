@@ -294,7 +294,6 @@ f.write(symbol_head + text4 + text5 + text6 + symbol_tail)
 f.close()
 
 lines = read_file(args.interpreter)
-
 lst = list(text5.split())
 lst = [s.replace(',', '') for s in lst]
 
@@ -319,7 +318,7 @@ lst = [i for i in lst if not "TERMINAL_MIN" in i]
 #Imprime os terminais contidos em lst, mas que nao estao em terminais
 missing = [i for i in lst if not i in terminais]
 for i in range(0,len(missing)):
-   if missing[i] != "T_CONST":
+   if missing[i] != "T_CONST" and missing[i] != "":
       print "Missing terminal:", missing[i], "\nPlease check the '" + args.interpreter + "' file"
 
 lines = read_file(args.interpreter_print)
@@ -392,7 +391,6 @@ f = open(os.path.join(args.output_dir, "interpreter_core_print"), 'w')
 f.write(icp_header + ''.join(print_function) + icp_tail)
 f.close()
 
-
 #lst -> contem os terminais fornecidos pela gramatica bnf
 #terminais -> contem os terminais tratados no algoritmo (interpreter_core)
 lst = [i for i in lst if not "=" in i]
@@ -400,5 +398,6 @@ lst = [i for i in lst if not "TERMINAL_MIN" in i]
 #Imprime os terminais contidos em lst, mas que nao estao em terminais
 missing = [i for i in lst if not i in terminais]
 for i in range(0,len(missing)):
-   print "Missing terminal:", missing[i], "\nPlease check the '" + args.interpreter_print + "' file"
+   if missing[i] != "":
+      print "Missing terminal:", missing[i], "\nPlease check the '" + args.interpreter_print + "' file"
  
