@@ -43,10 +43,12 @@
 #include "util/Util.h"
 #include "util/Random.h"
 #include "Poco/Logger.h"
+#include <omp.h>
 
 // Definition of the Random Number Generator to be used (see util/Random.h)
 //#define RNG XorShift128Plus
-#define RNG Random
+//#define RNG Random
+typedef XorShift128Plus RNG;
 
 /*
  * The parameter ALPHA is the complexity penalization factor. Each individual
@@ -70,7 +72,12 @@ struct Peer {
   float frequency;
 };
 
-namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; unsigned long long sum_size; int verbose; int machine; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int parallel_version; double time_total_evolve; double time_gen_evolve; double time_generate; double time_total_evaluate; double time_gen_evaluate; double gpops_gen_evaluate; double time_total_crossover; double time_gen_crossover; double time_total_mutation; double time_gen_mutation; double time_total_clone; double time_gen_clone; double time_total_tournament; double time_gen_tournament; double time_total_send; double time_gen_send; double time_total_receive; double time_gen_receive; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; int argc; char ** argv;  } data; };
+namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; unsigned long long sum_size; int verbose; int machine; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int parallel_version; double time_total_evolve; double time_gen_evolve; double time_generate; double time_total_evaluate; double time_gen_evaluate; double gpops_gen_evaluate; double time_total_crossover; double time_gen_crossover; double time_total_mutation; double time_gen_mutation; double time_total_clone; double time_gen_clone; double time_total_tournament; double time_gen_tournament; double time_total_send; double time_gen_send; double time_total_receive; double time_gen_receive; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; RNG * RNGs; int argc; char ** argv;  } data; };
+
+RNG * GetRNG() {
+   //std::cerr << "[" << omp_get_thread_num() << "]";
+   return &data.RNGs[omp_get_thread_num()];
+}
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTIONS ********************** **/
@@ -79,7 +86,7 @@ namespace { struct t_data { Symbol initial_symbol; Population best_individual; i
 #define swap(i, j) {Population t = *i; *i = *j; *j = t;}
 
 //double random_number() {return (double)rand() / ((double)RAND_MAX + 1.0f);} // [0.0, 1.0)
-double random_number() { return RNG::Real(); };
+double random_number() { return GetRNG()->Real(); };
 
 
 t_rule* decode_rule( const GENOME_TYPE* genome, int* const allele, Symbol cabeca )
@@ -310,6 +317,14 @@ void pee_init( float** input, int nlin, int ncol, int argc, char** argv )
       Server::immigrants_acceptance_threshold = iat * data.stagnation_tolerance;
    else // if '>= 1.0', it is an absolute value
       Server::immigrants_acceptance_threshold = static_cast<long int>(iat);
+
+   // Storage for multi-threaded Random Number Generators (RNG), one for each OpenMP thread
+   data.RNGs = new RNG[omp_get_num_threads()]; // TODO: destruction
+   for (int i=0; i<omp_get_num_threads(); ++i)
+   {
+      data.RNGs[i].Seed(data.seed+i);
+   }
+
 }
 
 void pee_clone( Population* original, int idx_original, Population* copy, int idx_copy )
@@ -593,7 +608,7 @@ void pee_crossover( const GENOME_TYPE* father, const GENOME_TYPE* mother, GENOME
    util::Timer t_crossover;
 #endif
 
-   if (RNG::Probability(TWOPOINT_CROSSOVER_PROBABILITY))
+   if (GetRNG()->Probability(TWOPOINT_CROSSOVER_PROBABILITY))
    {
       // Cruzamento de dois pontos
       int pontos[2];
@@ -654,7 +669,7 @@ void pee_mutation( GENOME_TYPE* genome )
 
    if (num_bits_mutated == 0) return; // lucky guy, no mutation for him...
 
-   if (RNG::Probability(BITFLIP_MUTATION_PROBABILITY))
+   if (GetRNG()->Probability(BITFLIP_MUTATION_PROBABILITY))
    {
       //////////////////////////////////////////////////////////////////////////
       // Bit (allele) mutation
@@ -695,7 +710,7 @@ void pee_mutation( GENOME_TYPE* genome )
          shrink is limited proportionally by 'mutation_rate'.
       */
 
-      if (RNG::Probability(AGGRESSIVE_SHRINK_MUTATION_PROBABILITY))
+      if (GetRNG()->Probability(AGGRESSIVE_SHRINK_MUTATION_PROBABILITY))
          num_bits_mutated = (int) (random_number() * (data.number_of_bits));
 
       int number_of_bits_to_shrink = int((num_bits_mutated+(data.bits_per_gene-1))/data.bits_per_gene)*data.bits_per_gene;
@@ -752,7 +767,7 @@ void pee_print_time( bool total )
 int pee_evolve()
 {
    /* Initialize the RNG seed */
-   RNG::Seed(data.seed);
+   // FIXME (currently done in _init; should we put it here instead?) RNG::Seed(data.seed);
 
    /*
       Pseudo-code for evolve:
