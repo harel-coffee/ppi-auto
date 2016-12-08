@@ -37,6 +37,7 @@ typedef long int64_t;
 // FIXME: use the line below instead (which requires a C++11 compiler)
 //#include <cstdint>
 
+// TODO: Make Random thread-safe (like XorShift128Plus)
 // ---------------------------------------------------------------------
 /**
  * Simple random number generator (based on standard rand() function).
@@ -118,8 +119,14 @@ public:
 
 //uint64_t s[2] = { (uint64_t(rd()) << 32) ^ (rd()), (uint64_t(rd()) << 32) ^ (rd()) };
 //double random_number() { return (double) xorshift128plus()/((double)18446744073709551615ULL + 1.0); };
+   XorShift128Plus(uint64_t id = 0) {
+      // Shift by id so that many created instances (having different id's)
+      // will have different (pseudo)-random sequences
+      s[0] = 12345 + id;
+      s[1] = 67890 + id;
+   }
 
-static uint64_t Int()
+uint64_t Int()
 {
    //std::cerr << '.';
    uint64_t x = s[0];
@@ -131,8 +138,8 @@ static uint64_t Int()
 }
 public:
    /** Sets the random seed. (0 = "random") */
-   static uint64_t Seed( uint64_t seed = 0L ) 
-   { 
+   uint64_t Seed( uint64_t seed = 0L ) 
+   {
       seed = ( seed == 0L ) ? time( NULL ) : seed;
       s[0] = (uint64_t(seed) << 32) | (seed & 0xffffffff);
       s[1] = (uint64_t(seed) << 32) | (seed & 0xffffffff);
@@ -140,25 +147,25 @@ public:
       return seed;
    }
 
-   static uint64_t Int( uint64_t n )
+   uint64_t Int( uint64_t n )
    {
       return static_cast<uint64_t>( double( Int() ) * n  / (rand_max + 1.0) );
-   }    
+   }
 
    /** Uniform random (integer) [a:b] */
-   static int64_t Int( int64_t a, int64_t b )
+   int64_t Int( int64_t a, int64_t b )
    {
       return a + static_cast<int64_t>( Int() * (b - a + 1.0) / (rand_max + 1.0) );
-   }    
+   }
 
    /** Uniform random (real) [a:b) -- includes 'a' but not 'b' */
-   static double Real()
+   double Real()
    {
       return double( Int() ) / (double( rand_max ) + 1.0);
    }
 
    /** Uniform random (real) [a:b] -- includes 'a' and 'b' */
-   static double Real( double a, double b )
+   double Real( double a, double b )
    {
       return a + Int() * (b - a) / double( rand_max );
    }
@@ -171,19 +178,19 @@ public:
     */
 
    /** Non-uniform. Integer version [a,b) -- includes 'a' but not 'b' */
-   static int64_t NonUniformInt( double weight, int64_t a, int64_t b )
+   int64_t NonUniformInt( double weight, int64_t a, int64_t b )
    {
       return static_cast<int64_t>( pow( Real(), weight ) * (b - a) + a );
    }
 
    /** Non-uniform. Float version [a,b) */
-   static double NonUniformReal( double weight, double a = 0.0, double b = 1.0 )
+   double NonUniformReal( double weight, double a = 0.0, double b = 1.0 )
    {
       return pow( Real(), weight ) * (b - a) + a;
    }
 
    /** Probability ("flip coin"): [0% = 0.0 and 100% = 1.0] */
-   static bool Probability( double p )
+   bool Probability( double p )
    {
       if( p <= 0.0 ) return false;
       if( p >= 1.0 ) return true;
@@ -193,7 +200,8 @@ public:
 protected:
    //static uint64_t const rand_max = std::numeric_limits<uint64_t>::max();
    static uint64_t const rand_max = 18446744073709551615UL;
-   static uint64_t s[2];
+   uint64_t s[2];
+   uint64_t id;
 };
 
 // --------------------------------------------------------------------

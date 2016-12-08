@@ -45,8 +45,8 @@
 #include "Poco/Logger.h"
 
 // Definition of the Random Number Generator to be used (see util/Random.h)
-#define RNG XorShift128Plus
-//#define RNG Random
+//#define RNG XorShift128Plus
+#define RNG Random
 
 /*
  * The parameter ALPHA is the complexity penalization factor. Each individual
