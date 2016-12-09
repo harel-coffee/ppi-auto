@@ -43,7 +43,9 @@
 #include "util/Util.h"
 #include "util/Random.h"
 #include "Poco/Logger.h"
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 // Definition of the Random Number Generator to be used (see util/Random.h)
 //#define RNG XorShift128Plus
@@ -76,7 +78,12 @@ namespace { struct t_data { Symbol initial_symbol; Population best_individual; i
 
 RNG * GetRNG() {
    //std::cerr << "[" << omp_get_thread_num() << "]";
-   return &data.RNGs[omp_get_thread_num()];
+#ifdef _OPENMP
+   int tid = omp_get_thread_num();
+#else
+   int tid = 0;
+#endif
+   return &data.RNGs[tid];
 }
 
 /** ****************************************************************** **/
@@ -319,8 +326,13 @@ void pee_init( float** input, int nlin, int ncol, int argc, char** argv )
       Server::immigrants_acceptance_threshold = static_cast<long int>(iat);
 
    // Storage for multi-threaded Random Number Generators (RNG), one for each OpenMP thread
-   data.RNGs = new RNG[omp_get_num_threads()]; // TODO: destruction
-   for (int i=0; i<omp_get_num_threads(); ++i)
+#ifdef _OPENMP
+   int num_threads = omp_get_num_threads();
+#else
+   int num_threads = 1;
+#endif
+   data.RNGs = new RNG[num_threads]; // TODO: destruction
+   for (int i=0; i<num_threads; ++i)
    {
       data.RNGs[i].Seed(data.seed+i);
    }
