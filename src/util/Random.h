@@ -122,13 +122,12 @@ public:
    XorShift128Plus(uint64_t id = 0) {
       // Shift by id so that many created instances (having different id's)
       // will have different (pseudo)-random sequences
-      s[0] = 12345 + id;
-      s[1] = 67890 + id;
+      s[0] = 12345 ^ id;
+      s[1] = 67890 ^ id;
    }
 
 uint64_t Int()
 {
-   //std::cerr << '.';
    uint64_t x = s[0];
    uint64_t const y = s[1];
    s[0] = y;

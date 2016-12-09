@@ -332,7 +332,7 @@ void pee_init( float** input, int nlin, int ncol, int argc, char** argv )
    data.RNGs = new RNG[num_threads];
    for (int i=0; i<num_threads; ++i)
    {
-      data.RNGs[i].Seed(data.seed+i);
+      data.RNGs[i].Seed(data.seed ^ i);
    }
 
 }
