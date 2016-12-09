@@ -604,6 +604,7 @@ void pee_generate_population( Population* antecedentes, Population* descendentes
    util::Timer t_generate;
 #endif
 
+#pragma omp parallel for
    for( int i = 0; i < data.population_size; ++i)
    {
       for( int j = 0; j < data.number_of_bits; j++ )
