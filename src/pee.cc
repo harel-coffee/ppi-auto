@@ -212,6 +212,8 @@ void pee_init( float** input, int nlin, int ncol, int argc, char** argv )
 
    Opts.Float.Add( "-iat", "--immigrants-acceptance-threshold", 0.0, 0.0 );
 
+   Opts.Int.Add( "-t", "--threads", -1, 0);
+
    // processing the command-line
    Opts.Process();
 
@@ -246,6 +248,22 @@ void pee_init( float** input, int nlin, int ncol, int argc, char** argv )
       data.interval[0] = Opts.Float.Get("-min");
       data.interval[1] = Opts.Float.Get("-max");
    }
+
+   /*
+      //////////////////////////////////////////////////////////////////////////
+         Number of threads:
+      //////////////////////////////////////////////////////////////////////////
+      if '-t' is NOT given (i.e., -1), than uses only one thread (sequential)
+      if '-t' is given as any value greater than 0, just set the number of threads to that value
+      if '-t' is given as ZERO, than uses the maximum number of threads (= number of cores) or the value of the environment variable OMP_NUM_THREADS
+   */
+#ifdef _OPENMP
+   if (Opts.Int.Get("-t") < 0) // Uses the default (threads = 1 = sequencial)
+      omp_set_num_threads(1);
+   else if (Opts.Int.Get("-t") > 0) // Uses the specified number of threads
+      omp_set_num_threads(Opts.Int.Get("-t"));
+#endif
+
 
    data.initial_symbol = NT_INICIAL;
 
