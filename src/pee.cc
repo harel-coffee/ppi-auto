@@ -76,14 +76,12 @@ struct Peer {
 
 namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; unsigned long long sum_size; int verbose; int machine; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int parallel_version; double time_total_evolve; double time_gen_evolve; double time_generate; double time_total_evaluate; double time_gen_evaluate; double gpops_gen_evaluate; double time_total_crossover; double time_gen_crossover; double time_total_mutation; double time_gen_mutation; double time_total_clone; double time_gen_clone; double time_total_tournament; double time_gen_tournament; double time_total_send; double time_gen_send; double time_total_receive; double time_gen_receive; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; RNG * RNGs; int argc; char ** argv;  } data; };
 
-RNG * GetRNG() {
-   //std::cerr << "[" << omp_get_thread_num() << "]";
+inline RNG * GetRNG() {
 #ifdef _OPENMP
-   int tid = omp_get_thread_num();
+   return &data.RNGs[omp_get_thread_num()];
 #else
-   int tid = 0;
+   return &data.RNGs[0];
 #endif
-   return &data.RNGs[tid];
 }
 
 /** ****************************************************************** **/
@@ -327,11 +325,11 @@ void pee_init( float** input, int nlin, int ncol, int argc, char** argv )
 
    // Storage for multi-threaded Random Number Generators (RNG), one for each OpenMP thread
 #ifdef _OPENMP
-   int num_threads = omp_get_num_threads();
+   int num_threads = omp_get_max_threads();
 #else
    int num_threads = 1;
 #endif
-   data.RNGs = new RNG[num_threads]; // TODO: destruction
+   data.RNGs = new RNG[num_threads];
    for (int i=0; i<num_threads; ++i)
    {
       data.RNGs[i].Seed(data.seed+i);
@@ -353,8 +351,11 @@ void pee_clone( Population* original, int idx_original, Population* copy, int id
    copy->fitness[idx_copy] = original->fitness[idx_original];
 
 #ifdef PROFILING
-   data.time_gen_clone   += t_clone.elapsed();
-   data.time_total_clone += t_clone.elapsed();
+   double elapsed = t_clone.elapsed();
+#pragma omp atomic
+   data.time_gen_clone   += elapsed;
+#pragma omp atomic
+   data.time_total_clone += elapsed;
 #endif
 }
 
@@ -380,8 +381,11 @@ int pee_tournament( const float* fitness )
    }
 
 #ifdef PROFILING
-   data.time_gen_tournament   += t_tournament.elapsed();
-   data.time_total_tournament += t_tournament.elapsed();
+   double elapsed = t_tournament.elapsed();
+#pragma omp atomic
+   data.time_gen_tournament   += elapsed;
+#pragma omp atomic
+   data.time_total_tournament += elapsed;
 #endif
 
    return idx_winner;
@@ -663,8 +667,11 @@ void pee_crossover( const GENOME_TYPE* father, const GENOME_TYPE* mother, GENOME
       }
    }
 #ifdef PROFILING
-   data.time_gen_crossover   += t_crossover.elapsed();
-   data.time_total_crossover += t_crossover.elapsed();
+   double elapsed = t_crossover.elapsed();
+#pragma omp atomic
+   data.time_gen_crossover   += elapsed;
+#pragma omp atomic
+   data.time_total_crossover += elapsed;
 #endif
 }
 
@@ -739,8 +746,11 @@ void pee_mutation( GENOME_TYPE* genome )
       memmove(&genome[start], &genome[end], (data.number_of_bits-end)*sizeof(GENOME_TYPE));
    }
 #ifdef PROFILING
-   data.time_gen_mutation   += t_mutation.elapsed();
-   data.time_total_mutation += t_mutation.elapsed();
+   double elapsed = t_mutation.elapsed();
+#pragma omp atomic
+   data.time_gen_mutation   += elapsed;
+#pragma omp atomic
+   data.time_total_mutation += elapsed;
 #endif
 }
 
@@ -870,7 +880,7 @@ int pee_evolve()
       //std::cerr << "\nnImmigrants[generation: " << geracao << "]: " << nImmigrants << std::endl;
 
       // 5
-      // TODO: Parallelize this loop!
+#pragma omp parallel for
       for( int i = nImmigrants; i < data.population_size; i += 2 )
       {
          // 6:
@@ -960,6 +970,7 @@ void pee_destroy()
    delete[] data.size;
    delete[] Server::m_immigrants;
    delete[] Server::m_fitness;
+   delete[] data.RNGs;
 
    delete data.pool;
 
