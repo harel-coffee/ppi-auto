@@ -99,7 +99,7 @@ inline int GetMaxNumThreads() {
 #define swap(i, j) {Population t = *i; *i = *j; *j = t;}
 
 //double random_number() {return (double)rand() / ((double)RAND_MAX + 1.0f);} // [0.0, 1.0)
-double random_number() { return GetRNG()->Real(); };
+double random_number() { return GetRNG()->Real(); }
 
 
 t_rule* decode_rule( const GENOME_TYPE* genome, int* const allele, Symbol cabeca )
