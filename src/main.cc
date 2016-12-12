@@ -81,7 +81,7 @@ int read( const std::string& dataset, float**& input, int &ncol, int& nlin )
                   return 2;
                }
             }
-            if( isnan( input[i][j]) || isinf(input[i][j]) )
+            if( std::isnan( input[i][j]) || std::isinf(input[i][j]) )
             {
                fprintf(stderr, "Invalid input at line %d, column %d.\n", k+1, j+1);
                return 2;

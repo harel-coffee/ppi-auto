@@ -154,7 +154,7 @@ float* vector, int nInd, int* index, int* best_size, int pep_mode, int predictio
 
             // Avoid further calculations if the current one has overflown the float
             // (i.e., it is inf or NaN).
-            if( isinf(error) || isnan(error) ) { sum = std::numeric_limits<float>::max(); break; }
+            if( std::isinf(error) || std::isnan(error) ) { sum = std::numeric_limits<float>::max(); break; }
 
 #ifdef REDUCEMAX
             sum = (error*data.nlin > sum) ? error*data.nlin : sum;
@@ -165,7 +165,7 @@ float* vector, int nInd, int* index, int* best_size, int pep_mode, int predictio
       }
       if( !prediction_mode )
       {
-         if( isnan( sum ) || isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
+         if( std::isnan( sum ) || std::isinf( sum ) ) {vector[ind] = std::numeric_limits<float>::max();}
          else 
          {
             vector[ind] = sum/data.nlin + alpha * size[ind];
