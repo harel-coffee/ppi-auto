@@ -109,82 +109,35 @@ private:
 
 };
 
-
-// TODO: Make Random thread-safe (like XorShift128Plus)
-#if 0
 // ---------------------------------------------------------------------
 /**
  * Simple random number generator (based on standard rand() function).
  */
-class Random {
+class Random: public BaseRNG<Random> {
 public:
+   Random(uint64_t id = 0) {
+      // Shift by id so that many created instances (having different id's)
+      // will have different (pseudo)-random sequences
+      s = id;
+   }
+
+   uint64_t Int()
+   {
+      return rand_r(&s);
+   }
+
    /** Sets the random seed. (0 = "random") */
-   static uint64_t Seed( uint64_t seed = 0L ) 
-   { 
-      srand( seed = ( seed == 0L ) ? time( NULL ) : seed );
-      return seed;
+   void StoreSeed( uint64_t seed )
+   {
+      s = s ^ seed;
    }
 
-   /** Uniform random [0:rand_max] */
-   static uint64_t Int() { return rand(); }
-
-   /** Uniform random (integer) [0:n) -- greater than or equal 0 but less than n */
-   static uint64_t Int( uint64_t n )
-   {
-      return static_cast<uint64_t>( double( Int() ) * n  / (rand_max + 1.0) );
-   }    
-
-   /** Uniform random (integer) [a:b] */
-   static int64_t Int( int64_t a, int64_t b )
-   {
-      return a + static_cast<int64_t>( Int() * (b - a + 1.0) / (rand_max + 1.0) );
-   }    
-
-   /** Uniform random (real) [a:b) -- includes 'a' but not 'b' */
-   static double Real()
-   {
-      return double( Int() ) / (double( rand_max ) + 1.0);
-   }
-
-   /** Uniform random (real) [a:b] -- includes 'a' and 'b' */
-   static double Real( double a, double b )
-   {
-      return a + Int() * (b - a) / double( rand_max );
-   }
-
-   /* Non Uniform Random Numbers
-    *
-    * 'weight = 1': uniform distribution between 'a' and 'b' [a,b]
-    * 'weight > 1': non uniform distribution towards 'a'
-    * 'weight < 1': non uniform distribution towards 'b'
-    */
-
-   /** Non-uniform. Integer version [a,b) -- includes 'a' but not 'b' */
-   static int64_t NonUniformInt( double weight, int64_t a, int64_t b )
-   {
-      return static_cast<int64_t>( pow( Real(), weight ) * (b - a) + a );
-   }
-
-   /** Non-uniform. Float version [a,b) */
-   static double NonUniformReal( double weight, double a = 0.0, double b = 1.0 )
-   {
-      return pow( Real(), weight ) * (b - a) + a;
-   }
-
-   /** Probability ("flip coin"): [0% = 0.0 and 100% = 1.0] */
-   static bool Probability( double p )
-   {
-      if( p <= 0.0 ) return false;
-      if( p >= 1.0 ) return true;
-
-      return Real() < p ? true : false;
-   }
-protected:
+public:
    static uint64_t const rand_max = RAND_MAX;
+protected:
+   unsigned s;
 };
-#endif
 
-// TODO: Avoid code duplication!
 ////////////////////////////////////////////////////////////////////////////////
 /* XorShift128Plus (https://en.wikipedia.org/wiki/Xorshift) */
 ////////////////////////////////////////////////////////////////////////////////

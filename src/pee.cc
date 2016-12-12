@@ -48,8 +48,7 @@
 #endif
 
 // Definition of the Random Number Generator to be used (see util/Random.h)
-//#define RNG XorShift128Plus
-//#define RNG Random
+//typedef Random RNG;
 typedef XorShift128Plus RNG;
 
 /*
@@ -98,9 +97,8 @@ inline int GetMaxNumThreads() {
 
 #define swap(i, j) {Population t = *i; *i = *j; *j = t;}
 
-//double random_number() {return (double)rand() / ((double)RAND_MAX + 1.0f);} // [0.0, 1.0)
 double random_number() { return GetRNG()->Real(); }
-
+//double random_number() { double value = GetRNG()->Real(); std::cerr << value << std::endl; return value; }
 
 t_rule* decode_rule( const GENOME_TYPE* genome, int* const allele, Symbol cabeca )
 {
