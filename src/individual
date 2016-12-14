@@ -10,6 +10,6 @@ As PEE currently uses a binary representation, the 'bool' data type (or 'char')
 suffices here. */
 typedef bool GENOME_TYPE;
 
-struct Population { GENOME_TYPE* genome; float* fitness; };
+struct Population { GENOME_TYPE** genome; float* fitness; };
 
 #endif

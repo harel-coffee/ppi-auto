@@ -342,7 +342,7 @@ icp_header = r"""void pee_individual_print( const Population* individual, int id
    float ephemeral[data.max_size_phenotype];
 
    int allele = 0;
-   int size = decode( individual->genome + (idx * data.number_of_bits), &allele, phenotype, ephemeral, 0, data.initial_symbol );
+   int size = decode( individual->genome[idx], &allele, phenotype, ephemeral, 0, data.initial_symbol );
    if( !size ) { return; }
 
    if (print_mode)
@@ -377,7 +377,7 @@ icp_tail = r"""
       // Print the individual's genome, but only the active (no introns) region (useful for seeding new generations)
       fprintf(out, ";");
       for(int i=0; i<allele; ++i)
-         fprintf(out, "%d", (individual->genome + (idx * data.number_of_bits))[i]);
+         fprintf(out, "%d", (individual->genome[idx])[i]);
       fprintf(out, ";");
       for (int i=0; i<argc; ++i)
          fprintf(out, "%s ", argv[i]);

@@ -24,7 +24,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size,
 #ifdef PROFILING
 unsigned long sum_size_gen, 
 #endif
-float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE*), Population* migrants, int* nImmigrants, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha );
+float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**), Population* migrants, int* nImmigrants, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha );
 
 /** ************************************************************************************************** **/
 /** ************************************** Function print_time *************************************** **/

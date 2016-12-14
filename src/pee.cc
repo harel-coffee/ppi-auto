@@ -375,8 +375,8 @@ void pee_clone( Population* original, int idx_original, Population* copy, int id
    util::Timer t_clone;
 #endif
 
-   const GENOME_TYPE* const org = original->genome + idx_original*data.number_of_bits;
-   GENOME_TYPE* cpy = copy->genome + idx_copy*data.number_of_bits;
+   const GENOME_TYPE* const org = original->genome[idx_original];
+   GENOME_TYPE* cpy = copy->genome[idx_copy];
 
    for( int i = 0; i < data.number_of_bits; ++i ) cpy[i] = org[i];
 
@@ -474,7 +474,7 @@ void pee_send_individual( Population* population )
          std::stringstream results;
          results <<  population->fitness[idx] << " ";
          for( int j = 0; j < data.number_of_bits; j++ )
-            results <<  static_cast<int>(population->genome[idx * data.number_of_bits + j]); /* NB: A cast to 'int' is necessary here otherwise it will send characters instead of digits when GENOME_TYPE == char */
+            results <<  static_cast<int>(population->genome[idx][j]); /* NB: A cast to 'int' is necessary here otherwise it will send characters instead of digits when GENOME_TYPE == char */
 
          delete data.pool->clients[i]; delete data.pool->ss[i];
 
@@ -499,7 +499,7 @@ void pee_send_individual( Population* population )
 #endif
 }
 
-int pee_receive_individual( GENOME_TYPE* immigrants )
+int pee_receive_individual( GENOME_TYPE** immigrants )
 {
 #ifdef PROFILING
    util::Timer t_receive;
@@ -540,7 +540,7 @@ int pee_receive_individual( GENOME_TYPE* immigrants )
       for( int i = 0; i < chars_to_convert && tmp[i] != '\0'; i++ )
       {
          assert(tmp[i]-'0'==1 || tmp[i]-'0'==0); // In debug mode, assert that each value is either '0' or '1'
-         immigrants[nImmigrants * data.number_of_bits + i] = static_cast<bool>(tmp[i] - '0'); /* Ensures that the allele will be binary (0 or 1) regardless of the received value--this ensures it would work even if a communication error occurs (or a malicious message is sent). */
+         immigrants[nImmigrants][i] = static_cast<bool>(tmp[i] - '0'); /* Ensures that the allele will be binary (0 or 1) regardless of the received value--this ensures it would work even if a communication error occurs (or a malicious message is sent). */
       }
       nImmigrants++;
 
@@ -576,7 +576,7 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
    for( int i = 0; i < data.population_size; i++ )
    {
       int allele = 0;
-      data.size[i] = decode( descendentes->genome + (i * data.number_of_bits), &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
+      data.size[i] = decode( descendentes->genome[i], &allele, data.phenotype + (i * data.max_size_phenotype), data.ephemeral + (i * data.max_size_phenotype), 0, data.initial_symbol );
 #ifdef PROFILING
       sum_size_gen += data.size[i];
       //if( max_size < data.size[i] ) max_size = data.size[i];
@@ -641,7 +641,7 @@ void pee_generate_population( Population* antecedentes, Population* descendentes
    {
       for( int j = 0; j < data.number_of_bits; j++ )
       {
-         antecedentes->genome[i * data.number_of_bits + j] = (random_number() < 0.5) ? 1 : 0;
+         antecedentes->genome[i][j] = (random_number() < 0.5) ? 1 : 0;
       }
    }
    pee_evaluate( antecedentes, descendentes, nImmigrants );
@@ -859,21 +859,27 @@ int pee_evolve()
    data.time_total_receive     = 0.0;
 #endif
    
-   srand( data.seed );
-
    Population antecedentes, descendentes;
 
    antecedentes.fitness = new float[data.population_size];
    descendentes.fitness = new float[data.population_size];
 
-   antecedentes.genome = new GENOME_TYPE[data.population_size * data.number_of_bits];
-   descendentes.genome = new GENOME_TYPE[data.population_size * data.number_of_bits];
+   antecedentes.genome = new GENOME_TYPE*[data.population_size];
+   descendentes.genome = new GENOME_TYPE*[data.population_size];
+#pragma omp parallel for
+   for (int i=0; i < data.population_size; ++i)
+   {
+      antecedentes.genome[i] = new GENOME_TYPE[data.number_of_bits];
+      descendentes.genome[i] = new GENOME_TYPE[data.number_of_bits];
+   }
+
 
    data.best_individual.fitness = new float[data.best_size];
-   data.best_individual.genome = new GENOME_TYPE[data.best_size * data.number_of_bits];
+   data.best_individual.genome = new GENOME_TYPE*[data.best_size];
    for( int i = 0; i < data.best_size; i++ )
    {
       data.best_individual.fitness[i] = std::numeric_limits<float>::max();
+      data.best_individual.genome[i] = new GENOME_TYPE[data.number_of_bits];
    }
 
    int nImmigrants;
@@ -926,11 +932,11 @@ int pee_evolve()
             // 8 e 9:
             if( i < ( data.population_size - 1 ) )
             {
-               pee_crossover( antecedentes.genome + (idx_father * data.number_of_bits), antecedentes.genome + (idx_mother * data.number_of_bits), descendentes.genome + (i * data.number_of_bits), descendentes.genome + ((i + 1) * data.number_of_bits));
+               pee_crossover( antecedentes.genome[idx_father], antecedentes.genome[idx_mother], descendentes.genome[i], descendentes.genome[i + 1] );
             }
             else 
             {
-               pee_crossover( antecedentes.genome + (idx_father * data.number_of_bits), antecedentes.genome + (idx_mother * data.number_of_bits), descendentes.genome + (i * data.number_of_bits), descendentes.genome + (i * data.number_of_bits));
+               pee_crossover( antecedentes.genome[idx_father], antecedentes.genome[idx_mother], descendentes.genome[i], descendentes.genome[i] );
             }
          } // 10
          else 
@@ -944,10 +950,10 @@ int pee_evolve()
          } // 10
 
          // 11, 12, 13, 14 e 15:
-         pee_mutation( descendentes.genome + (i * data.number_of_bits) );
+         pee_mutation( descendentes.genome[i] );
          if( i < ( data.population_size - 1 ) )
          {
-            pee_mutation( descendentes.genome + ((i + 1) * data.number_of_bits) );
+            pee_mutation( descendentes.genome[i + 1] );
          }
       } // 16
 
@@ -982,9 +988,14 @@ int pee_evolve()
 
 
    // Clean up
+   for (int i=0; i < data.population_size; ++i)
+   {
+      delete[] antecedentes.genome[i];
+      delete[] descendentes.genome[i];
+   }
    delete[] antecedentes.genome;
-   delete[] antecedentes.fitness;
    delete[] descendentes.genome;
+   delete[] antecedentes.fitness;
    delete[] descendentes.fitness;
 
    return geracao;
@@ -996,6 +1007,10 @@ void pee_destroy()
    // graceful termination and prevents segmentation faults at the end
    Poco::ThreadPool::defaultPool().stopAll();
 
+   for( int i = 0; i < data.best_size; i++ )
+   {
+      delete[] data.best_individual.genome[i];
+   }
    delete[] data.best_individual.genome;
    delete[] data.best_individual.fitness;
    delete[] data.phenotype;
