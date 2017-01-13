@@ -5,9 +5,9 @@
 #include <string>   
 #include <limits>
 #include <queue>
+#include "definitions"
 #include "sequential.h"
 #include "../util/Util.h"
-
 
 /** ****************************************************************** **/
 /** ***************************** TYPES ****************************** **/

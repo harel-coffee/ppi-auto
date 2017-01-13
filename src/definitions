@@ -1,0 +1,11 @@
+/* The variable COST will be replaced with the definition from
+   '-DCOST=<matrix>' at building time. For instance, if given:
+  
+      cmake ... -DCOST='[4]={{0,1,1,1},{1,0,1,1},{1,1,0,1},{1,1,1,0}}'
+
+   Then, the line @COST@ below will be replaced by:
+
+      float COST[][4]={{0,1,1,1},{1,0,1,1},{1,1,0,1},{1,1,1,0}};
+*/
+
+@COST@

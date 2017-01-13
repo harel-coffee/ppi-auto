@@ -16,8 +16,19 @@ if (NOT LABEL)
    set(LABEL "main")
 endif ()
 
+if (NOT COST)
+   set(COST "")
+else()
+   set(COST "float COST[]${COST};") 
+   message(STATUS "Using COST MATRIX (COST) as: ${COST}")
+endif ()
+
 if (NOT EF)
-   set(EF "fabs((X)-(Y))")
+   if (COST)
+      set(EF "COST[(int)X][(int)Y]")
+   else ()
+      set(EF "fabs((X)-(Y))")
+   endif ()
 endif ()
 message(STATUS "Using ERROR FUNCTION (EF) as: ${EF}")
 
@@ -67,5 +78,6 @@ add_definitions( -DLABEL=${LABEL} )
 
 # The 'definitions.h' file holds macros and definitions which are taken from CMake's variables (such as the ERROR(X,Y) functional define)
 configure_file( "${CMAKE_SOURCE_DIR}/src/definitions.h" "${CMAKE_BINARY_DIR}/${LABEL}-include/definitions.h")
+configure_file( "${CMAKE_SOURCE_DIR}/src/definitions" "${CMAKE_BINARY_DIR}/${LABEL}-include/definitions")
 
 add_subdirectory( src )

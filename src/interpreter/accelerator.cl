@@ -1,5 +1,6 @@
 #include <symbol>
 #include <definitions.h>
+#include <definitions>
 #include <functions.h>
 
 __kernel void

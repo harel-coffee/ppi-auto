@@ -1,15 +1,5 @@
 # Functionality #
 
- - Implements the cost matrix for classification
-
-   The cost matrix can be passed at build time; for instance:
-      cmake ... -DCOSTMATRIX="{{0,1,1},{1,0,1},{1,1,0}}"
-
-   This would require to have two error vectors: one for the raw
-("presentable") error (without the cost matrix) and for the modified error
-(that will guide the search) using the cost matrix.
-
-
 # Optimization #
 
  - Implements the genome vector as a truly binary vector. In other words, it
