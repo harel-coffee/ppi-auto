@@ -137,7 +137,7 @@ while i < len(grammar):
                      else:
                         text0.append("t_rule " + nterminal + "_" + str(n) + " = { " + str(rule) + ", {T_" + value)
                         if not text5:
-                           text5.append(", T_" + value); text5.append(" = TERMINAL_MIN")
+                           text5.append(", "); text5.append("T_" + value); text5.append(" = TERMINAL_MIN")
                         else:
                            if "T_"+value not in text5:
                               text5.append(", "); text5.append("T_" + value)
@@ -154,7 +154,7 @@ while i < len(grammar):
                            #text7.append(grammar[ini][4:].upper())
                      else:
                         if not text5:
-                           text5.append(", T_" + grammar[ini].upper()); text5.append(" = TERMINAL_MIN")
+                           text5.append(", "); text5.append("T_" + grammar[ini].upper()); text5.append(" = TERMINAL_MIN")
                         else:
                            if "T_"+grammar[ini].upper() not in text5:
                               text5.append(", "); text5.append("T_" + grammar[ini].upper())
@@ -171,7 +171,7 @@ while i < len(grammar):
                         else:
                            text0.append(", T_" + value)
                         if not text5:
-                           text5.append(", T_" + value); text5.append(" = TERMINAL_MIN")
+                           text5.append(", "); text5.append("T_" + value); text5.append(" = TERMINAL_MIN")
                         else:
                            if "T_"+value not in text5:
                               text5.append(", "); text5.append("T_" + value)
@@ -188,7 +188,7 @@ while i < len(grammar):
                               #text7.append(grammar[j][4:].upper())
                         else:
                            if not text5:
-                              text5.append(", T_" + grammar[j].upper()); text5.append(" = TERMINAL_MIN")
+                              text5.append(", "); text5.append("T_" + grammar[j].upper()); text5.append(" = TERMINAL_MIN")
                            else:
                               if "T_"+grammar[j].upper() not in text5:
                                  text5.append(", "); text5.append("T_" + grammar[j].upper())
@@ -201,6 +201,7 @@ while i < len(grammar):
          i = i + 1
 
    i = i + 1
+
 
 
 text1.append(" };\n")
@@ -287,6 +288,7 @@ if "T_CONST" not in text5:
 
 symbol_tail = symbol_tail + r"""
 #endif"""
+
 
 f = open(os.path.join(args.output_dir, "symbol"), 'w')
 #f.write(symbol_head + text4 + text5 + text7 + symbol_tail)
