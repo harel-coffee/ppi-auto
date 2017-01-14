@@ -1,11 +1,13 @@
 #include <symbol>
 #include <definitions.h>
-#include <definitions>
 #include <functions.h>
 
 __kernel void
 evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, int nlin, int ncol, int prediction_mode, int population_size )
 {
+   // Include the cost matrix definition if given
+   #include <costmatrix>
+
    float stack[MAX_STACK_SIZE];
    int stack_top;
 
@@ -77,6 +79,9 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
 __kernel void
 evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, int nlin, int ncol, int prediction_mode, __local float* PE, int nInd )
 {
+   // Include the cost matrix definition if given
+   #include <costmatrix>
+
    float stack[MAX_STACK_SIZE];
    int stack_top;
 
@@ -150,6 +155,9 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
 __kernel void
 evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, int nlin, int ncol, int prediction_mode, __local float* PE )
 {
+   // Include the cost matrix definition if given
+   #include <costmatrix>
+
    float stack[MAX_STACK_SIZE];
    int stack_top;
 

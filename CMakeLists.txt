@@ -19,7 +19,7 @@ endif ()
 if (NOT COST)
    set(COST "")
 else()
-   set(COST "float COST[]${COST};") 
+   set(COST "const float COST[]${COST};") 
    message(STATUS "Using COST MATRIX (COST) as: ${COST}")
 endif ()
 
@@ -78,6 +78,6 @@ add_definitions( -DLABEL=${LABEL} )
 
 # The 'definitions.h' file holds macros and definitions which are taken from CMake's variables (such as the ERROR(X,Y) functional define)
 configure_file( "${CMAKE_SOURCE_DIR}/src/definitions.h" "${CMAKE_BINARY_DIR}/${LABEL}-include/definitions.h")
-configure_file( "${CMAKE_SOURCE_DIR}/src/definitions" "${CMAKE_BINARY_DIR}/${LABEL}-include/definitions")
+configure_file( "${CMAKE_SOURCE_DIR}/src/costmatrix" "${CMAKE_BINARY_DIR}/${LABEL}-include/costmatrix")
 
 add_subdirectory( src )

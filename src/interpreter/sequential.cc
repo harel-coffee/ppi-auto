@@ -5,7 +5,6 @@
 #include <string>   
 #include <limits>
 #include <queue>
-#include "definitions"
 #include "sequential.h"
 #include "../util/Util.h"
 
@@ -109,6 +108,8 @@ float* vector, int nInd, int* index, int* best_size, int pep_mode, int predictio
 #ifdef PROFILING
    util::Timer t_kernel;
 #endif
+   // Include the cost matrix definition if given
+   #include "costmatrix"
 
    float stack[data.size]; 
    float sum; 
