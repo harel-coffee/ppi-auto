@@ -43,6 +43,8 @@ import subprocess
 #                         Parallelization strategy [default=PPCU]
 #   -seq, --sequential    Enables sequential mode instead of accelerated
 #                         [default=false]
+#   -t, --threads         Number of OpenMP threads for the evolutionary part
+#                         [default=1]
 #
 # Example (don't forget to change the port number for each instance):
 #
@@ -63,6 +65,7 @@ parser.add_argument("-cl-d", "--cl-device-id", required=False, default=0, help="
 parser.add_argument("-s", "--strategy", required=False, default="PPCU", choices=['PPCU', 'ppcu', 'PP', 'pp', 'FP', 'fp'], help="Parallelization strategy [default=PPCU]")
 parser.add_argument("args", nargs=argparse.REMAINDER, help="Extra arguments to be passed to the executable; use after -- (ex: ... -- -min -1.0 -max 1.0)")
 parser.add_argument('-seq', '--sequential', required=False, action='store_true', default=False, help="Sequential evaluation mode instead of accelerated [default=accelerated]")
+parser.add_argument("-t", "--threads", type=int, default=1, help="Number of OpenMP threads for the evolutionary part [default=1]")
 
 args = parser.parse_args()
 
@@ -124,7 +127,7 @@ else:
    acc = "-acc -strategy " + args.strategy.upper() + " -cl-d " + str(args.cl_device_id) + " -cl-p " + str(args.cl_platform_id)
 
 cmd = [];
-cmd.append(args.exe + " -v -machine -e " + acc + " -d " + args.dataset + " -port " + str(args.port) + " -ps " + str(P['ps']) + " -g 100000000" + " -cp " + str(P['cp']) + " -mr " + str(P['mr']) + " -ts " + str(P['ts']) + " -nb " + str(P['nb']) + " -is " + str(P['is']) + " -st " + str(P['st']) + " -iat " + str(P['iat']))
+cmd.append(args.exe + " -v -machine -e " + acc + " -d " + args.dataset + " -port " + str(args.port) + " -ps " + str(P['ps']) + " -g 100000000" + " -cp " + str(P['cp']) + " -mr " + str(P['mr']) + " -ts " + str(P['ts']) + " -nb " + str(P['nb']) + " -is " + str(P['is']) + " -st " + str(P['st']) + " -iat " + str(P['iat']) + " -t " + str(args.threads))
 if peers:
    cmd.append(" -peers " + ''.join(peers))
 if args.args: # Adds extra arguments to the executable if any
