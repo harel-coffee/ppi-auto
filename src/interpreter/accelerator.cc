@@ -841,6 +841,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
 #endif
    );
 
+
 #ifdef PROFILING
    cl_ulong start, end;
    events[0].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
@@ -871,21 +872,24 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
       data.time_total_kernel2 += (end - start)/1.0E9;
    }
 
+   if ( !prediction_mode )
    {
-      std::vector<cl::Event> e(1, events[11]); 
-      cl::Event::waitForEvents(e);
+      {
+         std::vector<cl::Event> e(1, events[11]); 
+         cl::Event::waitForEvents(e);
+      }
+      events[5].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+      events[11].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+      data.time_gen_communication_receive1   += (end - start)/1.0E9;
+      data.time_total_communication_receive1 += (end - start)/1.0E9;
    }
-   events[5].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-   events[11].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_gen_communication_receive1   += (end - start)/1.0E9;
-   data.time_total_communication_receive1 += (end - start)/1.0E9;
 
    data.time_total_communication1 += data.time_gen_communication_send1 + data.time_gen_communication_receive1;
 
    data.gpops_gen_kernel = (sum_size_gen * data.nlin) / data.time_gen_kernel1;
    data.gpops_gen_communication = (sum_size_gen * data.nlin) / (data.time_gen_kernel1 + data.time_gen_communication_send1 + data.time_gen_communication_receive1);
 
-   if( !pep_mode && data.strategy == "FP" ) 
+   if( !prediction_mode && data.strategy == "FP" ) 
    {
       events[6].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
       events[6].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
@@ -893,23 +897,26 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
       data.time_total_communication_send2 += (end - start)/1.0E9;
    }
 
+   if( !pep_mode )
    {
-      std::vector<cl::Event> e(1, events[9]); 
-      cl::Event::waitForEvents(e);
+      {
+         std::vector<cl::Event> e(1, events[9]); 
+         cl::Event::waitForEvents(e);
+      }
+      events[7].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+      events[9].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+      data.time_gen_communication_receive2   += (end - start)/1.0E9;
+      data.time_total_communication_receive2 += (end - start)/1.0E9;
+   
+      {
+         std::vector<cl::Event> e(1, events[10]); 
+         cl::Event::waitForEvents(e);
+      }
+      events[8].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+      events[10].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+      data.time_gen_communication_receive2   += (end - start)/1.0E9;
+      data.time_total_communication_receive2 += (end - start)/1.0E9;
    }
-   events[7].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-   events[9].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_gen_communication_receive2   += (end - start)/1.0E9;
-   data.time_total_communication_receive2 += (end - start)/1.0E9;
-
-   {
-      std::vector<cl::Event> e(1, events[10]); 
-      cl::Event::waitForEvents(e);
-   }
-   events[8].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-   events[10].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_gen_communication_receive2   += (end - start)/1.0E9;
-   data.time_total_communication_receive2 += (end - start)/1.0E9;
 #endif
 }
 
