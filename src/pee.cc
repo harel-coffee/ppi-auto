@@ -429,6 +429,7 @@ void pee_send_individual( Population* population )
    util::Timer t_send;
 #endif
 
+   // Skip the first call, i.e, when it's the first generation (since it wasn't evaluated yet)
    static bool firstcall = true;
    if( firstcall ) {
       firstcall = false;
@@ -599,13 +600,26 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
    }
    else
    {
+      ////// Exchange (send and receive) individuals to and from islands.
+      ////// TODO: Make them actually asynchronous via OpenMP.
+      /* Send individuals to other islands. In order to allow for asynchronous
+         send (which can be done in background while the population is
+         evaluated), it will pick individuals from the last generation instead
+         of the current one; this is a good trade-off, though.  Note that this
+         function will skip the initial generation as it wasn't evaluated yet. */
+      pee_send_individual(antecedentes);
+
+      /* Receive individuals from other islands. Individuals received from
+       foreign islands will be put into the next population, which may sound
+       strange, but it is the 'antecedentes' (in the swap operation,
+       'antecedentes' will be made the next generation). */
+      *nImmigrants = pee_receive_individual( antecedentes->genome );
+
       seq_interpret( data.phenotype, data.ephemeral, data.size, 
 #ifdef PROFILING
       sum_size_gen, 
 #endif
       descendentes->fitness, data.population_size, index, &data.best_size, 0, 0, ALPHA );
-
-      *nImmigrants = pee_receive_individual( antecedentes->genome );
    }
 
    for( int i = 0; i < data.best_size; i++ )
