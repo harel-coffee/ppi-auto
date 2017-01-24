@@ -137,8 +137,8 @@ print "\n" + ''.join(cmd) + "\n"
 
 try:
    process = subprocess.Popen(''.join(cmd).split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-   #for out in iter(lambda: process.stdout.read(1), ''): # Outputs char by char
-   for out in iter(process.stdout.readline, ''): # Outputs line by line
+   for out in iter(lambda: process.stdout.read(1), ''): # Outputs char by char
+   #for out in iter(process.stdout.readline, ''): # Outputs line by line
       sys.stdout.write(out)
       sys.stdout.flush()
       sys.stderr.write(out)
