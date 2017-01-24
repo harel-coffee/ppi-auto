@@ -10,7 +10,8 @@ import argparse
 ################################################################################
 # usage: plot.py [-h] -e EXE -f FRONT_FILE -d TEST_DATASET [-t TITLE]
 #                [-x XLABEL] [-y YLABEL] [-fbl FIRST_BAR_LABEL]
-#                [-sbl SECOND_BAR_LABEL] [-out OUT_FILE] [-dup]
+#                [-sbl SECOND_BAR_LABEL] [-out OUT_FILE] [-dup] [-min MIN]
+#                [-max MAX]
 #
 # optional arguments:
 #   -h, --help            show this help message and exit
@@ -33,9 +34,12 @@ import argparse
 #                         Figure output filename [default=plot.pdf]
 #   -dup, --plot-duplicate
 #                         Plot duplicate entries instead of taking their mean
-#                         [default=false
-
-#
+#                         [default=false]
+#   -min MIN, --min MIN   Ignore sizes less than the given minimum size
+#                         [default=0]
+#   -max MAX, --max MAX   Ignore sizes greater than the given maximum size
+#                         [default=inf]
+###
 # Example:
 #
 #    python script/plot.py -e build/speed -f build/speed.front -d build/test.csv
@@ -53,6 +57,8 @@ parser.add_argument("-fbl", "--first-bar-label", default="Training set", help="L
 parser.add_argument("-sbl", "--second-bar-label", default="Test set", help="Label of the second bar [default='Test set']")
 parser.add_argument("-out", "--out-file", default="plot.pdf", help="Figure output filename [default=plot.pdf]")
 parser.add_argument("-dup", "--plot-duplicate", action='store_true', default=False, help="Plot duplicate entries instead of taking their mean [default=false]")
+parser.add_argument("-min", "--min", type=int, default=0, help="Ignore sizes less than the given minimum size [default=0]")
+parser.add_argument("-max", "--max", type=int, default=sys.maxint, help="Ignore sizes greater than the given maximum size [default=inf]")
 args = parser.parse_args()
 
 try:
@@ -63,15 +69,18 @@ except IOError:
 lines = f.readlines()
 f.close()
 
-size      = np.empty(len(lines)); 
-tra_error = np.empty(len(lines))
-solution  = [];
+size      = []
+tra_error = []
+solution  = []
 
 for i in range(len(lines)):
-    size[i] = lines[i].split(';')[1]
-    tra_error[i] = lines[i].split(';')[2]
-    solution.append(lines[i].split(';')[4])
-size = size.astype(int)
+   sz = int(lines[i].split(';')[1])
+   if sz >= args.min and sz <= args.max:
+      size.append(sz)
+      tra_error.append(lines[i].split(';')[2])
+      solution.append(lines[i].split(';')[4])
+size = np.array(size).astype(int)
+tra_error = np.array(tra_error).astype(float)
 
 try:
    f = open(args.test_dataset,"r")
