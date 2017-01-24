@@ -7,34 +7,38 @@ import subprocess
 import sys
 import argparse
 
-from matplotlib.cbook import get_sample_data
+################################################################################
+# usage: plot.py [-h] -e EXE -f FRONT_FILE -d TEST_DATASET [-t TITLE]
+#                [-x XLABEL] [-y YLABEL] [-fbl FIRST_BAR_LABEL]
+#                [-sbl SECOND_BAR_LABEL] [-out OUT_FILE] [-dup]
+#
+# optional arguments:
+#   -h, --help            show this help message and exit
+#   -e EXE, --exe EXE     Executable filename
+#   -f FRONT_FILE, --front-file FRONT_FILE
+#                         Pareto-front file
+#   -d TEST_DATASET, --test-dataset TEST_DATASET
+#                         Test dataset
+#   -t TITLE, --title TITLE
+#                         Title of the figure [default=none]
+#   -x XLABEL, --xlabel XLABEL
+#                         Label of the x-axis [default='Complexity (nodes)']
+#   -y YLABEL, --ylabel YLABEL
+#                         Label of the y-axis [default='Error']
+#   -fbl FIRST_BAR_LABEL, --first-bar-label FIRST_BAR_LABEL
+#                         Label of the first bar [default='Training set']
+#   -sbl SECOND_BAR_LABEL, --second-bar-label SECOND_BAR_LABEL
+#                         Label of the second bar [default='Test set']
+#   -out OUT_FILE, --out-file OUT_FILE
+#                         Figure output filename [default=plot.pdf]
+#   -dup, --plot-duplicate
+#                         Plot duplicate entries instead of taking their mean
+#                         [default=false
 
-################################################################################
-# Usage:
-################################################################################
-#
-#usage: plot.py [-h] -e EXE -f FRONT_FILE -d TEST_DATASET -t FIG_TITLE -x
-#               FIG_XLABEL -y FIG_YLABEL -out FIG_FILE
-#
-#optional arguments:
-#  -h, --help            show this help message and exit
-#  -e EXE, --exe EXE     Executable filename
-#  -f FRONT_FILE, --front-file FRONT_FILE
-#                        Pareto-front file
-#  -d TEST_DATASET, --test-dataset TEST_DATASET
-#                        Test dataset
-#  -t FIG_TITLE, --fig-title FIG_TITLE
-#                        Title of figure
-#  -x FIG_XLABEL, --fig-xlabel FIG_XLABEL
-#                        X-label of figure
-#  -y FIG_YLABEL, --fig-ylabel FIG_YLABEL
-#                        Y-label of figure
-#  -out FIG_FILE, --fig-file FIG_FILE
-#                        Figure file
 #
 # Example:
 #
-#    python script/plot.py -e build/speed_A305_1-mse-semantic -f build/speed_A305_1-mse-semantic.front -d ../vento/problem/speed_A305_1-fullyear.tes -t 'Title' -x 'xlabel' -y 'ylabel' -out '../vento/problem/figs/fig.pdf'
+#    python script/plot.py -e build/speed -f build/speed.front -d build/test.csv
 ################################################################################
 
 
@@ -42,11 +46,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-e", "--exe", required=True, help="Executable filename")
 parser.add_argument("-f", "--front-file", required=True, help="Pareto-front file")
 parser.add_argument("-d", "--test-dataset", required=True, help="Test dataset")
-parser.add_argument("-t", "--fig-title", default="", help="Title of the figure")
-parser.add_argument("-x", "--fig-xlabel", default="", help="Label of the x-axis")
-parser.add_argument("-y", "--fig-ylabel", default="", help="Label of the y-axis")
-parser.add_argument("-out", "--out-file", default="plot.pdf", help="Figure output filename")
-parser.add_argument("-dup", "--plot-duplicate", action='store_true', default=False, help="Plot duplicate entries instead of taking their mean")
+parser.add_argument("-t", "--title", default="", help="Title of the figure [default=none]")
+parser.add_argument("-x", "--xlabel", default="Complexity (nodes)", help="Label of the x-axis [default='Complexity (nodes)']")
+parser.add_argument("-y", "--ylabel", default="Error", help="Label of the y-axis [default='Error']")
+parser.add_argument("-fbl", "--first-bar-label", default="Training set", help="Label of the first bar [default='Training set']")
+parser.add_argument("-sbl", "--second-bar-label", default="Test set", help="Label of the second bar [default='Test set']")
+parser.add_argument("-out", "--out-file", default="plot.pdf", help="Figure output filename [default=plot.pdf]")
+parser.add_argument("-dup", "--plot-duplicate", action='store_true', default=False, help="Plot duplicate entries instead of taking their mean [default=false]")
 args = parser.parse_args()
 
 try:
@@ -77,6 +83,8 @@ f.close()
 
 
 tes_error = np.empty(len(solution)); 
+print "# training error -> '%s'" % (args.first_bar_label)
+print "# test error     -> '%s'" % (args.second_bar_label)
 print "ID    size :: training error :: test error     :: solution (encoded terminals)"
 print "--    ----    --------------    --------------    ----------------------------"
 for i in range(len(solution)):
@@ -87,9 +95,12 @@ min_value = sys.float_info.max; max_value = 0.
 
 fig = plt.figure(figsize=(18,4))
 ax = fig.add_subplot(111)
-ax.set_title(args.fig_title, fontsize=14, fontweight='bold')
-ax.set_xlabel(args.fig_xlabel, fontweight='bold', fontsize=12)
-ax.set_ylabel(args.fig_ylabel, fontweight='bold', fontsize=12)
+if args.title:
+   ax.set_title(args.title, fontsize=14, fontweight='bold')
+if args.xlabel:
+   ax.set_xlabel(args.xlabel, fontweight='bold', fontsize=12)
+if args.ylabel:
+   ax.set_ylabel(args.ylabel, fontweight='bold', fontsize=12)
 width = 0.4
 
 vector = []; marks = []
@@ -103,7 +114,7 @@ for i in range(1,max(size[tes_error<1.e+30])+1):
        if len(tra_error[(tes_error<1.e+30) & (size==i)]) > 0:
            marks.append(i)
            vector.append(np.mean(tra_error[(tes_error<1.e+30) & (size==i)]))
-ax.bar(range(1,len(marks)+1), vector, width, color='b', label='Training set')
+ax.bar(range(1,len(marks)+1), vector, width, color='b', label=args.first_bar_label)
 
 vector = []
 for i in range(1,max(size[tes_error<1.e+30])+1):
@@ -114,7 +125,7 @@ for i in range(1,max(size[tes_error<1.e+30])+1):
    else:
        if len(tes_error[(tes_error<1.e+30) & (size==i)]) > 0:
            vector.append(np.mean(tes_error[(tes_error<1.e+30) & (size==i)]))
-ax.bar([x + width for x in range(1,len(marks)+1)], vector, width, color='r', label='Test set')
+ax.bar([x + width for x in range(1,len(marks)+1)], vector, width, color='r', label=args.second_bar_label)
 
 if min(tra_error) < min_value: min_value = min(tra_error)
 if max(tra_error) > max_value: max_value = max(tra_error)
