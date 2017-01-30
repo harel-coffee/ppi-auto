@@ -57,91 +57,188 @@ def interpreter(exp, attr):
          cond1 = stack.pop(); cond2 = stack.pop();
          if cond1 == 1.0 or cond2 == 1.0: stack.append(1.0)
          else: stack.append(0.0)
+      elif token == "XOR":
+         cond1 = stack.pop(); cond2 = stack.pop();
+         if bool(cond1) ^ bool(cond2):
+            stack.append(1.0)
+         else:
+            stack.append(0.0)
       elif token == "NOT":
          stack.append(float(not(stack.pop())))
       elif token == ">":
          if stack.pop() > stack.pop(): stack.append(1.0)
          else: stack.append(0.0)
+      elif token == ">=":
+         if stack.pop() >= stack.pop():
+            stack.append(1.0)
+         else:
+            stack.append(0.0)
       elif token == "<":
          if stack.pop() < stack.pop(): stack.append(1.0)
          else: stack.append(0.0)
+      elif token == "<=":
+         if stack.pop() <= stack.pop():
+            stack.append(1.0)
+         else:
+            stack.append(0.0)
       elif token == "=":
-         #value1 = stack.pop()
-         #value2 = stack.pop()
-         #print value1 
-         #print value2
-         #if value1 == value2:
-         #   stack.append(1.0)
-         #   print "TRUE"
-         #else:
-         #   stack.append(0.0)
-         #   print "FALSE"
-         if stack.pop() == stack.pop(): stack.append(1.0)
-         else: stack.append(0.0)
+         if stack.pop() == stack.pop():
+            stack.append(1.0)
+         else:
+            stack.append(0.0)
+      elif token == "!=":
+         if stack.pop() != stack.pop():
+            stack.append(1.0)
+         else:
+            stack.append(0.0)
       elif token == "+":
          stack.append(stack.pop() + stack.pop())
       elif token == "-":
          stack.append(stack.pop() - stack.pop())
       elif token == "*":
-         value = stack.pop() * stack.pop()
-         if value == np.inf:
-            return None 
-         else: 
-            stack.append(value)
-      elif token == "/":
-         num = stack.pop(); den = stack.pop()
-         if abs(den) > 0.0: stack.append(num / den)
-         else:
+         res = stack.pop() * stack.pop()
+         if res == np.inf:
             return None
+         else:
+            stack.append(res)
       elif token == "MEAN":
          stack.append((stack.pop() + stack.pop()) / 2.0)
       elif token == "MAX":
          stack.append(max(stack.pop(),stack.pop()))
       elif token == "MIN":
-         value1 = stack.pop(); value2 = stack.pop();
-         #print value1, value2, min(value1,value2)
-         stack.append(min(value1,value2))
+         op1 = stack.pop(); op2 = stack.pop();
+         stack.append(min(op1,op2))
+      elif token == "MOD":
+         op1 = stack.pop(); op2 = stack.pop();
+         try:
+            res = op1 % op2
+         except ZeroDivisionError:
+            return None
+         stack.append(res)
+      elif token == "POW":
+         op1 = stack.pop(); op2 = stack.pop();
+         try:
+            res = pow(op1,op2)
+         except OverflowError:
+            return None
+         if res == np.inf:
+            return None
+         else:
+            stack.append(res)
       elif token == "ABS":
          stack.append(abs(stack.pop()))
-      elif token == "SQRT":
-         value = stack.pop()
-         if value >= 0.0: stack.append(sqrt(value))
-         else:
-            return None
       elif token == "POW2":
          try:
-            value = pow(stack.pop(),2.0)
+            res = pow(stack.pop(),2.0)
          except OverflowError:
             return None
-         if value == np.inf:
-            return None 
-         else: 
-            stack.append(value)
+         if res == np.inf:
+            return None
+         else:
+            stack.append(res)
       elif token == "POW3":
          try:
-            value = pow(stack.pop(),3.0)
+            res = pow(stack.pop(),3.0)
          except OverflowError:
             return None
-         if value == np.inf:
-            return None 
-         else: 
-            stack.append(value)
+         if res == np.inf:
+            return None
+         else:
+            stack.append(res)
+      elif token == "POW4":
+         try:
+            res = pow(stack.pop(),4.0)
+         except OverflowError:
+            return None
+         if res == np.inf:
+            return None
+         else:
+            stack.append(res)
+      elif token == "POW5":
+         try:
+            res = pow(stack.pop(),5.0)
+         except OverflowError:
+            return None
+         if res == np.inf:
+            return None
+         else:
+            stack.append(res)
       elif token == "NEG":
          stack.append(-stack.pop())
-      elif token == "1":
-         stack.append(1.0)
-      elif token == "2":
-         stack.append(2.0)
-      elif token == "3":
-         stack.append(3.0)
-      elif token == "4":
-         stack.append(4.0)
+      elif token == "ROUND":
+         stack.append(round(stack.pop()))
+      elif token == "CEIL":
+         stack.append(np.ceil(stack.pop()))
+      elif token == "FLOOR":
+         stack.append(np.floor(stack.pop()))
+      elif token == "EXP":
+         try:
+            res = np.exp(stack.pop())
+         except OverflowError:
+            return None
+         if res == np.inf:
+            return None
+         else:
+            stack.append(res)
+      elif token == "EXP10":
+         try:
+            res = pow(10., stack.pop())
+         except OverflowError:
+            return None
+         if res == np.inf:
+            return None
+         else:
+            stack.append(res)
+      elif token == "EXP2":
+         try:
+            res = np.exp2(stack.pop())
+         except OverflowError:
+            return None
+         if res == np.inf:
+            return None
+         else:
+            stack.append(res)
+      elif token == "SIN":
+         stack.append(np.sin(stack.pop()))
+      elif token == "COS":
+         stack.append(np.cos(stack.pop()))
+      elif token == "/":
+         op1 = stack.pop(); op2 = stack.pop()
+         try:
+            res = op1/op2
+         except ZeroDivisionError:
+            return None
+         stack.append(res)
+      elif token == "SQRT":
+         op = stack.pop()
+         if op >= 0.0: stack.append(sqrt(op))
+         else:
+            return None
+      elif token == "LOG":
+         res = np.log(stack.pop())
+         if res == -np.inf:
+            return None
+         else:
+            stack.append(res)
+      elif token == "LOG10":
+         res = np.log10(stack.pop())
+         if res == -np.inf:
+            return None
+         else:
+            stack.append(res)
+      elif token == "LOG2":
+         res = np.log2(stack.pop())
+         if res == -np.inf:
+            return None
+         else:
+            stack.append(res)
+      elif token == "TAN":
+         stack.append(np.tan(stack.pop()))
       elif token in attr:
          stack.append(float(attr[token]))
       else:
-         # Nenhum dos casos acima, empilha diretamente o valor da constante
+         # It's probably a constant, so just stacking it
          stack.append(float(token))
-   #print (stack)
    return stack.pop()
 
 
