@@ -1,10 +1,43 @@
 #!/usr/bin/env python
-##!/usr/bin/python
 
 from pylab import *
 
 import random
 import numpy as np
+
+niter = 30
+scenarios = 100
+
+#random.seed(100)
+
+attrNames = ["X1", "X2", "X3"] 
+
+#exps = [['+', 'X1', '*', '3.14', '/', 'X2', 'X3'],['+', 'X1', '*', '3.14', '/', 'X2', 'X3'],['+', 'X1', '*', '3.14', '/', 'X2', 'X3']]
+
+exps = [
+['+', 'X1', '*', '3.14', '/', 'X2', 'X3'],
+['+', 'X1', '*', '3.14', '/', 'X3', 'X2'],
+['+', 'X2', '*', '3.14', '/', 'X1', 'X3'],
+['+', 'X2', '*', '3.14', '/', 'X3', 'X1'],
+['+', 'X3', '*', '3.14', '/', 'X1', 'X2'],
+['+', 'X3', '*', '3.14', '/', 'X2', 'X1'], ['+', 'X1', 'X1'], ['/', 'X1', '0.0']]
+
+def get_sample(attrname):
+   return np.random.uniform(0.0,1.0) # TODO: uses a different distribution depending on the attribute
+
+def print_stats(result, attributes, nones, exps):
+   sum = 0.0
+   for i, attr in enumerate(attributes):
+      if result[i]:
+         sum += median(result[i])
+
+   out = ''
+   for i, attr in enumerate(attributes):
+      if result[i]:
+         stats = median(result[i])
+         frequency=len(result[i])
+         out += "%s: impact=%.2f%% (%f), frequency=%.2f%% (%d/%d), none=%.2f%% (%d/%d)\n" % (attr, 100. * stats/sum, stats, 100. * frequency/float(len(exps)), frequency, len(exps), 100.*none[i]/float(niter*scenarios*len(exps)), none[i], niter*scenarios*len(exps))
+   sys.stdout.write(out)
 
 def interpreter(exp, attr):
    stack = []
@@ -109,143 +142,50 @@ def interpreter(exp, attr):
    return stack.pop()
 
 
-#random.seed(100)
-
-alpha = 0.5; beta = 5 
-
-rainNames = ["BMA", "CHUVA_ONTEM", "CHUVA_ANTEONTEM", "CHUVA_LAG1P", "CHUVA_LAG1N", "CHUVA_LAG2P", "CHUVA_LAG2N", "CHUVA_LAG3P", "CHUVA_LAG3N", "CHUVA_PADRAO", "CHUVA_HISTORICA", "MEAN_MODELO", "MAX_MODELO", "MIN_MODELO", "STD_MODELO", 'ETAm2', 'ETAm3', 'ETAm1', 'GP213', 'ETAm4', 'RAMSC', 'SFAVN', 'CPTEC', 'RPSAS', 'ETA20', 'ETAcr', 'SFENM', 'T299x', 'ACOPL']
-attrNames = ["BMA", "CHUVA_ONTEM", "CHUVA_ANTEONTEM", "CHUVA_LAG1P", "CHUVA_LAG1N", "CHUVA_LAG2P", "CHUVA_LAG2N", "CHUVA_LAG3P", "CHUVA_LAG3N", "CHUVA_PADRAO", "CHUVA_HISTORICA", "MEAN_MODELO", "MAX_MODELO", "MIN_MODELO", "STD_MODELO", "CHOVE", "PADRAO_MUDA", "PAD", "K", "TT", "SWEAT", 'ETAm2', 'ETAm3', 'ETAm1', 'GP213', 'ETAm4', 'RAMSC', 'SFAVN', 'CPTEC', 'RPSAS', 'ETA20', 'ETAcr', 'SFENM', 'T299x', 'ACOPL'] 
-
-prev = "1"
-grammar = "nlinear"
-diretorio = "saida/prev_" + prev + "/" + grammar + "/"
-name = "stations_sorted.txt"
-#name = "stations_" + grammar + ".txt"
-
-print prev, grammar
-
-try:
-   stations = np.genfromtxt(diretorio + name, dtype=None, usecols=(0))
-except IOError:
-   print "Could not open file " + diretorio + name + "!"
-
-partial = []; temp = []; result = []; none = {}; freq = {}
+partial = []; temp = []; result = []; none = {};
 for i in range(0, len(attrNames)):
    partial.append([])
    temp.append([])
    result.append([])
    none[i] = 0
-   freq[i] = 0
 
-#soma = 0
+# The interpreter works from the end to the beginning (reversed order)
+exps = [list(reversed(e)) for e in exps]
 
-#nstation = 1
-nstation = len(stations) 
+for exp in exps:
+   for scenario in range(0,scenarios):
+      attr = {}; attr = {a : get_sample(a) for a in attrNames}
 
-for station in stations[0:nstation]:
-   #station = '83630'
-   #for run in range(6,7):
-   for run in range(0,10):
+      value1 = interpreter(exp, attr)
 
-      try:
-         f = open(diretorio + "modificada/" + str(station) + '.' + str(run),"r")
-      except IOError:
-         print "Could not open file " + diretorio + "modificada/" + str(station) + '.' + str(run) + "!"
-         continue
-      lines = f.readlines()
-      f.close()
-      
-      try:
-         exp = list(reversed(lines[1].split()))[2:-1]; #print exp
-      except:
-         print str(station) + '.' + str(run)
-         continue
-      #exp = ['0.1', 'BMA', '*', '0.5', 'CHUVA_ONTEM', '*', '+']
+      if value1 is not None:
+         for i, a in enumerate(attrNames):
+            if a in exp:
+               copy = dict.copy(attr)
+         
+               for j in range(0,niter):
+         
+                  copy[a] = get_sample(a)
 
-      for scenario in range(0,100):
-         attr = {}; attr = {a : random.gammavariate(alpha,beta) for a in rainNames}
-         attr["CHOVE"] = random.randint(0,1)
-         attr["PADRAO_MUDA"] = random.randint(0,1)
-         attr["PAD"] = random.randint(0,4)
-         attr["K"] = np.random.uniform(0,30)
-         attr["TT"] = np.random.uniform(0,60)
-         attr["SWEAT"] = np.random.uniform(0,600)
-   
-         #soma = attr["CHOVE"] + soma
+                  value2 = interpreter(exp, copy)
+                  if value2 is not None:
+                     partial[i].append(abs(value2 - value1))
+                  else:
+                     none[i] += 1
 
-         value1 = interpreter(exp, attr)
+               if partial[i]:
+                  temp[i].append(median(partial[i]))
+                  del partial[i][:]
+      else:
+         for i, a in enumerate(attrNames):
+            if a in exp:
+               none[i] += niter # all inner iterations are none (for each attribute)
 
-         if value1 is None:
-            for i in range(0,len(attrNames)):
-               if attrNames[i] == "PAD": 
-                  niter = 4
-               elif attrNames[i] == "CHOVE" or attrNames[i] == "PADRAO_MUDA": 
-                  niter = 2
-               else: niter = 30
-               none[i] = none[i] + niter
-            
-         if value1 is not None:
-            for i in range(0,len(attrNames)):
-               if attrNames[i] in exp:
-                  copy = dict.copy(attr)
-            
-                  if attrNames[i] == "PAD": 
-                     niter = 4
-                     copy["PAD"] = 0.0
-                  elif attrNames[i] == "CHOVE" or attrNames[i] == "PADRAO_MUDA":
-                     niter = 2
-                     copy[attrNames[i]] = -1.0
-                  else: niter = 30 
-            
-                  for j in range(0,niter):
-            
-                     #while True:
-                     if attrNames[i] == "CHOVE" or attrNames[i] == "PADRAO_MUDA" or attrNames[i] == "PAD": copy[attrNames[i]] = copy[attrNames[i]] + 1.0
-                     elif attrNames[i] == "K": copy["K"] = np.random.uniform(0,30)
-                     elif attrNames[i] == "TT": copy["TT"] = np.random.uniform(0,60)
-                     elif attrNames[i] == "SWEAT": copy["SWEAT"] = np.random.uniform(0,600)
-                     else: copy[attrNames[i]] = random.gammavariate(alpha,beta)
+   for i in range(0,len(attrNames)):
+      if temp[i]:
+         if mean(temp[i]) > 0.0:
+            result[i].append(mean(temp[i]))
+         del temp[i][:]
 
-                     #if abs(copy[attrNames[i]] - attr[attrNames[i]]) >= (0.1 * attr[attrNames[i]]):          
-                        #break
 
-                     value2 = interpreter(exp, copy)
-                     if value2 is not None:
-                        partial[i].append(abs(value2 - value1))
-                     else:
-                        none[i] = none[i] + 1
-
-                  if partial[i]:
-                     #print attrNames[i]
-                     temp[i].append(median(partial[i]))
-                     del partial[i][:]
-
-      for i in range(0,len(attrNames)):
-         if temp[i]:
-         #if attrNames[i] in exp:
-            if mean(temp[i]) > 0.0:
-            #if sum(j > 0.0 for j in partial[i]) > 0:
-               result[i].append(mean(temp[i]))
-               freq[i] = freq[i] + 1
-               #print station, run, attrNames[i]
-               #print attrNames[i], len(temp[i])
-            del temp[i][:]
-
-      #print
-
-#print soma
-
-saida = []
-for i in range(0,len(attrNames)):
-   saida.append([])
-
-soma = 0.0
-for i in range(0,len(attrNames)):
-   soma = median(result[i]) + soma
-
-for i in range(0,len(attrNames)):
-   if result[i]:
-      saida[i].append((median(result[i]) / soma) * 100)
-      saida[i].append((freq[i] / (nstation * 10.) * 100))
-      saida[i].append(len(result[i]))
-      print attrNames[i], saida[i], none[i]
+print_stats(result, attrNames, none, exps)
