@@ -1,8 +1,7 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from pylab import *
-
-import random
+import sys, random
 import numpy as np
 
 niter = 30
@@ -22,21 +21,39 @@ exps = [
 ['+', 'X3', '*', '3.14', '/', 'X1', 'X2'],
 ['+', 'X3', '*', '3.14', '/', 'X2', 'X1'], ['+', 'X1', 'X1'], ['/', 'X1', '0.0']]
 
+#exps = [['+', '+', 'X1', 'X2', 'X3']]
+
+################################################################################
+# Nice progress bar
+################################################################################
+def ProgressBar(count, total, suffix='', out=sys.stdout):
+    bar_len = 50
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = 100.0 * count / float(total)
+    bar = '#' * filled_len + '-' * (bar_len - filled_len)
+
+    out.write('[%s] %.2f%s (%d/%d)%s\r' % (bar, percents, '%', count, total, suffix))
+    out.flush()
+
 def get_sample(attrname):
    return np.random.uniform(0.0,1.0) # TODO: uses a different distribution depending on the attribute
 
-def print_stats(result, attributes, nones, exps):
-   sum = 0.0
+def print_stats(means, stds, attributes, nones, exps):
+   stat_means = {}
+   stat_stds = {}
+   sum_stat_means = 0.0
    for i, attr in enumerate(attributes):
-      if result[i]:
-         sum += median(result[i])
+      if means[i]:
+         stat_means[i] = np.median(means[i])
+         stat_stds[i] = np.median(stds[i])
+         sum_stat_means += stat_means[i]
 
    out = ''
    for i, attr in enumerate(attributes):
-      if result[i]:
-         stats = median(result[i])
-         frequency=len(result[i])
-         out += "%s: impact=%.2f%% (%f), frequency=%.2f%% (%d/%d), none=%.2f%% (%d/%d)\n" % (attr, 100. * stats/sum, stats, 100. * frequency/float(len(exps)), frequency, len(exps), 100.*none[i]/float(niter*scenarios*len(exps)), none[i], niter*scenarios*len(exps))
+      if means[i]:
+         frequency=len(means[i])
+         out += "%s: impact=%.2f%% (%.3f±%.1f), frequency=%.2f%% (%d/%d), none=%.2f%% (%d/%d)\n" % (attr, 100.*stat_means[i]/sum_stat_means, stat_means[i], stat_stds[i], 100. * frequency/float(len(exps)), frequency, len(exps), 100.*none[i]/float(niter*scenarios*len(exps)), none[i], niter*scenarios*len(exps))
    sys.stdout.write(out)
 
 def interpreter(exp, attr):
@@ -142,16 +159,18 @@ def interpreter(exp, attr):
    return stack.pop()
 
 
-partial = []; temp = []; result = []; none = {};
+partial = []; temp = []; means = []; stds = []; none = {};
 for i in range(0, len(attrNames)):
    partial.append([])
    temp.append([])
-   result.append([])
+   means.append([])
+   stds.append([])
    none[i] = 0
 
 # The interpreter works from the end to the beginning (reversed order)
 exps = [list(reversed(e)) for e in exps]
 
+count = 0
 for exp in exps:
    for scenario in range(0,scenarios):
       attr = {}; attr = {a : get_sample(a) for a in attrNames}
@@ -174,18 +193,22 @@ for exp in exps:
                      none[i] += 1
 
                if partial[i]:
-                  temp[i].append(median(partial[i]))
+                  temp[i].append(np.median(partial[i]))
                   del partial[i][:]
       else:
          for i, a in enumerate(attrNames):
             if a in exp:
                none[i] += niter # all inner iterations are none (for each attribute)
 
+      count += 1
+      ProgressBar(count, scenarios*len(exps), out=sys.stderr)
+
    for i in range(0,len(attrNames)):
       if temp[i]:
-         if mean(temp[i]) > 0.0:
-            result[i].append(mean(temp[i]))
+         if np.mean(temp[i]) > 0.0:
+            means[i].append(np.mean(temp[i]))
+            stds[i].append(np.std(temp[i]))
          del temp[i][:]
 
 
-print_stats(result, attrNames, none, exps)
+print_stats(means, stds, attrNames, none, exps)
