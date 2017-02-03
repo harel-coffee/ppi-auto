@@ -248,6 +248,7 @@ parser.add_argument('-s', '--scenarios', required=False, type=int, default=100, 
 parser.add_argument('-i', '--iterations', required=False, type=int, default=30, help="The number of iterations [default=30]")
 parser.add_argument('-min', '--min', required=False, type=float, default=0.0, help="Minimum value while sampling [default=0.0]")
 parser.add_argument('-max', '--max', required=False, type=float, default=1.0, help="Maximum value while sampling [default=1.0]")
+parser.add_argument('-df', '--diff-function', required=False, default='lambda x,y: abs(x-y)', help="Diff function (between scenario value and predicted value) [default=lambda x,y: abs(x-y)]")
 args = parser.parse_args()
 
 # The interpreter works from the end to the beginning (reversed order)
@@ -276,6 +277,9 @@ for i in range(0, len(attrNames)):
    stds.append([])
    none[i] = 0
 
+# diff_function = lambda...
+exec("diff_function = " + args.diff_function)
+
 count = 0
 for exp in exps:
    for scenario in range(0,args.scenarios):
@@ -287,14 +291,12 @@ for exp in exps:
          for i, a in enumerate(attrNames):
             if a in exp:
                copy = dict.copy(attr)
-         
                for j in range(0,args.iterations):
-         
                   copy[a] = get_sample(a)
 
                   value2 = interpreter(exp, copy)
                   if value2 is not None:
-                     partial[i].append(abs(value2 - value1))
+                     partial[i].append(diff_function(value1, value2))
                   else:
                      none[i] += 1
 
