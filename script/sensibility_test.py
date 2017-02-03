@@ -243,7 +243,7 @@ def interpreter(exp, attr):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-e', '--exp', action='append', dest='exps', required=True, default=[], help="Set the expressions to be evaluated. Ex: -e '+ ATTR0 ATTR1' -e 'ATTR1'")
+parser.add_argument('-e', '--exp', action='append', dest='exps', required=True, default=[], help="Set the expressions to be evaluated. Ex: -e '+ ATTR-0 ATTR-1' -e 'ATTR-1'")
 parser.add_argument('-s', '--scenarios', required=False, type=int, default=100, help="The number of scenarios [default=100]")
 parser.add_argument('-i', '--iterations', required=False, type=int, default=30, help="The number of iterations [default=30]")
 parser.add_argument('-min', '--min', required=False, type=float, default=0.0, help="Minimum value while sampling [default=0.0]")
@@ -255,10 +255,10 @@ exps = [list(reversed(e.split())) for e in args.exps]
 
 attrNames = []
 for e in exps:
-   for t in e: # Accepts one of: ATTR, ATTRN, X, XN, VAR, VARN, V, VN; with N in [0,9]
-      if t.upper()=='ATTR' or (t.upper().startswith('ATTR') and len(t)>4 and t[4] in [str(i) for i in range(10)]):
+   for t in e: # Accepts one of: ATTR, ATTRN, ATTR-N, X, XN, VAR, VARN, VAR-N, V, VN; with N in [0,9]
+      if t.upper()=='ATTR' or (t.upper().startswith('ATTR') and len(t)>4 and t[4] in [str(i) for i in range(10)]) or (t.upper().startswith('ATTR-') and len(t)>5 and t[5] in [str(i) for i in range(10)]):
          attrNames.append(t)
-      elif t.upper()=='VAR' or (t.upper().startswith('VAR') and len(t)>3 and t[3] in [str(i) for i in range(10)]):
+      elif t.upper()=='VAR' or (t.upper().startswith('VAR') and len(t)>3 and t[3] in [str(i) for i in range(10)]) or (t.upper().startswith('VAR-') and len(t)>4 and t[4] in [str(i) for i in range(10)]):
          attrNames.append(t)
       elif t.upper()=='X' or (t.upper().startswith('X') and len(t)>1 and t[1] in [str(i) for i in range(10)]):
          attrNames.append(t)
