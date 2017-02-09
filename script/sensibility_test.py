@@ -119,6 +119,8 @@ def interpreter(exp, attr):
          op1 = stack.pop(); op2 = stack.pop();
          try:
             res = pow(op1,op2)
+         except ValueError:
+            return None
          except OverflowError:
             return None
          if res == np.inf:
