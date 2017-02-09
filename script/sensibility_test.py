@@ -22,6 +22,14 @@ def ProgressBar(count, total, suffix='', out=sys.stdout):
     out.write('[%s] %.2f%s (%d/%d)%s\r' % (bar, percents, '%', count, total, suffix))
     out.flush()
 
+def GetAttributeIndex(attr):
+   # Extract only the digits from the given string (attr)
+   number = ''.join([i for i in attr if i >= '0' and i <= '9'])
+   if len(number) == 0: # For instance, X or ATTR
+      return 0
+   else:
+      return int(number)
+
 def get_sample(attrname):
    return np.random.uniform(args.min,args.max) # TODO: uses a different distribution depending on the attribute
 
@@ -259,17 +267,21 @@ exps = [list(reversed(e.split())) for e in args.exps]
 attrNames = []
 for e in exps:
    for t in e: # Accepts one of: ATTR, ATTRN, ATTR-N, X, XN, VAR, VARN, VAR-N, V, VN; with N in [0,9]
-      if t.upper()=='ATTR' or (t.upper().startswith('ATTR') and len(t)>4 and t[4] in [str(i) for i in range(10)]) or (t.upper().startswith('ATTR-') and len(t)>5 and t[5] in [str(i) for i in range(10)]):
+      if t.upper()=='ATTR' or (t.upper().startswith('ATTR') and len(t)>4 and (t[4] >= '0' and t[4] <= '9')) or (t.upper().startswith('ATTR-') and len(t)>5 and (t[5] >= '0' and t[5] <= '9')):
          attrNames.append(t)
-      elif t.upper()=='VAR' or (t.upper().startswith('VAR') and len(t)>3 and t[3] in [str(i) for i in range(10)]) or (t.upper().startswith('VAR-') and len(t)>4 and t[4] in [str(i) for i in range(10)]):
+      elif t.upper()=='VAR' or (t.upper().startswith('VAR') and len(t)>3 and (t[3] >= '0' and t[3] <= '9')) or (t.upper().startswith('VAR-') and len(t)>4 and (t[4] >= '0' and t[4] <= '9')):
          attrNames.append(t)
-      elif t.upper()=='X' or (t.upper().startswith('X') and len(t)>1 and t[1] in [str(i) for i in range(10)]):
+      elif t.upper()=='X' or (t.upper().startswith('X') and len(t)>1 and (t[1] >= '0' and t[1] <= '9')):
          attrNames.append(t)
-      elif t.upper()=='V' or (t.upper().startswith('V') and len(t)>1 and t[1] in [str(i) for i in range(10)]):
+      elif t.upper()=='V' or (t.upper().startswith('V') and len(t)>1 and (t[1] >= '0' and t[1] <= '9')):
          attrNames.append(t)
 
 
 attrNames = list(sorted(set(attrNames)))
+attrIndices = []
+for a in attrNames:
+   attrIndices.append(GetAttributeIndex(a))
+
 
 partial = []; temp = []; means = []; stds = []; none = {};
 for i in range(0, len(attrNames)):
@@ -285,7 +297,7 @@ exec("diff_function = " + args.diff_function)
 count = 0
 for exp in exps:
    for scenario in range(0,args.scenarios):
-      attr = {}; attr = {a : get_sample(a) for a in attrNames}
+      attr = {}; attr = {a : get_sample(a) for a in attrNames if a in exp}
 
       value1 = interpreter(exp, attr)
 
