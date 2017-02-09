@@ -37,17 +37,17 @@ def print_stats(means, stds, attributes, nones, exps):
    stat_means = {}
    stat_stds = {}
    sum_stat_means = 0.0
-   for i, attr in enumerate(attributes):
-      if means[i]:
-         stat_means[i] = np.median(means[i])
-         stat_stds[i] = np.median(stds[i])
-         sum_stat_means += stat_means[i]
+   for a in attributes:
+      if means[a]:
+         stat_means[a] = np.median(means[a])
+         stat_stds[a] = np.median(stds[a])
+         sum_stat_means += stat_means[a]
 
    out = ''
-   for i, attr in enumerate(attributes):
-      if means[i]:
-         frequency=len(means[i])
-         out += "%s: impact=%.2f%% (%.3f±%.1f), frequency=%.2f%% (%d/%d), none=%.2f%% (%d/%d)\n" % (attr, 100.*stat_means[i]/sum_stat_means, stat_means[i], stat_stds[i], 100. * frequency/float(len(exps)), frequency, len(exps), 100.*none[i]/float(args.iterations*args.scenarios*len(exps)), none[i], args.iterations*args.scenarios*len(exps))
+   for a in attributes:
+      if means[a]:
+         frequency=len(means[a])
+         out += "%s: impact=%.2f%% (%.3f±%.1f), frequency=%.2f%% (%d/%d), none=%.2f%% (%d/%d)\n" % (a, 100.*stat_means[a]/sum_stat_means, stat_means[a], stat_stds[a], 100. * frequency/float(len(exps)), frequency, len(exps), 100.*none[a]/float(args.iterations*args.scenarios*len(exps)), none[a], args.iterations*args.scenarios*len(exps))
    sys.stdout.write(out)
 
 def interpreter(exp, attr):
@@ -283,54 +283,53 @@ for a in attrNames:
    attrIndices.append(GetAttributeIndex(a))
 
 
-partial = []; temp = []; means = []; stds = []; none = {};
-for i in range(0, len(attrNames)):
-   partial.append([])
-   temp.append([])
-   means.append([])
-   stds.append([])
-   none[i] = 0
+partial = {}; temp = {}; means = {}; stds = {}; none = {};
+for a in attrNames:
+   partial[a] = []
+   temp[a] = []
+   means[a] = []
+   stds[a] = []
+   none[a] = 0
 
 # diff_function = lambda...
 exec("diff_function = " + args.diff_function)
 
 count = 0
 for exp in exps:
+   expAttrNames = [a for a in attrNames if a in exp]
    for scenario in range(0,args.scenarios):
-      attr = {}; attr = {a : get_sample(a) for a in attrNames if a in exp}
+      attr = {a : get_sample(a) for a in expAttrNames}
 
       value1 = interpreter(exp, attr)
 
       if value1 is not None:
-         for i, a in enumerate(attrNames):
-            if a in exp:
-               scenario_attr_value = attr[a]
-               for j in range(0,args.iterations):
-                  attr[a] = get_sample(a)
-                  value2 = interpreter(exp, attr)
-                  if value2 is not None:
-                     partial[i].append(diff_function(value1, value2))
-                  else:
-                     none[i] += 1
-               attr[a] = scenario_attr_value
+         for a in expAttrNames:
+            scenario_attr_value = attr[a]
+            for j in range(0,args.iterations):
+               attr[a] = get_sample(a)
+               value2 = interpreter(exp, attr)
+               if value2 is not None:
+                  partial[a].append(diff_function(value1, value2))
+               else:
+                  none[a] += 1
+            attr[a] = scenario_attr_value
 
-               if partial[i]:
-                  temp[i].append(np.median(partial[i]))
-                  del partial[i][:]
+            if partial[a]:
+               temp[a].append(np.median(partial[a]))
+               del partial[a][:]
       else:
-         for i, a in enumerate(attrNames):
-            if a in exp:
-               none[i] += args.iterations # all inner iterations are none (for each attribute)
+         for a in expAttrNames:
+            none[a] += args.iterations # all inner iterations are none (for each attribute)
 
       count += 1
       ProgressBar(count, args.scenarios*len(exps), out=sys.stderr)
 
-   for i in range(0,len(attrNames)):
-      if temp[i]:
-         if np.mean(temp[i]) > 0.0:
-            means[i].append(np.mean(temp[i]))
-            stds[i].append(np.std(temp[i]))
-         del temp[i][:]
+   for a in expAttrNames:
+      if temp[a]:
+         if np.mean(temp[a]) > 0.0: # is attribute 'a' statistically present? Maybe it is not even touched at all during the interpretation or it is something like "- X X"
+            means[a].append(np.mean(temp[a]))
+            stds[a].append(np.std(temp[a]))
+         del temp[a][:]
 
 
 print_stats(means, stds, attrNames, none, exps)
