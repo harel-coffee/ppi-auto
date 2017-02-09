@@ -81,21 +81,21 @@ class Generator:
          return int(number)
 
 
-def print_stats(means, stds, attributes, nones, exps, total_iterations):
-   stat_means = {}
-   stat_stds = {}
-   sum_stat_means = 0.0
+def print_stats(scenarios_stats, scenarios_stdev, attributes, nones, exps, total_iterations):
+   exps_stats = {}
+   exps_stdev = {}
+   sum_exps_stats = 0.0
    for a in attributes:
-      if means[a]:
-         stat_means[a] = np.median(means[a])
-         stat_stds[a] = np.median(stds[a])
-         sum_stat_means += stat_means[a]
+      if scenarios_stats[a]:
+         exps_stats[a] = expressions_stats_function(scenarios_stats[a])
+         exps_stdev[a] = expressions_stats_function(scenarios_stdev[a])
+         sum_exps_stats += exps_stats[a]
 
    out = ''
    for a in attributes:
-      if means[a]:
-         frequency=len(means[a])
-         out += "%s: impact=%.2f%% (%.3f±%.1f), frequency=%.2f%% (%d/%d), none=%.2f%% (%d/%d)\n" % (a, 100.*stat_means[a]/sum_stat_means, stat_means[a], stat_stds[a], 100. * frequency/float(len(exps)), frequency, len(exps), 100.*none[a]/float(total_iterations), none[a], total_iterations)
+      if scenarios_stats[a]:
+         frequency=len(scenarios_stats[a])
+         out += "%s: impact=%.2f%% (%.3f±%.1f), frequency=%.2f%% (%d/%d), none=%.2f%% (%d/%d)\n" % (a, 100.*exps_stats[a]/sum_exps_stats, exps_stats[a], exps_stdev[a], 100. * frequency/float(len(exps)), frequency, len(exps), 100.*none[a]/float(total_iterations), none[a], total_iterations)
    sys.stdout.write(out)
 
 
@@ -306,9 +306,12 @@ parser.add_argument('-e', '--exp', action='append', dest='exps', required=True, 
 parser.add_argument('-d', '--dataset', required=True, default='', help="CSV dataset file representing the distribution of each attribute (it is 0-based, so for example the set of valid values (distribution) for ATTR-5 is on the 6th column)")
 parser.add_argument('-s', '--scenarios', required=False, type=int, default=None, help="The number of scenarios [default=number of rows of the dataset]")
 parser.add_argument('-srs', action='store_true', default=False, help="Randomly sample each scenario instead of sequentially iterating over all rows of the dataset")
-parser.add_argument('-i', '--iterations', required=False, type=int, default=None, help="The number of iterations for each attribute [default=number of values of the attribute]")
-parser.add_argument('-irs', action='store_true', default=False, help="Randomly sample each attribute instead of iteration over all its values")
-parser.add_argument('-df', '--diff-function', required=False, default='lambda x,y: abs(x-y)', help="Diff function (between scenario value and predicted value) [default=lambda x,y: abs(x-y)]")
+parser.add_argument('-p', '--perturbations', required=False, type=int, default=None, help="The number of perturbations for each attribute [default=number of values of the attribute]")
+parser.add_argument('-prs', action='store_true', default=False, help="Randomly sample each attribute perturbation instead of iterating over all its values")
+parser.add_argument('-pf', '--perturbation-function', required=False, default='lambda x,y: abs(x-y)', help="Perturbation measurement function (between scenario value and perturbed value) [default=lambda x,y: abs(x-y)]")
+parser.add_argument('-psf', '--perturbations-stats-function', required=False, default='lambda x: np.median(x)', help="Perturbations statistics function used to aggregate multiple measurements of perturbations (between a scenario value and perturbed values) [default=lambda x: np.median(x)]")
+parser.add_argument('-ssf', '--scenarios-stats-function', required=False, default='lambda x: np.mean(x)', help="Scenarios statistics function used to aggregate multiple scenarios measurements [default=lambda x: np.mean(x)]")
+parser.add_argument('-esf', '--expressions-stats-function', required=False, default='lambda x: np.median(x)', help="Expressions statistics function used to aggregate scenarios statistics when an attribute is present in multiple expression [default=lambda x: np.median(x)]")
 
 ###
 # Options table
@@ -320,7 +323,7 @@ parser.add_argument('-df', '--diff-function', required=False, default='lambda x,
 #  None    | True   -> there will be N scenarios, where N is the number of rows of the given dataset; but each attribute of the scenario will be randomly sampled (individually)
 #  M, M>0  | True   -> there will be M scenarios; each attribute of the scenario will be randomly sampled (individually)
 
-# For '-i' the behavior is analogous except that each attribute is always treated individually
+# For '-p' the behavior is analogous except that each attribute is always treated individually
 
 args = parser.parse_args()
 
@@ -352,46 +355,49 @@ with open(args.dataset) as dist_file:
             print >> sys.stderr, "> Warning: could not convert '%s' to float at line %d, column %d of '%s', skipping..." % (v, r+1, i+1, args.dataset)
 
 
-partial = {}; temp = {}; means = {}; stds = {}; none = {};
+partial = {}; temp = {}; scenarios_stats = {}; scenarios_stdev = {}; none = {};
 for a in attrNames:
    partial[a] = []
    temp[a] = []
-   means[a] = []
-   stds[a] = []
+   scenarios_stats[a] = []
+   scenarios_stdev[a] = []
    none[a] = 0
 
-# diff_function = lambda...
-exec("diff_function = " + args.diff_function)
+# perturbation_function = lambda...
+exec("perturbation_function = " + args.perturbation_function)
+exec("perturbations_stats_function = " + args.perturbations_stats_function)
+exec("scenarios_stats_function = " + args.scenarios_stats_function)
+exec("expressions_stats_function = " + args.expressions_stats_function)
 
 count = 0
 total_iterations = 0
 for exp in exps:
-   expAttrNames = [a for a in attrNames if a in exp]
+   expAttrNames = [a for a in attrNames if a in exp] # Only the attributes in the expression
    scenarios = Generator(distribution, expAttrNames, random=args.srs, amount=args.scenarios)
    for attr in scenarios:
-      value1 = interpreter(exp, attr)
+      scenario_value = interpreter(exp, attr)
 
-      if value1 is not None:
+      if scenario_value is not None:
          for a in expAttrNames:
-            scenario_attr_value = attr[a]
-            samples = Generator(distribution, [a], random=args.irs, amount=args.iterations)
+            original = attr[a] # Back up the original value for attr[a] before perturbation
+            samples = Generator(distribution, [a], random=args.prs, amount=args.perturbations)
             for sample in samples:
                attr[a] = sample[a]
-               value2 = interpreter(exp, attr)
-               if value2 is not None:
-                  partial[a].append(diff_function(value1, value2))
+               perturbed_value = interpreter(exp, attr)
+               if perturbed_value is not None:
+                  partial[a].append(perturbation_function(scenario_value, perturbed_value))
                else:
                   none[a] += 1
-            attr[a] = scenario_attr_value
+            attr[a] = original # Restore the original value of attr[a]
 
             if partial[a]:
-               temp[a].append(np.median(partial[a]))
+               temp[a].append(perturbations_stats_function(partial[a]))
                del partial[a][:]
             total_iterations += samples.GetAmount()
       else:
          for a in expAttrNames:
-            samples = Generator(distribution, [a], random=args.irs, amount=args.iterations)
-            none[a] += samples.GetAmount() # all inner iterations are none (for each attribute)
+            samples = Generator(distribution, [a], random=args.prs, amount=args.perturbations)
+            none[a] += samples.GetAmount() # all inner perturbations ended up being none (for each attribute)
             total_iterations += samples.GetAmount()
 
       count += 1
@@ -399,9 +405,10 @@ for exp in exps:
 
    for a in expAttrNames:
       if temp[a]:
-         if np.mean(temp[a]) > 0.0: # is attribute 'a' statistically present? Maybe it is not even touched at all during the interpretation or it is something like "- X X"
-            means[a].append(np.mean(temp[a]))
-            stds[a].append(np.std(temp[a]))
+         stats = scenarios_stats_function(temp[a])
+         if stats > 0.0: # is attribute 'a' statistically present? Maybe it is not even touched at all during the interpretation or it is something like "- X X"
+            scenarios_stats[a].append(stats) # Append scenario stats (mean, median, ...) for expression exp
+            scenarios_stdev[a].append(np.std(temp[a])) # Append scenario standard deviation for expression exp
          del temp[a][:]
 
-print_stats(means, stds, attrNames, none, exps, total_iterations)
+print_stats(scenarios_stats, scenarios_stdev, attrNames, none, exps, total_iterations)
