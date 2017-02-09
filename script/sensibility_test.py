@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys, random
+import sys, random, csv
 import numpy as np
 import argparse
 
-#random.seed(100)
+#np.random.seed(1)
 
 # -e '+ X1 * 3.14 / X2 X3' -e '+ X1 * 3.14 / X3 X2' -e '+ X2 * 3.14 / X1 X3' -e '+ X2 * 3.14 / X3 X1' -e '+ X3 * 3.14 / X1 X2' -e '+ X3 * 3.14 / X2 X1' -e '+ X1 X1' -e '/ X1 0.0'
 
@@ -22,16 +22,40 @@ def ProgressBar(count, total, suffix='', out=sys.stdout):
     out.write('[%s] %.2f%s (%d/%d)%s\r' % (bar, percents, '%', count, total, suffix))
     out.flush()
 
-def GetAttributeIndex(attr):
-   # Extract only the digits from the given string (attr)
-   number = ''.join([i for i in attr if i >= '0' and i <= '9'])
-   if len(number) == 0: # For instance, X or ATTR
-      return 0
-   else:
-      return int(number)
 
 def get_sample(attrname):
    return np.random.uniform(args.min,args.max) # TODO: uses a different distribution depending on the attribute
+
+class Generator:
+   def __init__(self, distribution, attributes, amount=sys.maxint):
+      self.attributes = attributes
+      self.distribution = distribution
+      self.amount = amount
+      self.indices = {a : self.GetAttributeIndex(a) for a in attributes}
+   def __iter__(self):
+      pass
+   @staticmethod
+   def GetAttributeIndex(attr):
+      # Extract only the digits from the given string (attr)
+      number = ''.join([i for i in attr if i >= '0' and i <= '9'])
+      if len(number) == 0: # For instance, X or ATTR
+         return 0
+      else:
+         return int(number)
+
+class Sampling(Generator):
+   #def __init__(self, distribution, attributes):
+   #   Generator.__init__(self, distribution, attributes)
+   def __iter__(self):
+      count = 0
+      while count < self.amount:
+         sample = {}
+         for a in self.attributes:
+            index = self.indices[a]
+            sample[a] = self.distribution[index][np.random.randint(0, len(self.distribution[index]))]
+         yield sample
+         count += 1
+
 
 def print_stats(means, stds, attributes, nones, exps):
    stat_means = {}
@@ -49,6 +73,7 @@ def print_stats(means, stds, attributes, nones, exps):
          frequency=len(means[a])
          out += "%s: impact=%.2f%% (%.3f±%.1f), frequency=%.2f%% (%d/%d), none=%.2f%% (%d/%d)\n" % (a, 100.*stat_means[a]/sum_stat_means, stat_means[a], stat_stds[a], 100. * frequency/float(len(exps)), frequency, len(exps), 100.*none[a]/float(args.iterations*args.scenarios*len(exps)), none[a], args.iterations*args.scenarios*len(exps))
    sys.stdout.write(out)
+
 
 def interpreter(exp, attr):
    stack = []
@@ -256,6 +281,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-e', '--exp', action='append', dest='exps', required=True, default=[], help="Set the expressions to be evaluated. Ex: -e '+ ATTR-0 ATTR-1' -e 'ATTR-1'")
 parser.add_argument('-s', '--scenarios', required=False, type=int, default=100, help="The number of scenarios [default=100]")
 parser.add_argument('-i', '--iterations', required=False, type=int, default=30, help="The number of iterations [default=30]")
+parser.add_argument('-d', '--dataset', required=True, default='', help="CSV dataset file representing the distribution of each attribute")
 parser.add_argument('-min', '--min', required=False, type=float, default=0.0, help="Minimum value while sampling [default=0.0]")
 parser.add_argument('-max', '--max', required=False, type=float, default=1.0, help="Maximum value while sampling [default=1.0]")
 parser.add_argument('-df', '--diff-function', required=False, default='lambda x,y: abs(x-y)', help="Diff function (between scenario value and predicted value) [default=lambda x,y: abs(x-y)]")
@@ -278,9 +304,12 @@ for e in exps:
 
 
 attrNames = list(sorted(set(attrNames)))
-attrIndices = []
-for a in attrNames:
-   attrIndices.append(GetAttributeIndex(a))
+
+distribution = {}
+with open(args.dataset) as dist_file:
+   for row in csv.reader(dist_file):
+      for i, v in enumerate(row):
+         distribution.setdefault(i, []).append(float(v))
 
 
 partial = {}; temp = {}; means = {}; stds = {}; none = {};
@@ -297,16 +326,16 @@ exec("diff_function = " + args.diff_function)
 count = 0
 for exp in exps:
    expAttrNames = [a for a in attrNames if a in exp]
-   for scenario in range(0,args.scenarios):
-      attr = {a : get_sample(a) for a in expAttrNames}
-
+   scenarios = Sampling(distribution, expAttrNames, amount=args.scenarios)
+   for attr in scenarios:
       value1 = interpreter(exp, attr)
 
       if value1 is not None:
          for a in expAttrNames:
             scenario_attr_value = attr[a]
-            for j in range(0,args.iterations):
-               attr[a] = get_sample(a)
+            samples = Sampling(distribution, [a], amount=args.iterations)
+            for sample in samples:
+               attr[a] = sample[a]
                value2 = interpreter(exp, attr)
                if value2 is not None:
                   partial[a].append(diff_function(value1, value2))
