@@ -304,15 +304,15 @@ for exp in exps:
       if value1 is not None:
          for i, a in enumerate(attrNames):
             if a in exp:
-               copy = dict.copy(attr)
+               scenario_attr_value = attr[a]
                for j in range(0,args.iterations):
-                  copy[a] = get_sample(a)
-
-                  value2 = interpreter(exp, copy)
+                  attr[a] = get_sample(a)
+                  value2 = interpreter(exp, attr)
                   if value2 is not None:
                      partial[i].append(diff_function(value1, value2))
                   else:
                      none[i] += 1
+               attr[a] = scenario_attr_value
 
                if partial[i]:
                   temp[i].append(np.median(partial[i]))
