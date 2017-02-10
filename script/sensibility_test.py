@@ -373,6 +373,8 @@ count = 0
 total_iterations = 0
 for exp in exps:
    expAttrNames = [a for a in attrNames if a in exp] # Only the attributes in the expression
+   if not expAttrNames:
+      continue
    scenarios = Generator(distribution, expAttrNames, random=args.srs, amount=args.scenarios)
    for attr in scenarios:
       scenario_value = interpreter(exp, attr)
