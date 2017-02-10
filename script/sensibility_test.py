@@ -24,23 +24,25 @@ def ProgressBar(count, total, suffix='', out=sys.stdout):
     out.flush()
 
 
+def GetAttributeIndex(attr):
+   # Extract only the digits from the given string (attr)
+   number = ''.join([i for i in attr if i >= '0' and i <= '9'])
+   if len(number) == 0: # For instance, X or ATTR
+      return 0
+   else:
+      return int(number)
+
+
 class Generator:
    def __init__(self, distribution, attributes, random=True, amount=None):
       self.attributes = attributes
       self.distribution = distribution
       self.amount = amount
       self.random = random
-      self.indices = {}
       for a in self.attributes:
          maxlen = 0
-         index = self.GetAttributeIndex(a)
-         if index >= len(self.distribution):
-            print >> sys.stderr, "> ERROR: 0-based index of attribute '%s' (index=%d) is out of range (dataset has only %d columns)" % (a, index, len(self.distribution))
-            sys.exit(1)
-
-         self.indices[a] = index
-         if len(self.distribution[index]) > maxlen:
-            maxlen = len(self.distribution[index])
+         if len(self.distribution[a]) > maxlen:
+            maxlen = len(self.distribution[a])
 
       if amount is None: # Let's automatically set a reasonable amount
          self.amount = maxlen
@@ -54,8 +56,7 @@ class Generator:
          while count < self.amount:
             sample = {}
             for a in self.attributes:
-               index = self.indices[a]
-               sample[a] = self.distribution[index][np.random.randint(0, len(self.distribution[index]))]
+               sample[a] = self.distribution[a][np.random.randint(0, len(self.distribution[a]))]
             yield sample
             count += 1
 
@@ -65,21 +66,12 @@ class Generator:
          while count < self.amount:
             sample = {}
             for a in self.attributes:
-               index = self.indices[a]
-               if counts.setdefault(index, 0) >= len(self.distribution[index]): # Rewind the count of an attribute when it reaches the end
-                  counts[index] = 0
-               sample[a] = self.distribution[index][counts[index]]
-               counts[index] += 1
+               if counts.setdefault(a, 0) >= len(self.distribution[a]): # Rewind the count of an attribute when it reaches the end
+                  counts[a] = 0
+               sample[a] = self.distribution[a][counts[a]]
+               counts[a] += 1
             yield sample
             count += 1
-   @staticmethod
-   def GetAttributeIndex(attr):
-      # Extract only the digits from the given string (attr)
-      number = ''.join([i for i in attr if i >= '0' and i <= '9'])
-      if len(number) == 0: # For instance, X or ATTR
-         return 0
-      else:
-         return int(number)
 
 
 def print_stats(scenarios_stats, scenarios_stdev, attributes, nones, exps, total_iterations):
@@ -346,18 +338,20 @@ for e in exps:
       elif t.upper()=='V' or (t.upper().startswith('V') and len(t)>1 and (t[1] >= '0' and t[1] <= '9')):
          attrNames.append(t)
 
-
 attrNames = list(sorted(set(attrNames)))
+
+attrToIndices = {a: GetAttributeIndex(a) for a in attrNames}
+indicesToAttr = {v: k for k, v in attrToIndices.items()} # Invert the mapping: from ATTR-X:X to X:ATTR-X
 
 distribution = {}
 with open(args.dataset) as dist_file:
    for r, row in enumerate(csv.reader(dist_file)):
       for i, v in enumerate(row):
-         try:
-            distribution.setdefault(i, []).append(float(v))
-         except ValueError:
-            print >> sys.stderr, "> Warning: could not convert '%s' to float at line %d, column %d of '%s', skipping..." % (v, r+1, i+1, args.dataset)
-
+         if i in indicesToAttr:
+            try:
+               distribution.setdefault(indicesToAttr[i], []).append(float(v))
+            except ValueError:
+               print >> sys.stderr, "> [%s]: could not convert '%s' to float at line %d, column %d of '%s', skipping..." % (indicesToAttr[i], v, r+1, i+1, args.dataset)
 
 partial = {}; temp = {}; scenarios_stats = {}; scenarios_stdev = {}; none = {};
 for a in attrNames:
