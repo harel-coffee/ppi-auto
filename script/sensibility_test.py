@@ -3,6 +3,7 @@
 
 import sys, random, csv
 import numpy as np
+import math
 import argparse
 
 #np.random.seed(1)
@@ -381,14 +382,14 @@ for exp in exps:
    for attr in scenarios:
       scenario_value = interpreter(exp, attr)
 
-      if scenario_value is not None:
+      if scenario_value is not None and not math.isnan(scenario_value) and not math.isinf(scenario_value):
          for a in expAttrNames:
             original = attr[a] # Back up the original value for attr[a] before perturbation
             samples = Generator(distribution, [a], random=args.prs, amount=args.perturbations)
             for sample in samples:
                attr[a] = sample[a]
                perturbed_value = interpreter(exp, attr)
-               if perturbed_value is not None:
+               if perturbed_value is not None and not math.isnan(perturbed_value) and not math.isinf(perturbed_value):
                   partial[a].append(perturbation_function(scenario_value, perturbed_value))
                else:
                   none[a] += 1
