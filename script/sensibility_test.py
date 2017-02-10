@@ -278,7 +278,7 @@ def interpreter(exp, attr):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-e', '--exp', action='append', dest='exps', required=True, default=[], help="Set the expressions to be evaluated (can be given multiple times). Ex: -e '+ ATTR-0 ATTR-1' -e 'ATTR-1'")
+parser.add_argument('-e', '--exp', action='append', dest='exps', required=True, default=[], help="Set the expressions to be evaluated (can be given multiple times). If given '-e -' then expressions from stdin will be read as well (one per line). Ex: -e '+ ATTR-0 ATTR-1' -e 'ATTR-1'")
 parser.add_argument('-d', '--dataset', required=True, default='', help="CSV dataset file representing the distribution of each attribute (it is 0-based, so for example the set of valid values (distribution) for ATTR-5 is on the 6th column)")
 parser.add_argument('-s', '--scenarios', required=False, type=int, default=None, help="The number of scenarios [default=number of rows of the dataset]")
 parser.add_argument('-srs', action='store_true', default=False, help="Randomly sample each scenario instead of sequentially iterating over all rows of the dataset")
@@ -305,7 +305,15 @@ parser.add_argument('-st', '--significance-threshold', required=False, type=floa
 args = parser.parse_args()
 
 # The interpreter works from the end to the beginning (reversed order)
-exps = [list(reversed(e.split())) for e in args.exps]
+exps = []
+for e in args.exps:
+   if e == '-': # "-e -" will make the script read also from stdin
+      for i in sys.stdin.read().splitlines():
+         if i.strip():
+            exps.append(list(reversed(i.split())))
+   else:
+      exps.append(list(reversed(e.split())))
+
 
 attrNames = []
 for e in exps:
