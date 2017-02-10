@@ -234,6 +234,44 @@ def interpreter(exp, attr):
          stack.append(np.sin(stack.pop()))
       elif token == "COS":
          stack.append(np.cos(stack.pop()))
+      elif token == "STEP":
+         if stack.pop() >= 0.0:
+            stack.append(1.0)
+         else:
+            stack.append(0.0)
+      elif token == "SIGN":
+         op = stack.pop()
+         if op > 0.0:
+            stack.append(1.0)
+         elif op < 0.0:
+            stack.append(-1.0)
+         else:
+            stack.append(0.0)
+      elif token == "LOGISTIC":
+         try:
+            stack.append((1.0/(1.0 + np.exp(-stack.pop()))))
+         except OverflowError:
+            stack.append(np.inf)
+         except FloatingPointError:
+            return None
+      elif token == "GAMMA":
+         op = stack.pop()
+         try:
+            stack.append(math.pow((op/2.71828174591064)*np.sqrt(op*np.sinh(1.0/op)),op)*np.sqrt(2.0*3.14159274101257/op))
+         except ValueError:
+            return None
+         except OverflowError:
+            stack.append(np.inf)
+         except ZeroDivisionError:
+            return None
+      elif token == "GAUSS":
+         op = stack.pop()
+         try:
+            stack.append(np.exp(-op*op));
+         except OverflowError:
+            stack.append(np.inf)
+         except FloatingPointError:
+            return None
       elif token == "/":
          try:
             stack.append(stack.pop()/stack.pop())
@@ -264,12 +302,37 @@ def interpreter(exp, attr):
             stack.append(np.tan(stack.pop()))
          except FloatingPointError:
             return None
+      elif token == "pi":
+         stack.append(3.14159274101257)
+      elif token == "pi/2":
+         stack.append(1.57079637050629)
+      elif token == "pi/4":
+         stack.append(0.78539818525314)
+      elif token == "1/pi":
+         stack.append(0.31830987334251)
+      elif token == "2/pi":
+         stack.append(0.63661974668503)
+      elif token == "2/sqrt(pi)":
+         stack.append(1.12837922573090)
+      elif token == "sqrt(2)":
+         stack.append(1.41421353816986)
+      elif token == "sqrt(2)/2":
+         stack.append(0.70710676908493)
+      elif token == "e":
+         stack.append(2.71828174591064)
+      elif token == "log2(e)":
+         stack.append(1.44269502162933)
+      elif token == "log10(e)":
+         stack.append(0.43429449200630)
+      elif token == "ln(2)":
+         stack.append(0.69314718246460)
+      elif token == "ln(10)":
+         stack.append(2.30258512496948)
       elif token in attr:
          stack.append(float(attr[token]))
       else:
          # It's probably a constant, so just stacking it
          stack.append(float(token))
-
    res = stack.pop()
    if math.isnan(res) or math.isinf(res):
       return None
