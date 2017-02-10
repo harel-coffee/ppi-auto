@@ -80,7 +80,7 @@ class Generator:
             count += 1
 
 
-def print_stats(scenarios_stats, scenarios_stdev, attributes, nones, exps, total_iterations):
+def print_stats(scenarios_stats, scenarios_stdev, attributes, invalids, exps, total_iterations):
    exps_stats = {}
    exps_stdev = {}
    sum_exps_stats = 0.0
@@ -94,7 +94,7 @@ def print_stats(scenarios_stats, scenarios_stdev, attributes, nones, exps, total
    for a in attributes:
       if scenarios_stats[a]:
          frequency=len(scenarios_stats[a])
-         out += "%s: impact=%.2f%% (%.3f±%.1f), frequency=%.2f%% (%d/%d), none=%.2f%% (%d/%d)\n" % (a, 100.*exps_stats[a]/sum_exps_stats, exps_stats[a], exps_stdev[a], 100. * frequency/float(len(exps)), frequency, len(exps), 100.*none[a]/float(total_iterations), none[a], total_iterations)
+         out += "%s: impact=%.2f%% (%.3f±%.1f), frequency=%.2f%% (%d/%d), invalids=%.2f%% (%d/%d)\n" % (a, 100.*exps_stats[a]/sum_exps_stats, exps_stats[a], exps_stdev[a], 100. * frequency/float(len(exps)), frequency, len(exps), 100.*invalids[a]/float(total_iterations), invalids[a], total_iterations)
    sys.stdout.write(out)
 
 
@@ -334,13 +334,13 @@ with open(args.dataset) as dist_file:
             except ValueError:
                print >> sys.stderr, "> [%s]: could not convert '%s' to float at line %d, column %d of '%s', skipping..." % (indicesToAttr[i], v, r+1, i+1, args.dataset)
 
-partial = {}; temp = {}; scenarios_stats = {}; scenarios_stdev = {}; none = {};
+perturbations = {}; perturbations_stats = {}; scenarios_stats = {}; scenarios_stdev = {}; invalids = {};
 for a in attrNames:
-   partial[a] = []
-   temp[a] = []
+   perturbations[a] = []
+   perturbations_stats[a] = []
    scenarios_stats[a] = []
    scenarios_stdev[a] = []
-   none[a] = 0
+   invalids[a] = 0
 
 # perturbation_function = lambda...
 exec("perturbation_function = " + args.perturbation_function)
@@ -352,7 +352,7 @@ count = 0
 total_iterations = 0
 for exp in exps:
    expAttrNames = [a for a in attrNames if a in exp] # Only the attributes in the expression
-   if not expAttrNames:
+   if not expAttrNames: # Some expressions don't have any attribute at all
       continue
    scenarios = Generator(distribution, expAttrNames, random=args.srs, amount=args.scenarios)
    for attr in scenarios:
@@ -367,30 +367,30 @@ for exp in exps:
                attr[a] = sample[a]
                perturbed_value = interpreter(exp, attr)
                if perturbed_value is not None:
-                  partial[a].append(perturbation_function(scenario_value, perturbed_value))
+                  perturbations[a].append(perturbation_function(scenario_value, perturbed_value))
                else:
-                  none[a] += 1
+                  invalids[a] += 1
             attr[a] = original # Restore the original value of attr[a]
 
-            if partial[a]:
-               temp[a].append(perturbations_stats_function(partial[a]))
-               del partial[a][:]
+            if perturbations[a]:
+               perturbations_stats[a].append(perturbations_stats_function(perturbations[a]))
+               del perturbations[a][:]
             total_iterations += samples.GetAmount()
       else:
          for a in expAttrNames:
             samples = Generator(distribution, [a], random=args.prs, amount=args.perturbations)
-            none[a] += samples.GetAmount() # all inner perturbations ended up being none (for each attribute)
+            invalids[a] += samples.GetAmount() # all inner perturbations ended up being invalid (for each attribute)
             total_iterations += samples.GetAmount()
 
       count += 1
       ProgressBar(count, scenarios.GetAmount()*len(exps), out=sys.stderr)
 
    for a in expAttrNames:
-      if temp[a]:
-         stats = scenarios_stats_function(temp[a])
+      if perturbations_stats[a]:
+         stats = scenarios_stats_function(perturbations_stats[a])
          if stats > args.significance_threshold: # is attribute 'a' statistically present? Maybe it is not even touched at all during the interpretation or it is something like "- X X"
             scenarios_stats[a].append(stats) # Append scenario stats (mean, median, ...) for expression exp
-            scenarios_stdev[a].append(np.std(temp[a])) # Append scenario standard deviation for expression exp
-         del temp[a][:]
+            scenarios_stdev[a].append(np.std(perturbations_stats[a])) # Append scenario standard deviation for expression exp
+         del perturbations_stats[a][:]
 
-print_stats(scenarios_stats, scenarios_stdev, attrNames, none, exps, total_iterations)
+print_stats(scenarios_stats, scenarios_stdev, attrNames, invalids, exps, total_iterations)
