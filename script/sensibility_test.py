@@ -315,6 +315,7 @@ parser.add_argument('-pf', '--perturbation-function', required=False, default='l
 parser.add_argument('-psf', '--perturbations-stats-function', required=False, default='lambda x: np.median(x)', help="Perturbations statistics function used to aggregate multiple measurements of perturbations (between a scenario value and perturbed values) [default=lambda x: np.median(x)]")
 parser.add_argument('-ssf', '--scenarios-stats-function', required=False, default='lambda x: np.mean(x)', help="Scenarios statistics function used to aggregate multiple scenarios measurements [default=lambda x: np.mean(x)]")
 parser.add_argument('-esf', '--expressions-stats-function', required=False, default='lambda x: np.median(x)', help="Expressions statistics function used to aggregate scenarios statistics when an attribute is present in multiple expression [default=lambda x: np.median(x)]")
+parser.add_argument('-st', '--significance-threshold', required=False, type=float, default=0.0, help="Attributes having a 'scenarios statistics' value greater than that are considered statistically present in the expression [default=0.0]")
 
 ###
 # Options table
@@ -411,7 +412,7 @@ for exp in exps:
    for a in expAttrNames:
       if temp[a]:
          stats = scenarios_stats_function(temp[a])
-         if stats > 0.0: # is attribute 'a' statistically present? Maybe it is not even touched at all during the interpretation or it is something like "- X X"
+         if stats > args.significance_threshold: # is attribute 'a' statistically present? Maybe it is not even touched at all during the interpretation or it is something like "- X X"
             scenarios_stats[a].append(stats) # Append scenario stats (mean, median, ...) for expression exp
             scenarios_stdev[a].append(np.std(temp[a])) # Append scenario standard deviation for expression exp
          del temp[a][:]
