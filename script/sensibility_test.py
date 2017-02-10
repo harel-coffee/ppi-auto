@@ -8,7 +8,13 @@ import argparse
 
 #np.random.seed(1)
 
-# -e '+ X1 * 3.14 / X2 X3' -e '+ X1 * 3.14 / X3 X2' -e '+ X2 * 3.14 / X1 X3' -e '+ X2 * 3.14 / X3 X1' -e '+ X3 * 3.14 / X1 X2' -e '+ X3 * 3.14 / X2 X1' -e '+ X1 X1' -e '/ X1 0.0'
+# Make numpy ignore the following exceptions: 'divide', 'invalid', 'over', 'under'.
+# Replacing 'ignore' with 'raise' will make the interpreter more intransigent and
+# will return 'None' more frequently (in some cases, for instance, instead of
+# Inf, None will be returned).
+np.seterr(all='ignore')
+#np.seterr(all='raise')
+
 
 ################################################################################
 # Nice progress bar
@@ -146,11 +152,7 @@ def interpreter(exp, attr):
       elif token == "-":
          stack.append(stack.pop() - stack.pop())
       elif token == "*":
-         res = stack.pop() * stack.pop()
-         if res == np.inf:
-            return None
-         else:
-            stack.append(res)
+         stack.append(stack.pop() * stack.pop())
       elif token == "MEAN":
          stack.append((stack.pop() + stack.pop()) / 2.0)
       elif token == "MAX":
@@ -159,64 +161,41 @@ def interpreter(exp, attr):
          op1 = stack.pop(); op2 = stack.pop();
          stack.append(min(op1,op2))
       elif token == "MOD":
-         op1 = stack.pop(); op2 = stack.pop();
          try:
-            res = op1 % op2
+            stack.append(stack.pop() % stack.pop())
          except ZeroDivisionError:
             return None
-         stack.append(res)
       elif token == "POW":
-         op1 = stack.pop(); op2 = stack.pop();
          try:
-            res = pow(op1,op2)
+            stack.append(pow(stack.pop(),stack.pop()))
          except ValueError:
             return None
          except OverflowError:
             return None
          except ZeroDivisionError:
             return None
-         if res == np.inf:
-            return None
-         else:
-            stack.append(res)
       elif token == "ABS":
          stack.append(abs(stack.pop()))
       elif token == "POW2":
          try:
-            res = pow(stack.pop(),2.0)
+            stack.append(pow(stack.pop(),2.0))
          except OverflowError:
             return None
-         if res == np.inf:
-            return None
-         else:
-            stack.append(res)
       elif token == "POW3":
          try:
-            res = pow(stack.pop(),3.0)
+            stack.append(pow(stack.pop(),3.0))
          except OverflowError:
             return None
-         if res == np.inf:
-            return None
-         else:
-            stack.append(res)
       elif token == "POW4":
          try:
-            res = pow(stack.pop(),4.0)
+            stack.append(pow(stack.pop(),4.0))
          except OverflowError:
             return None
-         if res == np.inf:
-            return None
-         else:
-            stack.append(res)
       elif token == "POW5":
          try:
-            res = pow(stack.pop(),5.0)
+            stack.append(pow(stack.pop(),5.0))
          except OverflowError:
             return None
-         if res == np.inf:
-            return None
-         else:
-            stack.append(res)
       elif token == "NEG":
          stack.append(-stack.pop())
       elif token == "ROUND":
@@ -227,73 +206,70 @@ def interpreter(exp, attr):
          stack.append(np.floor(stack.pop()))
       elif token == "EXP":
          try:
-            res = np.exp(stack.pop())
+            stack.append(np.exp(stack.pop()))
          except OverflowError:
             return None
-         if res == np.inf:
+         except FloatingPointError:
             return None
-         else:
-            stack.append(res)
       elif token == "EXP10":
          try:
-            res = pow(10., stack.pop())
+            stack.append(pow(10., stack.pop()))
          except OverflowError:
             return None
-         if res == np.inf:
+         except FloatingPointError:
             return None
-         else:
-            stack.append(res)
       elif token == "EXP2":
          try:
-            res = np.exp2(stack.pop())
+            stack.append(np.exp2(stack.pop()))
          except OverflowError:
             return None
-         if res == np.inf:
+         except FloatingPointError:
             return None
-         else:
-            stack.append(res)
       elif token == "SIN":
          stack.append(np.sin(stack.pop()))
       elif token == "COS":
          stack.append(np.cos(stack.pop()))
       elif token == "/":
-         op1 = stack.pop(); op2 = stack.pop()
          try:
-            res = op1/op2
+            stack.append(stack.pop()/stack.pop())
          except ZeroDivisionError:
             return None
-         stack.append(res)
       elif token == "SQRT":
-         op = stack.pop()
-         if op >= 0.0: stack.append(np.sqrt(op))
-         else:
+         try:
+            stack.append(np.sqrt(stack.pop()))
+         except FloatingPointError:
             return None
       elif token == "LOG":
-         res = np.log(stack.pop())
-         if res == -np.inf:
+         try:
+            stack.append(np.log(stack.pop()))
+         except FloatingPointError:
             return None
-         else:
-            stack.append(res)
       elif token == "LOG10":
-         res = np.log10(stack.pop())
-         if res == -np.inf:
+         try:
+            stack.append(np.log10(stack.pop()))
+         except FloatingPointError:
             return None
-         else:
-            stack.append(res)
       elif token == "LOG2":
-         res = np.log2(stack.pop())
-         if res == -np.inf:
+         try:
+            stack.append(np.log2(stack.pop()))
+         except FloatingPointError:
             return None
-         else:
-            stack.append(res)
       elif token == "TAN":
-         stack.append(np.tan(stack.pop()))
+         try:
+            stack.append(np.tan(stack.pop()))
+         except FloatingPointError:
+            return None
       elif token in attr:
          stack.append(float(attr[token]))
       else:
          # It's probably a constant, so just stacking it
          stack.append(float(token))
-   return stack.pop()
+
+   res = stack.pop()
+   if math.isnan(res) or math.isinf(res):
+      return None
+   else:
+      return res
 
 
 parser = argparse.ArgumentParser()
@@ -377,14 +353,14 @@ for exp in exps:
    for attr in scenarios:
       scenario_value = interpreter(exp, attr)
 
-      if scenario_value is not None and not math.isnan(scenario_value) and not math.isinf(scenario_value):
+      if scenario_value is not None:
          for a in expAttrNames:
             original = attr[a] # Back up the original value for attr[a] before perturbation
             samples = Generator(distribution, [a], random=args.prs, amount=args.perturbations)
             for sample in samples:
                attr[a] = sample[a]
                perturbed_value = interpreter(exp, attr)
-               if perturbed_value is not None and not math.isnan(perturbed_value) and not math.isinf(perturbed_value):
+               if perturbed_value is not None:
                   partial[a].append(perturbation_function(scenario_value, perturbed_value))
                else:
                   none[a] += 1
