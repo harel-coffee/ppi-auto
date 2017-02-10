@@ -1,21 +1,21 @@
 case T_IF_THEN_ELSE:
-   stack[stack_top - 2] = ( (stack[stack_top] == 1.0f) ? stack[stack_top - 1] : stack[stack_top - 2] );
+   stack[stack_top - 2] = ( (bool) stack[stack_top] ? stack[stack_top - 1] : stack[stack_top - 2] );
    stack_top = stack_top - 2;
    break;
 case T_AND:
-   stack[stack_top - 1] = ( (stack[stack_top] == 1.0f && stack[stack_top - 1] == 1.0f) ? 1.0f : 0.0f );
+   stack[stack_top - 1] = ( ((bool) stack[stack_top] && (bool) stack[stack_top - 1]) ? 1.0f : 0.0f );
    --stack_top;
    break;
 case T_OR:
-   stack[stack_top - 1] = ( (stack[stack_top] == 1.0f || stack[stack_top - 1] == 1.0f) ? 1.0f : 0.0f );
+   stack[stack_top - 1] = ( ((bool) stack[stack_top] || (bool) stack[stack_top - 1]) ? 1.0f : 0.0f );
    --stack_top;
    break;
 case T_XOR:
-   stack[stack_top - 1] = ((stack[stack_top] <= 0.0f && stack[stack_top-1] > 0.0f) || (stack[stack_top] > 0.0f && stack[stack_top-1] <= 0.0f));
+   stack[stack_top - 1] = ( (!(bool) stack[stack_top] != !(bool) stack[stack_top-1]) ? 1.0f : 0.0f );
    --stack_top;
    break;
 case T_NOT:
-   stack[stack_top] = !(int) stack[stack_top];
+   stack[stack_top] = (float) !(bool) stack[stack_top];
    break;
 case T_GREATER:
    stack[stack_top - 1] = ( (stack[stack_top] > stack[stack_top - 1]) ? 1.0f : 0.0f );

@@ -103,19 +103,24 @@ def interpreter(exp, attr):
    for token in exp:
       if token == "IF-THEN-ELSE":
          cond = stack.pop(); true = stack.pop(); false = stack.pop();
-         if cond: stack.append(true)
-         else: stack.append(false)
+         if cond:
+            stack.append(true)
+         else:
+            stack.append(false)
       elif token == "AND":
          cond1 = stack.pop(); cond2 = stack.pop();
-         if cond1 == 1.0 and cond2 == 1.0: stack.append(1.0)
-         else: stack.append(0.0)
+         if cond1 and cond2:
+            stack.append(1.0)
+         else:
+            stack.append(0.0)
       elif token == "OR":
          cond1 = stack.pop(); cond2 = stack.pop();
-         if cond1 == 1.0 or cond2 == 1.0: stack.append(1.0)
-         else: stack.append(0.0)
+         if cond1 or cond2:
+            stack.append(1.0)
+         else:
+            stack.append(0.0)
       elif token == "XOR":
-         cond1 = stack.pop(); cond2 = stack.pop();
-         if bool(cond1) ^ bool(cond2):
+         if float(not(stack.pop())) != float(not(stack.pop())):
             stack.append(1.0)
          else:
             stack.append(0.0)
@@ -167,11 +172,11 @@ def interpreter(exp, attr):
             return None
       elif token == "POW":
          try:
-            stack.append(pow(stack.pop(),stack.pop()))
+            stack.append(math.pow(stack.pop(),stack.pop()))
          except ValueError:
             return None
          except OverflowError:
-            return None
+            stack.append(np.inf)
          except ZeroDivisionError:
             return None
       elif token == "ABS":
@@ -180,22 +185,22 @@ def interpreter(exp, attr):
          try:
             stack.append(pow(stack.pop(),2.0))
          except OverflowError:
-            return None
+            stack.append(np.inf)
       elif token == "POW3":
          try:
             stack.append(pow(stack.pop(),3.0))
          except OverflowError:
-            return None
+            stack.append(np.inf)
       elif token == "POW4":
          try:
             stack.append(pow(stack.pop(),4.0))
          except OverflowError:
-            return None
+            stack.append(np.inf)
       elif token == "POW5":
          try:
             stack.append(pow(stack.pop(),5.0))
          except OverflowError:
-            return None
+            stack.append(np.inf)
       elif token == "NEG":
          stack.append(-stack.pop())
       elif token == "ROUND":
@@ -208,21 +213,21 @@ def interpreter(exp, attr):
          try:
             stack.append(np.exp(stack.pop()))
          except OverflowError:
-            return None
+            stack.append(np.inf)
          except FloatingPointError:
             return None
       elif token == "EXP10":
          try:
             stack.append(pow(10., stack.pop()))
          except OverflowError:
-            return None
+            stack.append(np.inf)
          except FloatingPointError:
             return None
       elif token == "EXP2":
          try:
             stack.append(np.exp2(stack.pop()))
          except OverflowError:
-            return None
+            stack.append(np.inf)
          except FloatingPointError:
             return None
       elif token == "SIN":
@@ -352,6 +357,7 @@ for exp in exps:
    scenarios = Generator(distribution, expAttrNames, random=args.srs, amount=args.scenarios)
    for attr in scenarios:
       scenario_value = interpreter(exp, attr)
+      #print scenario_value
 
       if scenario_value is not None:
          for a in expAttrNames:
