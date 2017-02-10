@@ -180,6 +180,8 @@ def interpreter(exp, attr):
             return None
          except OverflowError:
             return None
+         except ZeroDivisionError:
+            return None
          if res == np.inf:
             return None
          else:
