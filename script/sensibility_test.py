@@ -272,7 +272,7 @@ def interpreter(exp, attr):
          stack.append(res)
       elif token == "SQRT":
          op = stack.pop()
-         if op >= 0.0: stack.append(sqrt(op))
+         if op >= 0.0: stack.append(np.sqrt(op))
          else:
             return None
       elif token == "LOG":
