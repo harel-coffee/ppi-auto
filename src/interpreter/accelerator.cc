@@ -704,6 +704,9 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
             last 'partial error', that is, 'n-1' is the index of the last work-group (gr_id).
           */
 
+#ifdef PROFILING
+         util::Timer t_time;
+#endif
          const unsigned num_work_groups = data.global_size1 / data.local_size1;
 
          // The line below maps the contents of 'data_buffer_vector' into 'tmp'.
@@ -715,9 +718,6 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
          );
 
          // Reduction on host!
-#ifdef PROFILING
-         util::Timer t_time;
-#endif
          for( int i = 0; i < nInd; i++)
          {
             float sum = 0.0f;
@@ -741,9 +741,17 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
             else
                vector[i] = sum/data.nlin + alpha * size[i];
          }
+
+         //essa linha some
+         data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp, NULL
+      #ifdef PROFILING
+         , &events[11]
+      #endif
+         );
+
 #ifdef PROFILING
-         data.time_gen_kernel1   += t_time.elapsed();
-         data.time_total_kernel1 += t_time.elapsed();
+         data.time_gen_communication_receive1   += t_time.elapsed();
+         data.time_total_communication_receive1 += t_time.elapsed();
 #endif
 
          data.queue.enqueueWriteBuffer( data.buffer_error, CL_TRUE, 0, data.population_size * sizeof( float ), vector, NULL
@@ -779,22 +787,40 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
       {
          if( data.strategy == "PPCU" || data.strategy == "PP" ) 
          {
+#ifdef PROFILING
+            util::Timer t_time;
+#endif
             tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ), NULL
 #ifdef PROFILING
-         , &events[5]
+            , &events[5]
 #endif
-         );
+            );
             for( int i = 0; i < nInd; i++ ) { vector[i] = tmp[i] + alpha * size[i]; }
 
             //printf("%f\n", vector[0]);
             // substitui as duas linhas de cima
             //for( int i = 0; i < nInd; i++ ) { tmp[i] += alpha * size[i]; }
             //vector = tmp;
+
+            //essa linha some
+            data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp, NULL
+         #ifdef PROFILING
+            , &events[11]
+         #endif
+            );
+
+#ifdef PROFILING
+            data.time_gen_communication_receive1   += t_time.elapsed();
+            data.time_total_communication_receive1 += t_time.elapsed();
+#endif
          }
       }
 
       if( !pep_mode )
       {
+#ifdef PROFILING
+         util::Timer t_time;
+#endif
          const unsigned num_work_groups2 = data.global_size2 / data.local_size2;
    
          // The line below maps the contents of 'data_buffer_pb' and 'data_buffer_pi' into 'PB' and 'PI', respectively.
@@ -811,15 +837,8 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
    
          if( *best_size > num_work_groups2 ) { *best_size = num_work_groups2; }
          
-#ifdef PROFILING
-         util::Timer t_time;
-#endif
          /* Reduction on host of the per-group partial reductions performed by kernel2. */
          util::PickNBest(*best_size, index, num_work_groups2, PB, PI);
-#ifdef PROFILING
-         data.time_gen_kernel2   += t_time.elapsed();
-         data.time_total_kernel2 += t_time.elapsed();
-#endif
 
          data.queue.enqueueUnmapMemObject( data.buffer_pb, PB, NULL 
 #ifdef PROFILING
@@ -831,38 +850,46 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
          , &events[10]
 #endif
          );
+
+#ifdef PROFILING
+         data.time_gen_communication_receive2   += t_time.elapsed();
+         data.time_total_communication_receive2 += t_time.elapsed();
+#endif
       }
    }
 
-   //essa linha some
-   data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp, NULL
-#ifdef PROFILING
-   , &events[11]
-#endif
-   );
 
 
 #ifdef PROFILING
    cl_ulong start, end;
+   cl_ulong min = std::numeric_limits<float>::max(), max = 0.;
+
    events[0].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    events[0].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_gen_communication_send1    = (end - start)/1.0E9;
-   data.time_total_communication_send1 += (end - start)/1.0E9;
+   if( start < min ) { min = start; }
+   if( end > max )   { max = end; }
 
    events[1].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    events[1].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_gen_communication_send1   += (end - start)/1.0E9; 
-   data.time_total_communication_send1 += (end - start)/1.0E9; 
+   if( start < min ) { min = start; }
+   if( end > max )   { max = end; }
 
    events[2].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    events[2].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-   data.time_gen_communication_send1   += (end - start)/1.0E9; 
-   data.time_total_communication_send1 += (end - start)/1.0E9; 
+   if( start < min ) { min = start; }
+   if( end > max )   { max = end; }
+
+   data.time_gen_communication_send1   += (max - min)/1.0E9; 
+   data.time_total_communication_send1 += (max - min)/1.0E9; 
    
    events[3].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
    events[3].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
    data.time_gen_kernel1   += (end - start)/1.0E9;
    data.time_total_kernel1 += (end - start)/1.0E9;
+
+   data.time_total_communication1 += data.time_gen_communication_send1 + data.time_gen_communication_receive1;
+   data.gpops_gen_kernel = (sum_size_gen * data.nlin) / data.time_gen_kernel1;
+   data.gpops_gen_communication = (sum_size_gen * data.nlin) / (data.time_gen_kernel1 + data.time_gen_communication_send1 + data.time_gen_communication_receive1);
 
    if( !pep_mode )
    {
@@ -872,50 +899,12 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
       data.time_total_kernel2 += (end - start)/1.0E9;
    }
 
-   if ( !prediction_mode )
-   {
-      {
-         std::vector<cl::Event> e(1, events[11]); 
-         cl::Event::waitForEvents(e);
-      }
-      events[5].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-      events[11].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-      data.time_gen_communication_receive1   += (end - start)/1.0E9;
-      data.time_total_communication_receive1 += (end - start)/1.0E9;
-   }
-
-   data.time_total_communication1 += data.time_gen_communication_send1 + data.time_gen_communication_receive1;
-
-   data.gpops_gen_kernel = (sum_size_gen * data.nlin) / data.time_gen_kernel1;
-   data.gpops_gen_communication = (sum_size_gen * data.nlin) / (data.time_gen_kernel1 + data.time_gen_communication_send1 + data.time_gen_communication_receive1);
-
    if( !prediction_mode && data.strategy == "FP" ) 
    {
       events[6].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
       events[6].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
       data.time_gen_communication_send2   += (end - start)/1.0E9;
       data.time_total_communication_send2 += (end - start)/1.0E9;
-   }
-
-   if( !pep_mode )
-   {
-      {
-         std::vector<cl::Event> e(1, events[9]); 
-         cl::Event::waitForEvents(e);
-      }
-      events[7].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-      events[9].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-      data.time_gen_communication_receive2   += (end - start)/1.0E9;
-      data.time_total_communication_receive2 += (end - start)/1.0E9;
-   
-      {
-         std::vector<cl::Event> e(1, events[10]); 
-         cl::Event::waitForEvents(e);
-      }
-      events[8].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-      events[10].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
-      data.time_gen_communication_receive2   += (end - start)/1.0E9;
-      data.time_total_communication_receive2 += (end - start)/1.0E9;
    }
 #endif
 }
