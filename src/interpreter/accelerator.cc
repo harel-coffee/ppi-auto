@@ -592,7 +592,7 @@ unsigned long sum_size_gen,
 float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**), Population* migrants, int* nImmigrants, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
 {
 #ifdef PROFILING
-   std::vector<cl::Event> events(12); 
+   std::vector<cl::Event> events(6); 
 
    data.time_gen_kernel1  = 0.0;
    data.time_gen_kernel2  = 0.0;
@@ -711,11 +711,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
 
          // The line below maps the contents of 'data_buffer_vector' into 'tmp'.
          // essa linha some
-         tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, num_work_groups * nInd * sizeof( float ), NULL
-#ifdef PROFILING
-         , &events[5]
-#endif
-         );
+         tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, num_work_groups * nInd * sizeof( float ), NULL);
 
          // Reduction on host!
          for( int i = 0; i < nInd; i++)
@@ -743,11 +739,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
          }
 
          //essa linha some
-         data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp, NULL
-      #ifdef PROFILING
-         , &events[11]
-      #endif
-         );
+         data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp, NULL);
 
 #ifdef PROFILING
          data.time_gen_communication_receive1   += t_time.elapsed();
@@ -756,7 +748,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
 
          data.queue.enqueueWriteBuffer( data.buffer_error, CL_TRUE, 0, data.population_size * sizeof( float ), vector, NULL
 #ifdef PROFILING
-         , &events[6]
+         , &events[5]
 #endif
          );
 
@@ -790,11 +782,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
 #ifdef PROFILING
             util::Timer t_time;
 #endif
-            tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ), NULL
-#ifdef PROFILING
-            , &events[5]
-#endif
-            );
+            tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, nInd * sizeof( float ), NULL);
             for( int i = 0; i < nInd; i++ ) { vector[i] = tmp[i] + alpha * size[i]; }
 
             //printf("%f\n", vector[0]);
@@ -803,11 +791,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
             //vector = tmp;
 
             //essa linha some
-            data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp, NULL
-         #ifdef PROFILING
-            , &events[11]
-         #endif
-            );
+            data.queue.enqueueUnmapMemObject( data.buffer_vector, tmp, NULL);
 
 #ifdef PROFILING
             data.time_gen_communication_receive1   += t_time.elapsed();
@@ -824,32 +808,16 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
          const unsigned num_work_groups2 = data.global_size2 / data.local_size2;
    
          // The line below maps the contents of 'data_buffer_pb' and 'data_buffer_pi' into 'PB' and 'PI', respectively.
-         float* PB = (float*) data.queue.enqueueMapBuffer( data.buffer_pb, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( float ), NULL
-#ifdef PROFILING
-         , &events[7]
-#endif
-         );
-         int* PI = (int*) data.queue.enqueueMapBuffer( data.buffer_pi, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( int ), NULL
-#ifdef PROFILING
-         , &events[8]
-#endif
-         );
+         float* PB = (float*) data.queue.enqueueMapBuffer( data.buffer_pb, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( float ), NULL);
+         int* PI = (int*) data.queue.enqueueMapBuffer( data.buffer_pi, CL_TRUE, CL_MAP_READ, 0, num_work_groups2 * sizeof( int ), NULL);
    
          if( *best_size > num_work_groups2 ) { *best_size = num_work_groups2; }
          
          /* Reduction on host of the per-group partial reductions performed by kernel2. */
          util::PickNBest(*best_size, index, num_work_groups2, PB, PI);
 
-         data.queue.enqueueUnmapMemObject( data.buffer_pb, PB, NULL 
-#ifdef PROFILING
-         , &events[9]
-#endif
-         );
-         data.queue.enqueueUnmapMemObject( data.buffer_pi, PI, NULL
-#ifdef PROFILING
-         , &events[10]
-#endif
-         );
+         data.queue.enqueueUnmapMemObject( data.buffer_pb, PB, NULL );
+         data.queue.enqueueUnmapMemObject( data.buffer_pi, PI, NULL);
 
 #ifdef PROFILING
          data.time_gen_communication_receive2   += t_time.elapsed();
@@ -901,8 +869,8 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
 
    if( !prediction_mode && data.strategy == "FP" ) 
    {
-      events[6].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
-      events[6].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
+      events[5].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
+      events[5].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
       data.time_gen_communication_send2   += (end - start)/1.0E9;
       data.time_total_communication_send2 += (end - start)/1.0E9;
    }
