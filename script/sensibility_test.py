@@ -352,6 +352,7 @@ parser.add_argument('-psf', '--perturbations-stats-function', required=False, de
 parser.add_argument('-ssf', '--scenarios-stats-function', required=False, default='lambda x: np.mean(x)', help="Scenarios statistics function used to aggregate multiple scenarios measurements [default=lambda x: np.mean(x)]")
 parser.add_argument('-esf', '--expressions-stats-function', required=False, default='lambda x: np.median(x)', help="Expressions statistics function used to aggregate scenarios statistics when an attribute is present in multiple expression [default=lambda x: np.median(x)]")
 parser.add_argument('-st', '--significance-threshold', required=False, type=float, default=0.0, help="Attributes having a 'scenarios statistics' value greater than that are considered statistically present in the expression [default=0.0]")
+parser.add_argument('-a', '--attributes', nargs='+', dest='attributes', type=str, required=False, help="Subset of attributes to be considered [default=all]")
 
 ###
 # Options table
@@ -391,6 +392,7 @@ for e in exps:
          attrNames.append(t)
 
 attrNames = list(sorted(set(attrNames)))
+attrNamesFiltered = [a for a in attrNames if (not args.attributes or a in args.attributes)] # Only the attributes the user want (via '-a' option)
 
 attrToIndices = {a: GetAttributeIndex(a) for a in attrNames}
 indicesToAttr = {v: k for k, v in attrToIndices.items()} # Invert the mapping: from ATTR-X:X to X:ATTR-X
@@ -405,8 +407,8 @@ with open(args.dataset) as dist_file:
             except ValueError:
                print >> sys.stderr, "> [%s]: could not convert '%s' to float at line %d, column %d of '%s', skipping..." % (indicesToAttr[i], v, r+1, i+1, args.dataset)
 
-perturbations = {}; perturbations_stats = {}; scenarios_stats = {}; scenarios_stdev = {}; invalids = {};
-for a in attrNames:
+perturbations = {}; perturbations_stats = {}; scenarios_stats = {}; scenarios_stdev = {}; invalids = {}
+for a in attrNamesFiltered:
    perturbations[a] = []
    perturbations_stats[a] = []
    scenarios_stats[a] = []
@@ -423,7 +425,8 @@ count = 0
 total_iterations = 0
 for exp in exps:
    expAttrNames = [a for a in attrNames if a in exp] # Only the attributes in the expression
-   if not expAttrNames: # Some expressions don't have any attribute at all
+   expAttrNamesFiltered = [a for a in attrNamesFiltered if a in exp] # Only the attributes in the expression that we want to compute stats
+   if not expAttrNamesFiltered: # Some expressions don't have any desired attribute at all
       continue
    scenarios = Generator(distribution, expAttrNames, random=args.srs, amount=args.scenarios)
    for attr in scenarios:
@@ -431,7 +434,7 @@ for exp in exps:
       #print scenario_value
 
       if scenario_value is not None:
-         for a in expAttrNames:
+         for a in expAttrNamesFiltered:
             original = attr[a] # Back up the original value for attr[a] before perturbation
             samples = Generator(distribution, [a], random=args.prs, amount=args.perturbations)
             for sample in samples:
@@ -448,7 +451,7 @@ for exp in exps:
                del perturbations[a][:]
             total_iterations += samples.GetAmount()
       else:
-         for a in expAttrNames:
+         for a in expAttrNamesFiltered:
             samples = Generator(distribution, [a], random=args.prs, amount=args.perturbations)
             invalids[a] += samples.GetAmount() # all inner perturbations ended up being invalid (for each attribute)
             total_iterations += samples.GetAmount()
@@ -456,7 +459,7 @@ for exp in exps:
       count += 1
       ProgressBar(count, scenarios.GetAmount()*len(exps), out=sys.stderr)
 
-   for a in expAttrNames:
+   for a in expAttrNamesFiltered:
       if perturbations_stats[a]:
          stats = scenarios_stats_function(perturbations_stats[a])
          if stats > args.significance_threshold: # is attribute 'a' statistically present? Maybe it is not even touched at all during the interpretation or it is something like "- X X"
@@ -464,4 +467,4 @@ for exp in exps:
             scenarios_stdev[a].append(np.std(perturbations_stats[a])) # Append scenario standard deviation for expression exp
          del perturbations_stats[a][:]
 
-print_stats(scenarios_stats, scenarios_stdev, attrNames, invalids, exps, total_iterations)
+print_stats(scenarios_stats, scenarios_stdev, attrNamesFiltered, invalids, exps, total_iterations)
