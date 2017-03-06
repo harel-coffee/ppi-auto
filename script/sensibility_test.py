@@ -347,12 +347,13 @@ parser.add_argument('-s', '--scenarios', required=False, type=int, default=None,
 parser.add_argument('-srs', action='store_true', default=False, help="Randomly sample each scenario instead of sequentially iterating over all rows of the dataset")
 parser.add_argument('-p', '--perturbations', required=False, type=int, default=None, help="The number of perturbations for each attribute [default=number of values of the attribute]")
 parser.add_argument('-prs', action='store_true', default=False, help="Randomly sample each attribute perturbation instead of iterating over all its values")
-parser.add_argument('-pf', '--perturbation-function', required=False, default='lambda x,y: abs(x-y)', help="Perturbation measurement function (between scenario value and perturbed value) [default=lambda x,y: abs(x-y)]")
-parser.add_argument('-psf', '--perturbations-stats-function', required=False, default='lambda x: np.median(x)', help="Perturbations statistics function used to aggregate multiple measurements of perturbations (between a scenario value and perturbed values) [default=lambda x: np.median(x)]")
-parser.add_argument('-ssf', '--scenarios-stats-function', required=False, default='lambda x: np.mean(x)', help="Scenarios statistics function used to aggregate multiple scenarios measurements [default=lambda x: np.mean(x)]")
-parser.add_argument('-esf', '--expressions-stats-function', required=False, default='lambda x: np.median(x)', help="Expressions statistics function used to aggregate scenarios statistics when an attribute is present in multiple expression [default=lambda x: np.median(x)]")
+parser.add_argument('-pf', '--perturbation-function', required=False, default='lambda x,y: abs(x-y)', help="Perturbation measurement function (between scenario value and perturbed value) [default='lambda x,y: abs(x-y)']")
+parser.add_argument('-psf', '--perturbations-stats-function', required=False, default='lambda x: np.median(x)', help="Perturbations statistics function used to aggregate multiple measurements of perturbations (between a scenario value and perturbed values) [default='lambda x: np.median(x)']")
+parser.add_argument('-ssf', '--scenarios-stats-function', required=False, default='lambda x: np.mean(x)', help="Scenarios statistics function used to aggregate multiple scenarios measurements [default='lambda x: np.mean(x)']")
+parser.add_argument('-esf', '--expressions-stats-function', required=False, default='lambda x: np.median(x)', help="Expressions statistics function used to aggregate scenarios statistics when an attribute is present in multiple expression [default='lambda x: np.median(x)']")
 parser.add_argument('-st', '--significance-threshold', required=False, type=float, default=0.0, help="Attributes having a 'scenarios statistics' value greater than that are considered statistically present in the expression [default=0.0]")
 parser.add_argument('-a', '--attributes', nargs='+', dest='attributes', type=str, required=False, help="Subset of attributes to be considered [default=all]")
+parser.add_argument('-c', '--correlation', nargs="?", const=True, action='store', required=False, default=False, help="Enable generation of correlation graphics for each attribute using the given function to aggregate predictions [if -c is given, default='lambda x: np.mean(x)']")
 
 ###
 # Options table
@@ -407,13 +408,15 @@ with open(args.dataset) as dist_file:
             except ValueError:
                print >> sys.stderr, "> [%s]: could not convert '%s' to float at line %d, column %d of '%s', skipping..." % (indicesToAttr[i], v, r+1, i+1, args.dataset)
 
-perturbations = {}; perturbations_stats = {}; scenarios_stats = {}; scenarios_stdev = {}; invalids = {}
+perturbations = {}; perturbations_stats = {}; scenarios_stats = {}; scenarios_stdev = {}; invalids = {}; correlations = {}
 for a in attrNamesFiltered:
    perturbations[a] = []
    perturbations_stats[a] = []
    scenarios_stats[a] = []
    scenarios_stdev[a] = []
    invalids[a] = 0
+   if args.correlation != False:
+      correlations[a] = {}
 
 # perturbation_function = lambda...
 exec("perturbation_function = " + args.perturbation_function)
@@ -442,6 +445,13 @@ for exp in exps:
                perturbed_value = interpreter(exp, attr)
                if perturbed_value is not None:
                   perturbations[a].append(perturbation_function(scenario_value, perturbed_value))
+                  if args.correlation != False:
+                     # For a given attribute (a), this records all output values (perturbed_value's) for each perturbation value (attr[a])
+                     # attr_i: perturbation_a -> {output_1, ..., output_n}
+                     #         ...
+                     #         perturbation_z -> {output_1, ..., output_m}
+                     # ...
+                     correlations[a].setdefault(attr[a], []).append(perturbed_value)
                else:
                   invalids[a] += 1
             attr[a] = original # Restore the original value of attr[a]
@@ -468,3 +478,38 @@ for exp in exps:
          del perturbations_stats[a][:]
 
 print_stats(scenarios_stats, scenarios_stdev, attrNamesFiltered, invalids, exps, total_iterations)
+
+################################################################################
+####### Correlation plots (attribute values x corresponding predictions)
+################################################################################
+if args.correlation != False: # -c was given
+   import matplotlib.pyplot as plt
+
+   if args.correlation == True: # -c was given but without argument, using default
+      args.correlation = 'lambda x: np.mean(x)' # No correlation function was given, using default np.mean
+
+   exec("correlation_function = " + args.correlation)
+
+   for attr in correlations:
+      xs = []
+      ys = []
+      #sz = []
+      for x in correlations[attr]:
+         stats = correlation_function(correlations[attr][x])
+         #stdev = np.std(correlations[attr][x])
+         if type(stats) is list:
+            correlations[attr][x] = stats
+         else:
+            correlations[attr][x] = [stats]
+         for y in correlations[attr][x]:
+            xs.append(x)
+            ys.append(y)
+            #sz.append(stdev)
+            #print (x, y)
+
+      plt.title(attr)
+      plt.xlabel('Attribute range')
+      plt.ylabel('Predicted value')
+      plt.scatter(xs, ys, s=[15.0], c=ys, cmap=plt.cm.jet)
+      plt.show()
+#######
