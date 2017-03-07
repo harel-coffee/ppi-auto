@@ -490,24 +490,26 @@ if args.correlation != False: # -c was given
 
    exec("correlation_function = " + args.correlation)
 
-   for attr in correlations:
+   for a in correlations:
+      if not scenarios_stats[a]: # Skip if the current attribute 'a' is not significantly present (according to the significance threshold)
+         continue
       xs = []
       ys = []
       #sz = []
-      for x in correlations[attr]:
-         stats = correlation_function(correlations[attr][x])
-         #stdev = np.std(correlations[attr][x])
+      for x in correlations[a]:
+         stats = correlation_function(correlations[a][x])
+         #stdev = np.std(correlations[a][x])
          if type(stats) is list:
-            correlations[attr][x] = stats
+            correlations[a][x] = stats
          else:
-            correlations[attr][x] = [stats]
-         for y in correlations[attr][x]:
+            correlations[a][x] = [stats]
+         for y in correlations[a][x]:
             xs.append(x)
             ys.append(y)
             #sz.append(stdev)
             #print (x, y)
 
-      plt.title(attr)
+      plt.title(a)
       plt.xlabel('Attribute range')
       plt.ylabel('Predicted value')
       plt.scatter(xs, ys, s=[15.0], c=ys, cmap=plt.cm.jet)
