@@ -1,10 +1,15 @@
 #include "client.h"
-
+#include "../util/Util.h"
 #include <sstream>
+
+double Client::time = 0.;
 
 /******************************************************************************/
 void Client::SndIndividual()
 {
+#ifdef PROFILING
+   util::Timer t_send;
+#endif
    if( Connect() )
    {
       try {
@@ -18,6 +23,9 @@ void Client::SndIndividual()
 
       Disconnect();
    }
+#ifdef PROFILING
+   Client::time += t_send.elapsed();
+#endif
 }
 
 /******************************************************************************/
