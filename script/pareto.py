@@ -4,7 +4,13 @@ import os, sys
 import argparse
 import time
 import subprocess
-import simpleflock
+try:
+   import filelock
+   lock = filelock.FileLock
+except: # Fallback to simple lock (not as good, but...)
+   print >> sys.stderr, "> Warning: fallbacking to module simpleflock, but module filelock would be better."
+   import simpleflock
+   lock = simpleflock.SimpleFlock
 
 # Format: 'generation;size;error;solution;phenotype;genome;command-line;timings;...'
 #                    |_________|
@@ -84,7 +90,7 @@ def main():
    old_pareto = []; new_pareto = []; changed = None
 
    # A lock is required here since other pareto.py process might be writing to the pareto_file right now
-   with simpleflock.SimpleFlock(args.lock_file):
+   with lock(args.lock_file):
       # Create the pareto file if it doesn't exist:
       with open(args.pareto_file, 'a+') as pareto:
          pass
@@ -104,7 +110,7 @@ def main():
    if changed:
       #print "New pareto front member: %s" % (args.candidate)
       cur_pareto = []
-      with simpleflock.SimpleFlock(args.lock_file):
+      with lock(args.lock_file):
          #print "lock acquired!"
          with open(args.pareto_file, 'r+') as pareto:
             cur_pareto = pareto.read().splitlines()
