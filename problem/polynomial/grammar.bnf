@@ -1,0 +1,2 @@
+S = <pol>
+P = <pol>   ::= attr0 | 1 | + <pol> <pol> | - <pol> <pol> | * <pol> <pol>

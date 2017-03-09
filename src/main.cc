@@ -118,6 +118,9 @@ void destroy( float** input, int nlin )
 
 int main(int argc, char** argv)
 {
+#ifdef PROFILING
+   util::Timer t_total;
+#endif
    try {
       CmdLine::Parser Opts( argc, argv );
 
@@ -154,7 +157,6 @@ int main(int argc, char** argv)
          srv.start();
          //sleep(100);
 
-         util::Timer t_total;
          pee_init( input, nlin, ncol, argc, argv );
          int generations = pee_evolve();
 

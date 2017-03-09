@@ -73,7 +73,7 @@ struct Peer {
   float frequency;
 };
 
-namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; unsigned long long sum_size; int verbose; int machine; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int parallel_version; double time_total_evolve; double time_gen_evolve; double time_generate; double time_total_evaluate; double time_gen_evaluate; double gpops_gen_evaluate; double time_total_crossover; double time_gen_crossover; double time_total_mutation; double time_gen_mutation; double time_total_clone; double time_gen_clone; double time_total_tournament; double time_gen_tournament; double time_total_send; double time_gen_send; double time_total_receive; double time_gen_receive; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; RNG ** RNGs; int argc; char ** argv;  } data; };
+namespace { struct t_data { Symbol initial_symbol; Population best_individual; int best_size; unsigned max_size_phenotype; int nlin; Symbol* phenotype; float* ephemeral; int* size; unsigned long long sum_size; int verbose; int machine; int elitism; int population_size; int immigrants_size; int generations; int number_of_bits; int bits_per_gene; int bits_per_constant; int seed; int tournament_size; float mutation_rate; float crossover_rate; float interval[2]; int parallel_version; double time_total_evolve; double time_gen_evolve; double time_generate; double time_total_evaluate; double time_gen_evaluate; double gpops_gen_evaluate; double time_total_crossover; double time_gen_crossover; double time_total_mutation; double time_gen_mutation; double time_total_clone; double time_gen_clone; double time_total_tournament; double time_gen_tournament; double time_total_send; double time_total_receive; double time_gen_receive; double time_total_decode; double time_gen_decode; std::vector<Peer> peers; Pool* pool; unsigned long stagnation_tolerance; RNG ** RNGs; int argc; char ** argv;  } data; };
 
 inline RNG * GetRNG() {
 #ifdef _OPENMP
@@ -495,7 +495,6 @@ void pee_send_individual( Population* population )
    }
 
 #ifdef PROFILING
-   data.time_gen_send    = t_send.elapsed();
    data.time_total_send += t_send.elapsed();
 #endif
 }
@@ -564,8 +563,8 @@ int pee_receive_individual( GENOME_TYPE** immigrants )
 unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, int* nImmigrants )
 {
 #ifdef PROFILING
-   util::Timer t_evaluate;
    unsigned long sum_size_gen = 0;
+   util::Timer t_evaluate, t_decode;
    //int max_size = 0;
 #endif
 
@@ -583,6 +582,11 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
       //if( max_size < data.size[i] ) max_size = data.size[i];
 #endif
    }
+#ifdef PROFILING
+   data.time_gen_decode     = t_decode.elapsed();
+   data.time_total_decode  += t_decode.elapsed();
+#endif
+
 #ifdef PROFILING
    //std::cout << sum_size_gen/(double)data.population_size << " " << max_size << std::endl;
    data.sum_size += sum_size_gen;
@@ -658,11 +662,12 @@ void pee_generate_population( Population* antecedentes, Population* descendentes
          antecedentes->genome[i][j] = (random_number() < 0.5) ? 1 : 0;
       }
    }
-   pee_evaluate( antecedentes, descendentes, nImmigrants );
 
 #ifdef PROFILING
    data.time_generate = t_generate.elapsed();
 #endif
+
+   pee_evaluate( antecedentes, descendentes, nImmigrants );
 }
 
 void pee_crossover( const GENOME_TYPE* father, const GENOME_TYPE* mother, GENOME_TYPE* offspring1, GENOME_TYPE* offspring2 )
@@ -812,15 +817,15 @@ void pee_print_time( bool total )
 
    double time_evolve     = total ? data.time_total_evolve : data.time_gen_evolve;
    double time_evaluate   = total ? data.time_total_evaluate : data.time_gen_evaluate;
+   double time_decode     = total ? data.time_total_decode : data.time_gen_decode;
    double time_crossover  = total ? data.time_total_crossover : data.time_gen_crossover;
    double time_mutation   = total ? data.time_total_mutation : data.time_gen_mutation;
    double time_clone      = total ? data.time_total_clone : data.time_gen_clone;
    double time_tournament = total ? data.time_total_tournament : data.time_gen_tournament;
-   double time_send       = total ? data.time_total_send : data.time_gen_send;
    double time_receive    = total ? data.time_total_receive : data.time_gen_receive;
    double gpops_evaluate  = total ? (data.sum_size * data.nlin) / data.time_total_evaluate : data.gpops_gen_evaluate;
 
-   printf(", time_generate: %lf, time_evolve: %lf, time_evaluate: %lf, time_crossover: %lf, time_mutation: %lf, time_clone: %lf, time_tournament: %lf, time_send: %lf, time_receive: %lf", data.time_generate, time_evolve, time_evaluate, time_crossover, time_mutation, time_clone, time_tournament, time_send, time_receive);
+   printf(", time_generate: %lf, time_decode: %lf, time_evolve: %lf, time_evaluate: %lf, time_crossover: %lf, time_mutation: %lf, time_clone: %lf, time_tournament: %lf, time_send: %lf, time_receive: %lf", data.time_generate, time_decode, time_evolve, time_evaluate, time_crossover, time_mutation, time_clone, time_tournament, data.time_total_send + Client::time, time_receive);
    if( data.parallel_version )
    {
       acc_print_time(total, data.sum_size);

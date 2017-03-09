@@ -54,6 +54,9 @@ public:
       }
    }
 
+public:
+   static double time;
+
 private:
    const char* m_server;
    const std::string m_results;
