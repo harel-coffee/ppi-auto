@@ -162,8 +162,8 @@ int main(int argc, char** argv)
 
          fprintf(stdout, "\n> Overall best:");
          pee_print_best( stdout, generations, 1 );
-         printf(";time_total: %lf", t_total.elapsed());
 #ifdef PROFILING
+         printf(";time_total: %lf", t_total.elapsed());
          pee_print_time(true);
 #else
          printf("\n");
