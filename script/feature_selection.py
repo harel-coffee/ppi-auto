@@ -8,7 +8,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dataset", required=True, help="Dataset file")
 parser.add_argument("-t", "--threshold", required=False, type=float, default=0.01, help="Threshold value")
 parser.add_argument("-o", "--output", required=True, help="Output dataset with the selected attributes")
-parser.add_argument("-p", "--pee", required=True, help="Pee directory")
+parser.add_argument("-p", "--pee", required=True, help="PEE directory")
+parser.add_argument("-pa", "--pee-args", default='', help="Arguments for PEE")
+parser.add_argument("-ca", "--cmake-args", default='', help="Arguments for CMAKE")
 parser.add_argument("--has-y", action='store_true', default=False, help="Has dependent variable")
 parser.add_argument("--has-header", action='store_true', default=False, help="Has header")
 args = parser.parse_args()
@@ -59,8 +61,8 @@ for i in range(1,nvar):
    f.write(grammar+text)
    f.close()
 
-   os.system('mkdir -p /tmp/build; cd /tmp/build; cmake ' + args.pee + ' -DGRAMMAR=/tmp/grammar.bnf' + ' -DLABEL=select -DCMAKE_BUILD_TYPE=RELEASE -DPROFILING=OFF > /dev/null; make -j -s')
-   mae = subprocess.check_output("/tmp/build/select -d " + args.output + " -g 5 -ps 1000 | grep -a '^> [0-9]' | cut -d';' -f3", shell=True)
+   os.system('mkdir -p /tmp/build; cd /tmp/build; cmake ' + args.pee + ' ' + args.cmake_args + ' -DGRAMMAR=/tmp/grammar.bnf -DLABEL=select -DCMAKE_BUILD_TYPE=RELEASE -DPROFILING=OFF > /dev/null; make -j -s')
+   mae = subprocess.check_output("/tmp/build/select -d " + args.output + " " + args.pee_args + " | grep -a '^> [0-9]' | cut -d';' -f3", shell=True)
    print i, mae
 
    if float(mae) <= args.threshold:
