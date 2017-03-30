@@ -16,10 +16,18 @@ def RunPEE(attr_ids, dataset, tmpdir):
       grammar += "attr" + str(j)
       if j < len(attr_ids)-2:
          grammar += " | "
+   grammar += '\n'
 
-   with open(tmpdir+"/grammar.bnf", 'w') as f: f.write(grammar+'\n')
+   # Check if we really need to rebuild PEE, i.e., if the grammar has changed
+   try:
+      with open(tmpdir+"/grammar.bnf", 'r') as g: old_grammar = g.read()
+   except:
+      old_grammar = None
 
-   os.system('cd ' + tmpdir + ' && cmake ' + args.pee + ' ' + args.cmake_args + ' -DGRAMMAR='+tmpdir+'/grammar.bnf -DLABEL=select -DCMAKE_BUILD_TYPE=RELEASE -DPROFILING=OFF > /dev/null && make -j -s')
+   if old_grammar is None or old_grammar != grammar:
+      with open(tmpdir+"/grammar.bnf", 'w') as g: g.write(grammar)
+      os.system('cd ' + tmpdir + ' && cmake ' + args.pee + ' ' + args.cmake_args + ' -DGRAMMAR='+tmpdir+'/grammar.bnf -DLABEL=select -DCMAKE_BUILD_TYPE=RELEASE -DPROFILING=OFF > /dev/null && make -j -s')
+
    mae = float(subprocess.check_output(tmpdir + "/select -d " + dataset + " " + args.pee_args + " | grep -a '^> [0-9]' | cut -d';' -f3", shell=True))
 
    return mae
