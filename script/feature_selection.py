@@ -2,7 +2,7 @@
 
 import numpy as np
 from numpy import genfromtxt
-import subprocess, os, argparse, csv
+import subprocess, os, argparse, csv, tempfile
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dataset", required=True, help="Dataset file")
@@ -11,8 +11,8 @@ parser.add_argument("-o", "--output", required=True, help="Output dataset with t
 parser.add_argument("-p", "--pee", required=True, help="PEE directory")
 parser.add_argument("-pa", "--pee-args", default='', help="Arguments for PEE")
 parser.add_argument("-ca", "--cmake-args", default='', help="Arguments for CMAKE")
-parser.add_argument("--has-y", action='store_true', default=False, help="Has dependent variable")
-parser.add_argument("--has-header", action='store_true', default=False, help="Has header")
+parser.add_argument("-hy", "--has-y", action='store_true', default=False, help="Has dependent variable")
+parser.add_argument("-hh", "--has-header", action='store_true', default=False, help="Has header")
 args = parser.parse_args()
 
 args.output = os.path.abspath(args.output)
@@ -35,6 +35,9 @@ else:
    nvar = len(data[0])
 
 index = [0];
+
+TMPDIR = tempfile.mkdtemp(prefix='build-')
+
 for i in range(1,nvar):
    index.append(i)
    if args.has_header:
@@ -57,12 +60,12 @@ for i in range(1,nvar):
        <numeric_const> ::= const | PI | PI_2 | PI_4 | 1_PI | 2_PI | 2_SQRTPI | SQRT2 | SQRT1_2 | E | LOG2E | LOG10E | LN2 | LN10 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | N1 | N2 | N3 | N4 | N5 | N6 | N7 | N8 | N9
 """
 
-   f = open("/tmp/grammar.bnf", 'w')
-   f.write(grammar+text)
+   f = open(TMPDIR+"/grammar.bnf", 'w')
+   f.write(grammar+text+'\n')
    f.close()
 
-   os.system('mkdir -p /tmp/build; cd /tmp/build; cmake ' + args.pee + ' ' + args.cmake_args + ' -DGRAMMAR=/tmp/grammar.bnf -DLABEL=select -DCMAKE_BUILD_TYPE=RELEASE -DPROFILING=OFF > /dev/null; make -j -s')
-   mae = subprocess.check_output("/tmp/build/select -d " + args.output + " " + args.pee_args + " | grep -a '^> [0-9]' | cut -d';' -f3", shell=True)
+   os.system('cd ' + TMPDIR + '; cmake ' + args.pee + ' ' + args.cmake_args + ' -DGRAMMAR='+TMPDIR+'/grammar.bnf -DLABEL=select -DCMAKE_BUILD_TYPE=RELEASE -DPROFILING=OFF > /dev/null; make -j -s')
+   mae = subprocess.check_output(TMPDIR + "/select -d " + args.output + " " + args.pee_args + " | grep -a '^> [0-9]' | cut -d';' -f3", shell=True)
    print i, mae
 
    if float(mae) <= args.threshold:
