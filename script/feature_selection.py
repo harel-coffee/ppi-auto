@@ -3,16 +3,15 @@
 import numpy as np
 from numpy import genfromtxt
 from numpy import linalg
-import subprocess, os, argparse, csv, tempfile
+import subprocess, os, argparse, csv, tempfile, shutil
 
 def RunPEE(attr_ids, dataset, tmpdir):
-   grammar = r"""S = <exp>
+   grammar = r"""   S = <exp>
    P = <exp> ::= <attribute> | <numeric_const> | <un_op> <exp> | <bin_op> <exp> <exp>
        <bin_op> ::= AND | OR | XOR | GREATER | GREATEREQUAL | LESS | LESSEQUAL | EQUAL | NOTEQUAL | ADD | SUB | MULT | DIV | MEAN | MAX | MIN | MOD | POW
        <un_op> ::= NOT | ABS | SQRT | POW2 | POW3 | POW4 | POW5 | NEG | ROUND | CEIL | FLOOR | EXP | EXP10 | EXP2 | LOG | LOG10 | LOG2 | SIN | COS | TAN | STEP | SIGN | LOGISTIC | GAMMA | GAUSS
        <numeric_const> ::= const | PI | PI_2 | PI_4 | 1_PI | 2_PI | 2_SQRTPI | SQRT2 | SQRT1_2 | E | LOG2E | LOG10E | LN2 | LN10 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | N1 | N2 | N3 | N4 | N5 | N6 | N7 | N8 | N9
-       <attribute> ::= 
-"""
+       <attribute> ::= """
    for j in range(len(attr_ids)-1):
       grammar += "attr" + str(j)
       if j < len(attr_ids)-2:
@@ -55,10 +54,11 @@ if args.has_y:
 else:
    nvar = len(data[0])
 
-index = [0];
-
 TMPDIR = tempfile.mkdtemp(prefix='build-')
 
+print "The temporary directory is: %s" % (TMPDIR)
+
+index = [0]
 for i in range(1, nvar):
    index.append(i)
    if args.has_header:
@@ -94,3 +94,6 @@ else:
    header_str = ''
 
 np.savetxt(args.output, data[:,index], delimiter=",", header=header_str, comments='', fmt='%.8f')
+
+# Remove temporary directory
+shutil.rmtree(TMPDIR, ignore_errors=True)
