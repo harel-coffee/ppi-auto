@@ -2,6 +2,7 @@
 
 import numpy as np
 from numpy import genfromtxt
+from numpy import linalg
 import subprocess, os, argparse, csv, tempfile
 
 parser = argparse.ArgumentParser()
@@ -65,13 +66,18 @@ for i in range(1,nvar):
    f.close()
 
    os.system('cd ' + TMPDIR + '; cmake ' + args.pee + ' ' + args.cmake_args + ' -DGRAMMAR='+TMPDIR+'/grammar.bnf -DLABEL=select -DCMAKE_BUILD_TYPE=RELEASE -DPROFILING=OFF > /dev/null; make -j -s')
-   mae = subprocess.check_output(TMPDIR + "/select -d " + args.output + " " + args.pee_args + " | grep -a '^> [0-9]' | cut -d';' -f3", shell=True)
-   print i, mae
+   mae = float(subprocess.check_output(TMPDIR + "/select -d " + args.output + " " + args.pee_args + " | grep -a '^> [0-9]' | cut -d';' -f3", shell=True))
 
-   if float(mae) <= args.threshold:
+   i_values = data[:,i]
+   mean_norm = linalg.norm(i_values, 1)/len(i_values) # Compute the L1 norm divided by the number of values on the column
+   print ":: [ATTR-%d]: MAE=%f, MEAN L1 NORM=%f, RELATIVE MAE=%f -> " % (i, mae, mean_norm, mae/mean_norm),
+
+   if mae/mean_norm <= args.threshold: # Use Relative MAE to account for different magnitudes so the threshold can be applied to non-normalized datasets
       index.pop()
+      print "CORRELATED attributed @ t=%s" % (args.threshold)
    else:
-      print index
+      print "NON-CORRELATED attributed @ t=%s" % (args.threshold)
+      print ":: Selected features (%d):" % (len(index)), index
 
 if args.has_y:
    index.append(len(data[0])-1)
