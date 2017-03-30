@@ -33,6 +33,7 @@ parser.add_argument("-pa", "--pee-args", default='', help="Arguments for PEE")
 parser.add_argument("-ca", "--cmake-args", default='', help="Arguments for CMAKE")
 parser.add_argument("-hy", "--has-y", action='store_true', default=False, help="Has dependent variable")
 parser.add_argument("-hh", "--has-header", action='store_true', default=False, help="Has header")
+parser.add_argument("-nr", "--no-relative", action='store_true', default=False, help="Don't make the error relative by dividing it by the mean L1 norm of the attribute")
 args = parser.parse_args()
 
 args.output = os.path.abspath(args.output)
@@ -72,10 +73,13 @@ for i in range(1, nvar):
    mae = RunPEE(index, args.output, TMPDIR)
    #######################
 
-   i_values = data[:,i]
-   mean_norm = linalg.norm(i_values, 1)/len(i_values) # Compute the L1 norm divided by the number of values on the column
-   if abs(mean_norm) <= 1e-8:
+   if args.no_relative:
       mean_norm = 1.0
+   else:
+      i_values = data[:,i]
+      mean_norm = linalg.norm(i_values, 1)/len(i_values) # Compute the L1 norm divided by the number of values on the column
+      if abs(mean_norm) <= 1e-8:
+         mean_norm = 1.0
    print "\n:: [ATTR-%d]: MAE=%f, MEAN L1 NORM=%f, RELATIVE MAE=%f -> " % (i, mae, mean_norm, mae/mean_norm),
 
    if mae/mean_norm <= args.threshold: # Use Relative MAE to account for different magnitudes so the threshold can be applied to non-normalized datasets
