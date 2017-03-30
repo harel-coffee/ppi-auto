@@ -90,12 +90,16 @@ for i in range(1, nvar):
       print "NON-CORRELATED attributed @ t=%s" % (args.threshold)
       print ":: Selected %d features (%s%%):" % (len(index), 100.0*len(index)/float(i+1)), index
       print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in rmaes]
+      if args.has_header:
+         print ":: Selected feature names:", [h for j, h in enumerate(header) if j in index]
    print
 
 if args.has_y:
    index.append(len(data[0])-1)
 
+print ":: Excluded feature indices:", [j for j in range(0,nvar) if j not in index]
 if args.has_header:
+   print ":: Excluded feature names:", [h for j, h in enumerate(header) if j not in index]
    header_str = ','.join([h for j, h in enumerate(header) if j in index])
 else:
    header_str = ''
