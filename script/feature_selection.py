@@ -59,6 +59,7 @@ TMPDIR = tempfile.mkdtemp(prefix='build-')
 print "The temporary directory is: %s" % (TMPDIR)
 
 index = [0]
+rmaes = [np.inf]
 for i in range(1, nvar):
    index.append(i)
    if args.has_header:
@@ -81,8 +82,10 @@ for i in range(1, nvar):
       index.pop()
       print "CORRELATED attributed @ t=%s" % (args.threshold)
    else:
+      rmaes.append(mae/mean_norm)
       print "NON-CORRELATED attributed @ t=%s" % (args.threshold)
       print ":: Selected %d features (%s%%):" % (len(index), 100.0*len(index)/float(i+1)), index
+      print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in rmaes]
    print
 
 if args.has_y:
