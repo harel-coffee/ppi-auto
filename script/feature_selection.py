@@ -35,7 +35,11 @@ else:
 index = [0];
 for i in range(1,nvar):
    index.append(i)
-   np.savetxt(args.output, data[:,index], delimiter=",", header=','.join([h for j, h in enumerate(header) if j in index]), comments='', fmt='%.8f')
+   if args.has_header:
+      header_str = ','.join([h for j, h in enumerate(header) if j in index])
+   else:
+      header_str = ''
+   np.savetxt(args.output, data[:,index], delimiter=",", header=header_str, comments='', fmt='%.8f')
 
    text = []; text.append("    <attribute> ::= ");
    for j in range(len(index)-1):
@@ -64,6 +68,12 @@ for i in range(1,nvar):
    else:
       print index
 
-if args.has_y: 
+if args.has_y:
    index.append(len(data[0])-1)
-   np.savetxt(args.output, data[:,index], delimiter=",", header=','.join([h for i, h in enumerate(header) if i in index]), comments='', fmt='%.8f')
+
+if args.has_header:
+   header_str = ','.join([h for j, h in enumerate(header) if j in index])
+else:
+   header_str = ''
+
+np.savetxt(args.output, data[:,index], delimiter=",", header=header_str, comments='', fmt='%.8f')
