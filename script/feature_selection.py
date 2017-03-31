@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import numpy as np
 from numpy import genfromtxt
 from numpy import linalg
 import subprocess, os, argparse, csv, tempfile, shutil
+
 
 def RunPEE(attr_ids, dataset, tmpdir):
    grammar = r"""   S = <exp>
@@ -35,13 +37,13 @@ def RunPEE(attr_ids, dataset, tmpdir):
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dataset", required=True, help="Dataset file")
 parser.add_argument("-t", "--threshold", required=False, type=float, default=0.01, help="Threshold value")
-parser.add_argument("-o", "--output", required=True, help="Output dataset with the selected attributes")
+parser.add_argument("-o", "--output", required=True, help="Output dataset with the selected features")
 parser.add_argument("-p", "--pee", required=True, help="PEE directory")
 parser.add_argument("-pa", "--pee-args", default='', help="Arguments for PEE")
 parser.add_argument("-ca", "--cmake-args", default='', help="Arguments for CMAKE")
 parser.add_argument("-hy", "--has-y", action='store_true', default=False, help="Has dependent variable")
 parser.add_argument("-hh", "--has-header", action='store_true', default=False, help="Has header")
-parser.add_argument("-nr", "--no-relative", action='store_true', default=False, help="Don't make the error relative by dividing it by the mean L1 norm of the attribute")
+parser.add_argument("-nr", "--no-relative", action='store_true', default=False, help="Don't make the error relative by dividing it by the mean L1 norm of the feature")
 args = parser.parse_args()
 
 args.output = os.path.abspath(args.output)
@@ -92,14 +94,14 @@ for i in range(1, nvar):
 
    if mae/mean_norm <= args.threshold: # Use Relative MAE to account for different magnitudes so the threshold can be applied to non-normalized datasets
       index.pop()
-      print "CORRELATED attributed @ t=%s" % (args.threshold)
+      print "CORRELATED feature @ t=%s" % (args.threshold)
    else:
       rmaes.append(mae/mean_norm)
-      print "NON-CORRELATED attributed @ t=%s" % (args.threshold)
+      print "NON-CORRELATED feature @ t=%s" % (args.threshold)
       print ":: Selected %d features (%s%%):" % (len(index), 100.0*len(index)/float(i+1)), index
       print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in rmaes]
       if args.has_header:
-         print ":: Selected feature names:", [h for j, h in enumerate(header) if j in index]
+         print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in index])
    print
 
 if args.has_y:
@@ -107,7 +109,7 @@ if args.has_y:
 
 print ":: Excluded feature indices:", [j for j in range(0,nvar) if j not in index]
 if args.has_header:
-   print ":: Excluded feature names:", [h for j, h in enumerate(header) if j not in index]
+   print ":: Excluded feature names:", ','.join([h for j, h in enumerate(header) if j not in index])
    header_str = ','.join([h for j, h in enumerate(header) if j in index])
 else:
    header_str = ''
