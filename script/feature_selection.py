@@ -4,8 +4,13 @@
 import numpy as np
 from numpy import genfromtxt
 from numpy import linalg
-import subprocess, os, argparse, csv, tempfile, shutil
+import subprocess, os, argparse, csv, tempfile, shutil, sys
 
+def RunCorrCoef(index, training_data, training_header, tmpdir):
+   # Compute the correlation of the last column with all other columns
+   correlations = np.corrcoef(training_data, rowvar=0)[-1][:-1]
+   # Return 1.0 minus the maximum absolute correlation, so the greater the value, the less correlated the last column is with the remaining columns
+   return 1.0 - np.max(map(abs, correlations))
 
 def RunPEE(index, training_data, training_header, tmpdir):
    # Save the training dataset to a file (no need to save the header at this time, but doing it anyway)
@@ -41,7 +46,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dataset", required=True, help="Dataset file")
 parser.add_argument("-t", "--threshold", required=False, type=float, default=0.01, help="Threshold value")
 parser.add_argument("-o", "--output", required=True, help="Output dataset with the selected features")
-parser.add_argument("-p", "--pee", required=True, help="PEE directory")
+parser.add_argument("-p", "--pee", default='', help="PEE directory")
+parser.add_argument("-pearson", "--pearson", action='store_true', default=False, help="Runs Pearson correlation instead of PEE")
 parser.add_argument("-pa", "--pee-args", default='', help="Arguments for PEE")
 parser.add_argument("-ca", "--cmake-args", default='', help="Arguments for CMAKE")
 parser.add_argument("-hy", "--has-y", action='store_true', default=False, help="Has dependent variable")
@@ -50,7 +56,16 @@ parser.add_argument("-nr", "--no-relative", action='store_true', default=False, 
 args = parser.parse_args()
 
 args.output = os.path.abspath(args.output)
-args.pee = os.path.abspath(args.pee)
+
+if args.pee:
+   args.pee = os.path.abspath(args.pee)
+
+if args.pearson: # don't make sense to use relative norm with Pearson
+   args.no_relative = True
+else:
+   if not args.pee:
+      print >> sys.stderr, "> ERROR: PEE directory not given. Use -pearson if you would like to run a linear correlation analysis instead."
+      sys.exit(1)
 
 if args.has_header:
    skip_header=1
@@ -63,7 +78,7 @@ else:
 
 data = genfromtxt(args.dataset, delimiter=',', skip_header=skip_header)
 
-if args.has_y: 
+if args.has_y:
    nvar = len(data[0])-1
 else:
    nvar = len(data[0])
@@ -86,7 +101,10 @@ for i in range(1, nvar):
       training_header = [h for j, h in enumerate(header) if j in index]
 
    #######################
-   mae = RunPEE(index, training_data, training_header, TMPDIR)
+   if args.pearson:
+      mae = RunCorrCoef(index, training_data, training_header, TMPDIR)
+   else:
+      mae = RunPEE(index, training_data, training_header, TMPDIR)
    #######################
 
    if args.no_relative:
