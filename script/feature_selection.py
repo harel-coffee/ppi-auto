@@ -6,15 +6,15 @@ from numpy import genfromtxt
 from numpy import linalg
 import subprocess, os, argparse, csv, tempfile, shutil, sys
 
-def RunCorrCoef(index, training_data, training_header, tmpdir):
+def RunCorrCoef(training_data):
    # Compute the correlation of the last column with all other columns
    correlations = np.corrcoef(training_data, rowvar=0)[-1][:-1]
    # Return 1.0 minus the maximum absolute correlation, so the greater the value, the less correlated the last column is with the remaining columns
    return 1.0 - np.max(map(abs, correlations))
 
-def RunPEE(index, training_data, training_header, tmpdir):
+def RunPEE(index, training_data, tmpdir):
    # Save the training dataset to a file (no need to save the header at this time, but doing it anyway)
-   np.savetxt(args.output, training_data, delimiter=",", header=','.join(training_header), comments='', fmt='%.8f')
+   np.savetxt(args.output, training_data, delimiter=",", header=','.join([h for j, h in enumerate(header) if j in index]), comments='', fmt='%.8f')
 
    grammar = r"""   S = <exp>
    P = <exp> ::= <attribute> | <numeric_const> | <un_op> <exp> | <bin_op> <exp> <exp>
@@ -66,7 +66,12 @@ else:
    if not args.pee:
       print >> sys.stderr, "> ERROR: PEE directory not given. Use -pearson if you would like to run a linear correlation analysis instead."
       sys.exit(1)
+   # Create temporary directory for PEE
+   TMPDIR = tempfile.mkdtemp(prefix='build-')
+   print "The temporary directory is: %s" % (TMPDIR)
 
+
+header = []
 if args.has_header:
    skip_header=1
    with open(args.dataset) as input:
@@ -83,10 +88,6 @@ if args.has_y:
 else:
    nvar = len(data[0])
 
-TMPDIR = tempfile.mkdtemp(prefix='build-')
-
-print "The temporary directory is: %s" % (TMPDIR)
-
 index = [0]
 rmaes = [np.inf]
 for i in range(1, nvar):
@@ -96,15 +97,11 @@ for i in range(1, nvar):
 
    # Prepare the sliced training data (and header) to be used as regression
    training_data = data[:,index]
-   training_header = []
-   if args.has_header:
-      training_header = [h for j, h in enumerate(header) if j in index]
-
    #######################
    if args.pearson:
-      mae = RunCorrCoef(index, training_data, training_header, TMPDIR)
+      mae = RunCorrCoef(training_data)
    else:
-      mae = RunPEE(index, training_data, training_header, TMPDIR)
+      mae = RunPEE(index, training_data, TMPDIR)
    #######################
 
    if args.no_relative:
@@ -122,7 +119,7 @@ for i in range(1, nvar):
    else:
       rmaes.append(mae/mean_norm)
       print "NON-CORRELATED feature @ t=%s" % (args.threshold)
-      print ":: Selected %d features (%s%%):" % (len(index), 100.0*len(index)/float(i+1)), index
+      print ":: Selected %d features (%.2f%%):" % (len(index), 100.0*len(index)/float(i+1)), index
       print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in rmaes]
       if args.has_header:
          print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in index])
@@ -131,14 +128,18 @@ for i in range(1, nvar):
 if args.has_y:
    index.append(len(data[0])-1)
 
+#print ":: Excluded feature indices:", list(set(range(nvar)).symmetric_difference(set(index)))
 print ":: Excluded feature indices:", [j for j in range(0,nvar) if j not in index]
-
-training_header = []
 if args.has_header:
    print ":: Excluded feature names:", ','.join([h for j, h in enumerate(header) if j not in index])
-   training_header = [h for j, h in enumerate(header) if j in index]
 
-np.savetxt(args.output, data[:,index], delimiter=",", header=','.join(training_header), comments='', fmt='%.8f')
+print "\n:: Selected %d features indices (%.2f%%):" % (len(index), 100.0*len(index)/float(i+1)), index
+print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in rmaes]
+if args.has_header:
+   print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in index])
+
+np.savetxt(args.output, data[:,index], delimiter=",", header=','.join([h for j, h in enumerate(header) if j in index]), comments='', fmt='%.8f')
 
 # Remove temporary directory
-shutil.rmtree(TMPDIR, ignore_errors=True)
+if not args.pearson:
+   shutil.rmtree(TMPDIR, ignore_errors=True)
