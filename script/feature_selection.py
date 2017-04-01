@@ -12,9 +12,9 @@ def RunCorrCoef(training_data):
    # Return 1.0 minus the maximum absolute correlation, so the greater the value, the less correlated the last column is with the remaining columns
    return 1.0 - np.max(map(abs, correlations))
 
-def RunPEE(index, training_data, tmpdir):
+def RunPEE(indices, training_data, tmpdir):
    # Save the training dataset to a file (no need to save the header at this time, but doing it anyway)
-   np.savetxt(args.output, training_data, delimiter=",", header=','.join([h for j, h in enumerate(header) if j in index]), comments='', fmt='%.8f')
+   np.savetxt(args.output, training_data, delimiter=",", header=','.join([h for j, h in enumerate(header) if j in indices]), comments='', fmt='%.8f')
 
    grammar = r"""   S = <exp>
    P = <exp> ::= <attribute> | <numeric_const> | <un_op> <exp> | <bin_op> <exp> <exp>
@@ -22,9 +22,9 @@ def RunPEE(index, training_data, tmpdir):
        <un_op> ::= NOT | ABS | SQRT | POW2 | POW3 | POW4 | POW5 | NEG | ROUND | CEIL | FLOOR | EXP | EXP10 | EXP2 | LOG | LOG10 | LOG2 | SIN | COS | TAN | STEP | SIGN | LOGISTIC | GAMMA | GAUSS
        <numeric_const> ::= const | PI | PI_2 | PI_4 | 1_PI | 2_PI | 2_SQRTPI | SQRT2 | SQRT1_2 | E | LOG2E | LOG10E | LN2 | LN10 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | N1 | N2 | N3 | N4 | N5 | N6 | N7 | N8 | N9
        <attribute> ::= """
-   for j in range(len(index)-1):
+   for j in range(len(indices)-1):
       grammar += "attr" + str(j)
-      if j < len(index)-2:
+      if j < len(indices)-2:
          grammar += " | "
    grammar += '\n'
 
@@ -88,20 +88,20 @@ if args.has_y:
 else:
    nvar = len(data[0])
 
-index = [0]
-rmaes = [np.inf]
+indices = [0]
+entropies = [np.inf]
 for i in range(1, nvar):
    # Make 'i' the dependent variable (y), because we want to check if it can
    # be expressed by the other features.
-   index.append(i)
+   indices.append(i)
 
    # Prepare the sliced training data (and header) to be used as regression
-   training_data = data[:,index]
+   training_data = data[:,indices]
    #######################
    if args.pearson:
-      mae = RunCorrCoef(training_data)
+      entropy = RunCorrCoef(training_data)
    else:
-      mae = RunPEE(index, training_data, TMPDIR)
+      entropy = RunPEE(indices, training_data, TMPDIR)
    #######################
 
    if args.no_relative:
@@ -111,34 +111,34 @@ for i in range(1, nvar):
       mean_norm = linalg.norm(i_values, 1)/len(i_values) # Compute the L1 norm divided by the number of values on the column
       if abs(mean_norm) <= 1e-8:
          mean_norm = 1.0
-   print "\n:: [ATTR-%d]: MAE=%f, MEAN L1 NORM=%f, RELATIVE MAE=%f -> " % (i, mae, mean_norm, mae/mean_norm),
+   print "\n:: [ATTR-%d: '%s']: ENTROPY=%f, MEAN L1 NORM=%f, RELATIVE ENTROPY=%f -> " % (i, ','.join([h for j, h in enumerate(header) if j == i]), entropy, mean_norm, entropy/mean_norm),
 
-   if mae/mean_norm <= args.threshold: # Use Relative MAE to account for different magnitudes so the threshold can be applied to non-normalized datasets
-      index.pop()
+   if entropy/mean_norm <= args.threshold: # Use Relative entropy to account for different magnitudes so the threshold can be applied to non-normalized datasets
+      indices.pop()
       print "CORRELATED feature @ t=%s" % (args.threshold)
    else:
-      rmaes.append(mae/mean_norm)
+      entropies.append(entropy/mean_norm)
       print "NON-CORRELATED feature @ t=%s" % (args.threshold)
-      print ":: Selected %d features (%.2f%%):" % (len(index), 100.0*len(index)/float(i+1)), index
-      print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in rmaes]
+      print ":: Selected %d features (%.2f%%):" % (len(indices), 100.0*len(indices)/float(i+1)), indices
+      print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies]
       if args.has_header:
-         print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in index])
+         print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices])
    print
 
 if args.has_y:
-   index.append(len(data[0])-1)
+   indices.append(len(data[0])-1)
 
-#print ":: Excluded feature indices:", list(set(range(nvar)).symmetric_difference(set(index)))
-print ":: Excluded feature indices:", [j for j in range(0,nvar) if j not in index]
+#print ":: Excluded feature indices:", list(set(range(nvar)).symmetric_difference(set(indices)))
+print ":: Excluded feature indices:", [j for j in range(0,nvar) if j not in indices]
 if args.has_header:
-   print ":: Excluded feature names:", ','.join([h for j, h in enumerate(header) if j not in index])
+   print ":: Excluded feature names:", ','.join([h for j, h in enumerate(header) if j not in indices])
 
-print "\n:: Selected %d features indices (%.2f%%):" % (len(index), 100.0*len(index)/float(i+1)), index
-print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in rmaes]
+print "\n:: Selected %d features indices (%.2f%%):" % (len(indices), 100.0*len(indices)/float(i+1)), indices
+print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies]
 if args.has_header:
-   print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in index])
+   print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices])
 
-np.savetxt(args.output, data[:,index], delimiter=",", header=','.join([h for j, h in enumerate(header) if j in index]), comments='', fmt='%.8f')
+np.savetxt(args.output, data[:,indices], delimiter=",", header=','.join([h for j, h in enumerate(header) if j in indices]), comments='', fmt='%.8f')
 
 # Remove temporary directory
 if not args.pearson:
