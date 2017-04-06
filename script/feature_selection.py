@@ -10,7 +10,10 @@ def RunCorrCoef(training_data):
    # Compute the correlation of the last column with all other columns
    correlations = np.corrcoef(training_data, rowvar=0)[-1][:-1]
    # Return 1.0 minus the maximum absolute correlation, so the greater the value, the less correlated the last column is with the remaining columns
-   return 1.0 - np.max(map(abs, correlations))
+   entropy = 1.0 - np.max(map(abs, correlations))
+   if np.isnan(entropy):
+      return 0.0 # It is probably a zero array and can be surely eliminated
+   return entropy
 
 def RunPEE(indices, training_data, tmpdir):
    # Save the training dataset to a file (no need to save the header at this time, but doing it anyway)
@@ -81,12 +84,30 @@ if args.has_header:
 else:
    skip_header=0
 
-data = genfromtxt(args.dataset, delimiter=',', skip_header=skip_header)
+dataset = genfromtxt(args.dataset, delimiter=',', skip_header=skip_header)
+
+# Rescale to [0,1]:
+#
+#           (x-xmin)
+#    x' = -----------
+#         (xmax-xmin)
+
+data = (dataset - np.min(dataset, axis=0)) / (np.max(dataset, axis=0)-np.min(dataset,axis=0))
+
+# Copy unmodified from dataset those columns that ended up having NaNs in data
+# (e.g, columns with fixed values becaused max-min=0):
+columns_with_nans = np.any(np.isnan(data), axis=0)
+data[:,columns_with_nans] = dataset[:,columns_with_nans]
 
 if args.has_y:
    nvar = len(data[0])-1
 else:
    nvar = len(data[0])
+
+# FIXME: If the first column (index=0) has stdev=0 (i.e., fixed value), then
+# This will case all the remaining correlations to return NaN and therefore
+# not a single extra column will be selected.
+# The solution is to ignore the inicial columns with stdev=0
 
 indices = [0]
 entropies = [np.inf]
@@ -119,10 +140,10 @@ for i in range(1, nvar):
    else:
       entropies.append(entropy/mean_norm)
       print "NON-CORRELATED feature @ t=%s" % (args.threshold)
-      print ":: Selected %d features (%.2f%%):" % (len(indices), 100.0*len(indices)/float(i+1)), indices
-      print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies]
-      if args.has_header:
-         print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices])
+     # print ":: Selected %d features (%.2f%%):" % (len(indices), 100.0*len(indices)/float(i+1)), indices
+     # print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies]
+     # if args.has_header:
+     #    print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices])
    print
 
 if args.has_y:
@@ -138,7 +159,7 @@ print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies]
 if args.has_header:
    print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices])
 
-np.savetxt(args.output, data[:,indices], delimiter=",", header=','.join([h for j, h in enumerate(header) if j in indices]), comments='', fmt='%.8f')
+np.savetxt(args.output, dataset[:,indices], delimiter=",", header=','.join([h for j, h in enumerate(header) if j in indices]), comments='', fmt='%.8f')
 
 # Remove temporary directory
 if not args.pearson:
