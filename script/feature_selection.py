@@ -20,7 +20,8 @@ def RunPEE(indices, training_data, tmpdir):
    np.savetxt(args.output, training_data, delimiter=",", header=','.join([h for j, h in enumerate(header) if j in indices]), comments='', fmt='%.8f')
 
    grammar = r"""   S = <exp>
-   P = <exp> ::= <attribute> | <numeric_const> | <un_op> <exp> | <bin_op> <exp> <exp>
+   P = <exp> ::= <attribute> | <numeric_const> | <un_op> <exp> | <bin_op> <exp> <exp> | <ter_op> <exp> <exp> <exp>
+       <ter_op> ::= IF_THEN_ELSE
        <bin_op> ::= AND | OR | XOR | GREATER | GREATEREQUAL | LESS | LESSEQUAL | EQUAL | NOTEQUAL | ADD | SUB | MULT | DIV | MEAN | MAX | MIN | MOD | POW
        <un_op> ::= NOT | ABS | SQRT | POW2 | POW3 | POW4 | POW5 | NEG | ROUND | CEIL | FLOOR | EXP | EXP10 | EXP2 | LOG | LOG10 | LOG2 | SIN | COS | TAN | STEP | SIGN | LOGISTIC | GAMMA | GAUSS
        <numeric_const> ::= const | PI | PI_2 | PI_4 | 1_PI | 2_PI | 2_SQRTPI | SQRT2 | SQRT1_2 | E | LOG2E | LOG10E | LN2 | LN10 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | N1 | N2 | N3 | N4 | N5 | N6 | N7 | N8 | N9
@@ -140,10 +141,10 @@ for i in range(1, nvar):
    else:
       entropies.append(entropy/mean_norm)
       print "NON-CORRELATED feature @ t=%s" % (args.threshold)
-     # print ":: Selected %d features (%.2f%%):" % (len(indices), 100.0*len(indices)/float(i+1)), indices
-     # print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies]
-     # if args.has_header:
-     #    print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices])
+      print ":: Selected %d features (%.2f%%):" % (len(indices), 100.0*len(indices)/float(i+1)), indices
+      print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies]
+      if args.has_header:
+         print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices])
    print
 
 if args.has_y:
