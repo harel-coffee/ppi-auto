@@ -244,25 +244,32 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
    }
 
    unsigned max_cu = data.device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-   unsigned max_local_size;
+   unsigned max_local_size1, max_local_size2;
    if( maxlocalsize > 0 )
    {
-      max_local_size = maxlocalsize;
+      max_local_size1 = maxlocalsize;
    }
    else 
    {
-      max_local_size = fmin( data.device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), data.device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
+      max_local_size1 = fmin( data.device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), data.device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
    
-      //It is necessary to respect the local memory size. 
-      //Depending on the maximum local size, there will not be enough space to allocate the local variables. 
-      //The local size depends on the maximum local size. 
-      //The division by 8: 2 local vectors in best_individual kernel * 4 bytes
-      max_local_size = fmin( max_local_size, data.device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>() / 8 );
+      //It is necessary to respect the local memory size. Depending on the
+      //maximum local size, there will not be enough space to allocate the
+      //local variables.  The local size depends on the maximum local size. 
+      //The division by 4: 1 local vector in the FP and PPCU kernels (both are float vectors, so the division by 4 bytes)
+      max_local_size1 = fmin( max_local_size1, data.device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>() / 4 );
    }
+
+   max_local_size2 = fmin( data.device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(), data.device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>()[0] );
+   //It is necessary to respect the local memory size. Depending on the
+   //maximum local size, there will not be enough space to allocate the
+   //local variables.  The local size depends on the maximum local size. 
+   //The division by 8: 2 local vectors in best_individual kernel * 4 bytes
+   max_local_size2 = fmin( max_local_size2, data.device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>() / 8 );
 
    if( data.strategy == "PP" )  // Population-parallel
    {
-      data.local_size1 = fmin( max_local_size, (unsigned) ceil( data.population_size/(float) max_cu ) );
+      data.local_size1 = fmin( max_local_size1, (unsigned) ceil( data.population_size/(float) max_cu ) );
       data.global_size1 = (unsigned) ( ceil( data.population_size/(float) data.local_size1 ) * data.local_size1 );
       data.kernel1 = cl::Kernel( program, "evaluate_pp" );
    }
@@ -272,7 +279,7 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
       {
          // Evenly distribute the workload among the compute units (but avoiding local size
          // being more than the maximum allowed).
-         data.local_size1 = fmin( max_local_size, (unsigned) ceil( data.nlin/(float) max_cu ) );
+         data.local_size1 = fmin( max_local_size1, (unsigned) ceil( data.nlin/(float) max_cu ) );
 
          // It is better to have global size divisible by local size
          data.global_size1 = (unsigned) ( ceil( data.nlin/(float) data.local_size1 ) * data.local_size1 );
@@ -282,13 +289,13 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
       {
          if( data.strategy == "PPCU" ) // Population-parallel computing unit
          {
-            if( data.nlin < max_local_size )
+            if( data.nlin < max_local_size1 )
             {
                data.local_size1 = data.nlin;
             }
             else
             {
-               data.local_size1 = max_local_size;
+               data.local_size1 = max_local_size1;
             }
             //data.local_size1 = 128;
             // One individual per work-group
@@ -304,7 +311,7 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
    }
 
    if (data.verbose) {
-      std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size: " << max_local_size << std::endl;
+      std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size 1 (FP and PPCU kernels): " << max_local_size1 << ", Max local size 2 (best kernel): " << max_local_size2 << std::endl;
       std::cout << "Local size: " << data.local_size1 << ", Global size: " << data.global_size1 << ", Work groups: " << data.global_size1/data.local_size1 << std::endl;
    }
 
@@ -312,7 +319,7 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
    {
       // Evenly distribute the workload among the compute units (but avoiding local size
       // being more than the maximum allowed).
-      data.local_size2 = fmin( max_local_size, (unsigned) ceil( data.population_size/(float) max_cu ) );
+      data.local_size2 = fmin( max_local_size2, (unsigned) ceil( data.population_size/(float) max_cu ) );
       // It is better to have global size divisible by local size
       data.global_size2 = (unsigned) ( ceil( data.population_size/(float) data.local_size2 ) * data.local_size2 );
       data.kernel2 = cl::Kernel( program, "best_individual" );
