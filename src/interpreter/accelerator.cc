@@ -39,7 +39,7 @@ std::string getAbsoluteDirectory(std::string filepath) {
 /** ***************************** TYPES ****************************** **/
 /** ****************************************************************** **/
 
-namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double gpops_gen_kernel; double gpops_gen_communication; double time_gen_kernel1; double time_gen_kernel2; double time_gen_communication_send1; double time_gen_communication_send2; double time_gen_communication_receive1; double time_gen_communication_receive2; double time_total_kernel1; double time_total_kernel2; double time_communication_dataset; double time_total_communication_send1; double time_total_communication_send2; double time_total_communication_receive1; double time_total_communication_receive2; double time_total_communication1; std::string executable_directory; bool verbose; } data; };
+namespace { static struct t_data { int max_size; int max_arity; int nlin; int population_size; unsigned local_size1; unsigned global_size1; unsigned local_size2; unsigned global_size2; std::string strategy; cl::Device device; cl::Context context; cl::Kernel kernel1; cl::Kernel kernel2; cl::CommandQueue queue; cl::Buffer buffer_phenotype; cl::Buffer buffer_ephemeral; cl::Buffer buffer_size; cl::Buffer buffer_inputs; cl::Buffer buffer_vector; cl::Buffer buffer_error; cl::Buffer buffer_pb; cl::Buffer buffer_pi; double gpops_gen_kernel; double gpops_gen_communication; double time_gen_kernel1; double time_gen_kernel2; double time_gen_communication_send1; double time_gen_communication_send2; double time_gen_communication_receive1; double time_gen_communication_receive2; double time_total_kernel1; double time_total_kernel2; double time_communication_dataset; double time_total_communication_send1; double time_total_communication_send2; double time_total_communication_receive1; double time_total_communication_receive2; double time_total_communication1; std::string executable_directory; bool verbose; bool transpose; } data; };
 
 /** ****************************************************************** **/
 /** *********************** AUXILIARY FUNCTION *********************** **/
@@ -217,10 +217,22 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
    ifstream file(opencl_file.c_str());
    string kernel_str( istreambuf_iterator<char>(file), ( istreambuf_iterator<char>()) );
 
-   string program_str = 
-      "#define MAX_STACK_SIZE " + util::ToString( max_stack_size ) + "\n" +
-      "#define MAX_PHENOTYPE_SIZE " + util::ToString( data.max_size ) + "\n" +
-      kernel_str;
+   
+   string program_str;
+   if (data.transpose)
+   {
+      program_str = 
+         "#define TRANSPOSE 1 \n #define MAX_STACK_SIZE " + util::ToString( max_stack_size ) + "\n" +
+         "#define MAX_PHENOTYPE_SIZE " + util::ToString( data.max_size ) + "\n" +
+         kernel_str;
+   }
+   else
+   {
+      program_str = 
+         "#define MAX_STACK_SIZE " + util::ToString( max_stack_size ) + "\n" +
+         "#define MAX_PHENOTYPE_SIZE " + util::ToString( data.max_size ) + "\n" +
+         kernel_str;
+   }
    //cerr << program_str << endl;
 
    cl::Program::Sources source( 1, make_pair( program_str.c_str(), program_str.size() ) );
@@ -349,17 +361,8 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
 #endif
    );
 
-   if( data.strategy == "PP" ) 
-   {
-      for( int i = 0; i < data.nlin; i++ )
-      {
-         for( int j = 0; j < ncol; j++ )
-         {
-            inputs[i * ncol + j] = input[i][j];
-         }
-      }
-   }
-   else
+
+   if (data.transpose)
    {
       // Transposed version for coalesced access on the GPU
       /*
@@ -393,23 +396,52 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
       Original data points
 
       */
-      if( data.strategy == "FP" || data.strategy == "PPCU" ) 
+      for( int i = 0; i < data.nlin; i++ )
       {
-         for( int i = 0; i < data.nlin; i++ )
+         for( int j = 0; j < ncol; j++ )
          {
-            for( int j = 0; j < ncol; j++ )
-            {
-               inputs[j * data.nlin + i] = input[i][j];
-            }
+            inputs[j * data.nlin + i] = input[i][j];
          }
       }
-      else
+   }
+   else
+   {
+      for( int i = 0; i < data.nlin; i++ )
       {
-         fprintf(stderr, "Valid strategy: PP, FP and PPCU.\n");
+         for( int j = 0; j < ncol; j++ )
+         {
+            inputs[i * ncol + j] = input[i][j];
+         }
       }
    }
 
-
+   //if( data.strategy == "PP" ) 
+   //{
+   //   for( int i = 0; i < data.nlin; i++ )
+   //   {
+   //      for( int j = 0; j < ncol; j++ )
+   //      {
+   //         inputs[i * ncol + j] = input[i][j];
+   //      }
+   //   }
+   //}
+   //else
+   //{
+   //   if( data.strategy == "FP" || data.strategy == "PPCU" ) 
+   //   {
+   //      for( int i = 0; i < data.nlin; i++ )
+   //      {
+   //         for( int j = 0; j < ncol; j++ )
+   //         {
+   //            inputs[j * data.nlin + i] = input[i][j];
+   //         }
+   //      }
+   //   }
+   //   else
+   //   {
+   //      fprintf(stderr, "Valid strategy: PP, FP and PPCU.\n");
+   //   }
+   //}
 
    // Unmapping
    data.queue.enqueueUnmapMemObject( data.buffer_inputs, inputs, NULL
@@ -516,6 +548,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    // of the current directory (user directory).
    data.executable_directory = getAbsoluteDirectory(argv[0]);
 
+   Opts.Bool.Add( "-transpose", "--transpose" );
    Opts.Bool.Add( "-v", "--verbose" );
    Opts.Int.Add( "-cl-p", "--cl-platform-id", -1, 0 );
    Opts.Int.Add( "-cl-d", "--cl-device-id", -1, 0 );
@@ -524,6 +557,7 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    Opts.String.Add( "-strategy", "", "PPCU", "FP", "PP", "PPCU", NULL );
    Opts.Process();
    data.verbose = Opts.Bool.Get("-v");
+   data.transpose = Opts.Bool.Get("-transpose");
    data.strategy = Opts.String.Get("-strategy");
    data.max_size = size;
    data.max_arity = max_arity;
