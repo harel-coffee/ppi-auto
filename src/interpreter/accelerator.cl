@@ -122,7 +122,7 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
 #ifdef TRANSPOSE
                   stack[++stack_top] = inputs[(gr_id * lo_size + lo_id) + nlin * (int)ephemeral[ind * MAX_PHENOTYPE_SIZE + i]];
 #else
-                  stack[++stack_top] = inputs[(gr_id * lo_size + lo_id) + ncol * (int)ephemeral[ind * MAX_PHENOTYPE_SIZE + i]];
+                  stack[++stack_top] = inputs[(gr_id * lo_size + lo_id) * ncol + (int)ephemeral[ind * MAX_PHENOTYPE_SIZE + i]];
 #endif
                   break;
 #ifndef NOT_USING_T_CONST
@@ -140,7 +140,7 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
 #ifdef TRANSPOSE
             PE[lo_id] = ERROR( stack[stack_top], inputs[(gr_id * lo_size + lo_id) + nlin * (ncol - 1)] );
 #else
-            PE[lo_id] = ERROR( stack[stack_top], inputs[(gr_id * lo_size + lo_id) + ncol * (ncol - 1)] );
+            PE[lo_id] = ERROR( stack[stack_top], inputs[(gr_id * lo_size + lo_id) * ncol + (ncol - 1)] );
 #endif
          }
          else
@@ -204,7 +204,7 @@ evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral
 #ifdef TRANSPOSE
                      stack[++stack_top] = inputs[n + nlin * (int)ephemeral[gr_id * MAX_PHENOTYPE_SIZE + i]];
 #else
-                     stack[++stack_top] = inputs[n + ncol * (int)ephemeral[gr_id * MAX_PHENOTYPE_SIZE + i]];
+                     stack[++stack_top] = inputs[n * ncol + (int)ephemeral[gr_id * MAX_PHENOTYPE_SIZE + i]];
 #endif
                      break;
 #ifndef NOT_USING_T_CONST
