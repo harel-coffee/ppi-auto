@@ -338,7 +338,7 @@ for i in range(0,len(index)):
       else:
          print_function += lines[index[i]:index[i+1]]
 
-icp_header = r"""void pee_individual_print( const Population* individual, int idx, FILE* out, int generation, int argc, char** argv, int print_mode )
+icp_header = r"""void ppi_individual_print( const Population* individual, int idx, FILE* out, int generation, int argc, char** argv, int print_mode )
 {
    Symbol phenotype[data.max_size_phenotype];
    float ephemeral[data.max_size_phenotype];

@@ -1,7 +1,7 @@
 /************************************************************************/
 /**     Name:Amanda Sabatini Dufek                                     **/
 /**          Douglas Adriano Augusto            Date:01/06/2015        **/
-/**     Parallel Ensemble Evolution (PEE)                              **/
+/**     Parallel Program Induction (PPI)                              **/
 /************************************************************************/
 
 /** ****************************************************************** **/
@@ -35,7 +35,7 @@
 #include "util/CmdLineParser.h"
 #include "interpreter/accelerator.h"
 #include "interpreter/sequential.h"
-#include "pee.h"
+#include "ppi.h"
 #include "server/server.h"
 #include "client/client.h"
 #include "individual"
@@ -181,7 +181,7 @@ int decode( const GENOME_TYPE* genome, int* const allele, Symbol* phenotype, flo
 
 #include <interpreter_core_print>
 
-void pee_init( float** input, int nlin, int ncol, int argc, char** argv ) 
+void ppi_init( float** input, int nlin, int ncol, int argc, char** argv ) 
 {
    data.argc = argc; data.argv = argv;
    CmdLine::Parser Opts( argc, argv );
@@ -369,7 +369,7 @@ void pee_init( float** input, int nlin, int ncol, int argc, char** argv )
 
 }
 
-void pee_clone( Population* original, int idx_original, Population* copy, int idx_copy )
+void ppi_clone( Population* original, int idx_original, Population* copy, int idx_copy )
 {
 #ifdef PROFILING
    util::Timer t_clone;
@@ -391,7 +391,7 @@ void pee_clone( Population* original, int idx_original, Population* copy, int id
 #endif
 }
 
-int pee_tournament( const float* fitness )
+int ppi_tournament( const float* fitness )
 {
 #ifdef PROFILING
    util::Timer t_tournament;
@@ -423,7 +423,7 @@ int pee_tournament( const float* fitness )
    return idx_winner;
 }
 
-void pee_send_individual( Population* population )
+void ppi_send_individual( Population* population )
 {
 #ifdef PROFILING
    util::Timer t_send;
@@ -464,13 +464,13 @@ void pee_send_individual( Population* population )
             /* If we still don't have enough threads, just skip! */
             if (!Poco::ThreadPool::defaultPool().available())
             {
-               poco_warning( Common::m_logger, "pee_send_individual(): Still no available threads, skipping..." );
+               poco_warning( Common::m_logger, "ppi_send_individual(): Still no available threads, skipping..." );
                continue;
             }
          }
          //std::cerr << "Poco::ThreadPool: available " << Poco::ThreadPool::defaultPool().available() << " | allocated: " << Poco::ThreadPool::defaultPool().allocated() << "\n";
 
-         const int idx = pee_tournament( population->fitness );
+         const int idx = ppi_tournament( population->fitness );
 
          std::stringstream results;
          results <<  population->fitness[idx] << " ";
@@ -499,7 +499,7 @@ void pee_send_individual( Population* population )
 #endif
 }
 
-int pee_receive_individual( GENOME_TYPE** immigrants )
+int ppi_receive_individual( GENOME_TYPE** immigrants )
 {
 #ifdef PROFILING
    util::Timer t_receive;
@@ -560,7 +560,7 @@ int pee_receive_individual( GENOME_TYPE** immigrants )
    return nImmigrants;
 }
 
-unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, int* nImmigrants )
+unsigned long ppi_evaluate( Population* descendentes, Population* antecedentes, int* nImmigrants )
 {
 #ifdef PROFILING
    unsigned long sum_size_gen = 0;
@@ -600,7 +600,7 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
 #ifdef PROFILING
       sum_size_gen, 
 #endif
-      descendentes->fitness, data.population_size, &pee_send_individual, &pee_receive_individual, antecedentes, nImmigrants, index, &data.best_size, 0, 0, ALPHA );
+      descendentes->fitness, data.population_size, &ppi_send_individual, &ppi_receive_individual, antecedentes, nImmigrants, index, &data.best_size, 0, 0, ALPHA );
    }
    else
    {
@@ -611,13 +611,13 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
          evaluated), it will pick individuals from the last generation instead
          of the current one; this is a good trade-off, though.  Note that this
          function will skip the initial generation as it wasn't evaluated yet. */
-      pee_send_individual(antecedentes);
+      ppi_send_individual(antecedentes);
 
       /* Receive individuals from other islands. Individuals received from
        foreign islands will be put into the next population, which may sound
        strange, but it is the 'antecedentes' (in the swap operation,
        'antecedentes' will be made the next generation). */
-      *nImmigrants = pee_receive_individual( antecedentes->genome );
+      *nImmigrants = ppi_receive_individual( antecedentes->genome );
 
       seq_interpret( data.phenotype, data.ephemeral, data.size, 
 #ifdef PROFILING
@@ -631,7 +631,7 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
       if( descendentes->fitness[index[i]] < data.best_individual.fitness[i] )
       {
          Server::stagnation = 0;
-         pee_clone( descendentes, index[i], &data.best_individual, i );
+         ppi_clone( descendentes, index[i], &data.best_individual, i );
       }
       else
       {
@@ -648,7 +648,7 @@ unsigned long pee_evaluate( Population* descendentes, Population* antecedentes, 
    return Server::stagnation;
 }
 
-void pee_generate_population( Population* antecedentes, Population* descendentes, int* nImmigrants )
+void ppi_generate_population( Population* antecedentes, Population* descendentes, int* nImmigrants )
 {
 #ifdef PROFILING
    util::Timer t_generate;
@@ -667,10 +667,10 @@ void pee_generate_population( Population* antecedentes, Population* descendentes
    data.time_generate = t_generate.elapsed();
 #endif
 
-   pee_evaluate( antecedentes, descendentes, nImmigrants );
+   ppi_evaluate( antecedentes, descendentes, nImmigrants );
 }
 
-void pee_crossover( const GENOME_TYPE* father, const GENOME_TYPE* mother, GENOME_TYPE* offspring1, GENOME_TYPE* offspring2 )
+void ppi_crossover( const GENOME_TYPE* father, const GENOME_TYPE* mother, GENOME_TYPE* offspring1, GENOME_TYPE* offspring2 )
 {
 #ifdef PROFILING
    util::Timer t_crossover;
@@ -727,7 +727,7 @@ void pee_crossover( const GENOME_TYPE* father, const GENOME_TYPE* mother, GENOME
 #endif
 }
 
-void pee_mutation( GENOME_TYPE* genome )
+void ppi_mutation( GENOME_TYPE* genome )
 {
 #ifdef PROFILING
    util::Timer t_mutation;
@@ -806,13 +806,13 @@ void pee_mutation( GENOME_TYPE* genome )
 #endif
 }
 
-void pee_print_best( FILE* out, int generation, int print_mode ) 
+void ppi_print_best( FILE* out, int generation, int print_mode ) 
 {
-   pee_individual_print( &data.best_individual, 0, out, generation, data.argc, data.argv, print_mode );
+   ppi_individual_print( &data.best_individual, 0, out, generation, data.argc, data.argv, print_mode );
 }
 
 #ifdef PROFILING
-void pee_print_time( bool total ) 
+void ppi_print_time( bool total ) 
 {
 
    double time_evolve     = total ? data.time_total_evolve : data.time_gen_evolve;
@@ -838,7 +838,7 @@ void pee_print_time( bool total )
 }
 #endif
 
-int pee_evolve()
+int ppi_evolve()
 {
    /* Initialize the RNG seed */
    // FIXME (currently done in _init; should we put it here instead?) RNG::Seed(data.seed);
@@ -909,7 +909,7 @@ int pee_evolve()
 
    // 1 e 2:
    //cerr << "\nGeneration[0]  ";
-   pee_generate_population( &antecedentes, &descendentes, &nImmigrants );
+   ppi_generate_population( &antecedentes, &descendentes, &nImmigrants );
 
 #ifdef PROFILING
       data.time_total_evolve = t_gen_evolve.elapsed();
@@ -931,7 +931,7 @@ int pee_evolve()
       // 4:
       if( data.elitism ) 
       {
-         pee_clone( &data.best_individual, 0, &descendentes, nImmigrants );
+         ppi_clone( &data.best_individual, 0, &descendentes, nImmigrants );
          nImmigrants++;
       }
 
@@ -942,8 +942,8 @@ int pee_evolve()
       for( int i = nImmigrants; i < data.population_size; i += 2 )
       {
          // 6:
-         int idx_father = pee_tournament( antecedentes.fitness );
-         int idx_mother = pee_tournament( antecedentes.fitness );
+         int idx_father = ppi_tournament( antecedentes.fitness );
+         int idx_mother = ppi_tournament( antecedentes.fitness );
 
          // 7:
          if( random_number() < data.crossover_rate )
@@ -951,33 +951,33 @@ int pee_evolve()
             // 8 e 9:
             if( i < ( data.population_size - 1 ) )
             {
-               pee_crossover( antecedentes.genome[idx_father], antecedentes.genome[idx_mother], descendentes.genome[i], descendentes.genome[i + 1] );
+               ppi_crossover( antecedentes.genome[idx_father], antecedentes.genome[idx_mother], descendentes.genome[i], descendentes.genome[i + 1] );
             }
             else 
             {
-               pee_crossover( antecedentes.genome[idx_father], antecedentes.genome[idx_mother], descendentes.genome[i], descendentes.genome[i] );
+               ppi_crossover( antecedentes.genome[idx_father], antecedentes.genome[idx_mother], descendentes.genome[i], descendentes.genome[i] );
             }
          } // 10
          else 
          {
             // 9:
-            pee_clone( &antecedentes, idx_father, &descendentes, i );
+            ppi_clone( &antecedentes, idx_father, &descendentes, i );
             if( i < ( data.population_size - 1 ) )
             {
-               pee_clone( &antecedentes, idx_mother, &descendentes, i + 1 );
+               ppi_clone( &antecedentes, idx_mother, &descendentes, i + 1 );
             }
          } // 10
 
          // 11, 12, 13, 14 e 15:
-         pee_mutation( descendentes.genome[i] );
+         ppi_mutation( descendentes.genome[i] );
          if( i < ( data.population_size - 1 ) )
          {
-            pee_mutation( descendentes.genome[i + 1] );
+            ppi_mutation( descendentes.genome[i + 1] );
          }
       } // 16
 
       // 17:
-      if (pee_evaluate( &descendentes, &antecedentes, &nImmigrants ) > data.stagnation_tolerance) geracao = data.generations;
+      if (ppi_evaluate( &descendentes, &antecedentes, &nImmigrants ) > data.stagnation_tolerance) geracao = data.generations;
 
       // 18:
       swap( &antecedentes, &descendentes );
@@ -991,14 +991,14 @@ int pee_evolve()
       {
          if (Server::stagnation == 0 || geracao < 2) {
             if (data.machine) { // Output meant to be consumed by scripts, not humans
-               pee_print_best(stdout, geracao, 1);
+               ppi_print_best(stdout, geracao, 1);
 #ifdef PROFILING
-               pee_print_time(false);
+               ppi_print_time(false);
 #else
                fprintf(stdout, "\n");
 #endif
             } else
-               pee_print_best(stdout, geracao, 0);
+               ppi_print_best(stdout, geracao, 0);
 
          }
          else std::cerr << '.';
@@ -1020,7 +1020,7 @@ int pee_evolve()
    return geracao;
 }
 
-void pee_destroy()
+void ppi_destroy()
 {
    // Wait for awhile then kill the non-finished threads. This ensures a
    // graceful termination and prevents segmentation faults at the end

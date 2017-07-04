@@ -7,8 +7,8 @@
 #include "util/CmdLineParser.h"
 #include "util/Exception.h"
 #include "util/Util.h"
-#include "pee.h"
-#include "pep.h"
+#include "ppi.h"
+#include "ppp.h"
 
 //TODO fazer comentários; passar para inglês
 
@@ -141,10 +141,10 @@ int main(int argc, char** argv)
 
       if( Opts.String.Found("-sol") )
       {
-         pep_init( input, nlin, ncol, argc, argv );
-         pep_interpret();
-         pep_print( stdout );
-         pep_destroy();
+         ppp_init( input, nlin, ncol, argc, argv );
+         ppp_interpret();
+         ppp_print( stdout );
+         ppp_destroy();
       }
       else
       {
@@ -157,18 +157,18 @@ int main(int argc, char** argv)
          srv.start();
          //sleep(100);
 
-         pee_init( input, nlin, ncol, argc, argv );
-         int generations = pee_evolve();
+         ppi_init( input, nlin, ncol, argc, argv );
+         int generations = ppi_evolve();
 
          fprintf(stdout, "\n> Overall best:");
-         pee_print_best( stdout, generations, 1 );
+         ppi_print_best( stdout, generations, 1 );
 #ifdef PROFILING
          printf(";time_total: %lf", t_total.elapsed());
-         pee_print_time(false);
+         ppi_print_time(false);
 #else
          printf("\n");
 #endif
-         pee_destroy();
+         ppi_destroy();
       }
 
       destroy(input, nlin);

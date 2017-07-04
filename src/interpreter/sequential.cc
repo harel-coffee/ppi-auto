@@ -103,7 +103,7 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size,
 #ifdef PROFILING
 unsigned long sum_size_gen, 
 #endif
-float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
+float* vector, int nInd, int* index, int* best_size, int ppp_mode, int prediction_mode, float alpha )
 {
 #ifdef PROFILING
    util::Timer t_kernel;
@@ -147,7 +147,7 @@ float* vector, int nInd, int* index, int* best_size, int pep_mode, int predictio
                   break;
             }
          }
-         if( pep_mode && prediction_mode ) {
+         if( ppp_mode && prediction_mode ) {
             vector[ponto] = stack[stack_top];
          }
          else {
@@ -179,7 +179,7 @@ float* vector, int nInd, int* index, int* best_size, int pep_mode, int predictio
    data.gpops_gen_kernel     = (sum_size_gen * data.nlin) / t_kernel.elapsed();
 #endif
 
-   if( !pep_mode )
+   if( !ppp_mode )
    {
 #ifdef PROFILING
       util::Timer t_time;

@@ -49,9 +49,9 @@ add_subdirectory(server)
 add_subdirectory(client)
 add_subdirectory(common)
 
-add_library(pee pee.cc)
-add_library(pep pep.cc)
+add_library(ppi ppi.cc)
+add_library(ppp ppp.cc)
 
 add_executable(${LABEL} main.cc)
-target_link_libraries(${LABEL} pee pep interpreter util server client common ${OPENCL_LIBRARIES} ${Poco_LIBRARIES} pthread )
+target_link_libraries(${LABEL} ppi ppp interpreter util server client common ${OPENCL_LIBRARIES} ${Poco_LIBRARIES} pthread )
 set_target_properties(${LABEL} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

@@ -6,7 +6,7 @@
 /** ****************************************************************** **/
 
 /* Defines the genome's data type, i.e., the type of each allele of the genome.
-As PEE currently uses a binary representation, the 'bool' data type (or 'char')
+As PPI currently uses a binary representation, the 'bool' data type (or 'char')
 suffices here. */
 typedef bool GENOME_TYPE;
 

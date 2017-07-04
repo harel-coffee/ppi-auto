@@ -1,7 +1,7 @@
 /************************************************************************/
 /**     Name:Amanda Sabatini Dufek                                     **/
 /**          Douglas Adriano Augusto            Date:01/06/2015        **/
-/**     Parallel Ensemble Prediction (PEP)                             **/
+/**     Parallel Program Prediction (PPP)                             **/
 /************************************************************************/
 
 /** ****************************************************************** **/
@@ -17,7 +17,7 @@
 #include "util/CmdLineParser.h"
 #include "interpreter/accelerator.h"
 #include "interpreter/sequential.h"
-#include "pep.h"
+#include "ppp.h"
 
 
 /** ****************************************************************** **/
@@ -30,7 +30,7 @@ namespace { static struct t_data { int nlin; Symbol* phenotype; float* ephemeral
 /** ************************* MAIN FUNCTIONS ************************* **/
 /** ****************************************************************** **/
 
-void pep_init( float** input, int nlin, int ncol, int argc, char** argv ) 
+void ppp_init( float** input, int nlin, int ncol, int argc, char** argv ) 
 {
    CmdLine::Parser Opts( argc, argv );
 
@@ -92,7 +92,7 @@ void pep_init( float** input, int nlin, int ncol, int argc, char** argv )
    }
 }
 
-void pep_interpret()
+void ppp_interpret()
 {
    if( data.prediction )
    {
@@ -136,7 +136,7 @@ void pep_interpret()
    }
 }
 
-void pep_print( FILE* out )
+void ppp_print( FILE* out )
 {
    if( data.prediction )
    {
@@ -147,7 +147,7 @@ void pep_print( FILE* out )
       fprintf( out, "%.12f\n", data.vector[0] );
 }
 
-void pep_destroy() 
+void ppp_destroy() 
 {
    delete[] data.phenotype;
    delete[] data.ephemeral;

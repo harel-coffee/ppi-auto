@@ -1,4 +1,4 @@
-# PEE #
+# PPI #
 
 ## Building ##
 
@@ -67,10 +67,10 @@ Within `build/`:
 
 This will generate the Pareto front in file 'pareto.front'. Note that you have to run each instance separately (each one having its own port number (`-p <n>`) and ideally on a different accelerator (`-cl-p <p>`, `-cl-d <d>`); for example, you could start each instance on a separate 'screen' tab.
 
-It is possible to pass parameters directly to the PEE's process; in order to do that, use the following convention:
+It is possible to pass parameters directly to the PPI's process; in order to do that, use the following convention:
 
 ~~~~~~~~
-   ... ../script/run.py ... -- <parameters to be passed directly to PEE>
+   ... ../script/run.py ... -- <parameters to be passed directly to PPI>
 ~~~~~~~~
 
 For instance:
@@ -99,31 +99,31 @@ will periodically (each 10s) send a random genome from the pareto.front file ("H
 ### Putting it all together through 'screen' (AKA doing all above within GNU screen) ###
 
 ~~~~~~~~
-   # Create the screen session named 'pee'
-   screen -S pee -A -d -m
+   # Create the screen session named 'ppi'
+   screen -S ppi -A -d -m
 
    # Create all necessary windows (tabs)
-   screen -S pee -X screen -t island-9080
-   screen -S pee -X screen -t island-9081
-   screen -S pee -X screen -t island-9082
-   screen -S pee -X screen -t island-9083
-   screen -S pee -X screen -t island-9084
-   screen -S pee -X screen -t island-9085
+   screen -S ppi -X screen -t island-9080
+   screen -S ppi -X screen -t island-9081
+   screen -S ppi -X screen -t island-9082
+   screen -S ppi -X screen -t island-9083
+   screen -S ppi -X screen -t island-9084
+   screen -S ppi -X screen -t island-9085
 
-   screen -S pee -X screen -t seeder
-   screen -S pee -X screen -t pareto
+   screen -S ppi -X screen -t seeder
+   screen -S ppi -X screen -t pareto
 
    # Run each island on a different window
-   screen -S pee -p island-9080 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9080 -n 1 -st 1000000 -cl-p 0 -cl-d 0 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-   screen -S pee -p island-9081 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9081 -n 1 -st 2000000 -cl-p 0 -cl-d 0 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-   screen -S pee -p island-9082 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9082 -n 1 -st 3000000 -cl-p 0 -cl-d 1 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-   screen -S pee -p island-9083 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9083 -n 1 -st 4000000 -cl-p 0 -cl-d 1 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-   screen -S pee -p island-9084 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9084 -n 1 -st 5000000 -cl-p 0 -cl-d 2 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
-   screen -S pee -p island-9085 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9085 -n 1 -st 6000000 -cl-p 0 -cl-d 2 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S ppi -p island-9080 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9080 -n 1 -st 1000000 -cl-p 0 -cl-d 0 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S ppi -p island-9081 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9081 -n 1 -st 2000000 -cl-p 0 -cl-d 0 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S ppi -p island-9082 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9082 -n 1 -st 3000000 -cl-p 0 -cl-d 1 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S ppi -p island-9083 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9083 -n 1 -st 4000000 -cl-p 0 -cl-d 1 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S ppi -p island-9084 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9084 -n 1 -st 5000000 -cl-p 0 -cl-d 2 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
+   screen -S ppi -p island-9085 -X stuff $'while true; do ../script/run.py -d ../problem/iris/data.csv -e ./iris -i islands.txt -p 9085 -n 1 -st 6000000 -cl-p 0 -cl-d 2 | grep -a \'^> [0-9]\' | cut -c3- | while read CANDIDATE; do ../script/pareto.py -p iris-pareto.front -dup "$CANDIDATE"; done; sleep 1; done\n'
 
    # Runs the seeder (feedback) and visualize the Pareto front
-   screen -S pee -p seeder -X stuff $'while true; do ../script/seeder.py -i iris-pareto.front -p 9080 -p 9081 -p 9082 -p 9083 -p 9084 -p 9085; sleep 5; done\n'
-   screen -S pee -p pareto -X stuff $'watch -n 1 "cut -d\';\' -f2-4 iris-pareto.front|cut -c1-140|sort -n|tail -n 35"\n'
+   screen -S ppi -p seeder -X stuff $'while true; do ../script/seeder.py -i iris-pareto.front -p 9080 -p 9081 -p 9082 -p 9083 -p 9084 -p 9085; sleep 5; done\n'
+   screen -S ppi -p pareto -X stuff $'watch -n 1 "cut -d\';\' -f2-4 iris-pareto.front|cut -c1-140|sort -n|tail -n 35"\n'
 ~~~~~~~~
 
 ## Running Prediction (example) ##

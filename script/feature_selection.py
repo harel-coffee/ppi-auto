@@ -15,7 +15,7 @@ def RunCorrCoef(training_data):
       return 0.0 # It is probably a zero array and can be surely eliminated
    return entropy
 
-def RunPEE(indices, training_data, tmpdir):
+def RunPPI(indices, training_data, tmpdir):
    # Save the training dataset to a file (no need to save the header at this time, but doing it anyway)
    np.savetxt(args.output, training_data, delimiter=",", header=','.join([h for j, h in enumerate(header) if j in indices]), comments='', fmt='%.8f')
 
@@ -32,7 +32,7 @@ def RunPEE(indices, training_data, tmpdir):
          grammar += " | "
    grammar += '\n'
 
-   # Check if we really need to rebuild PEE, i.e., if the grammar has changed
+   # Check if we really need to rebuild PPI, i.e., if the grammar has changed
    try:
       with open(tmpdir+"/grammar.bnf", 'r') as g: old_grammar = g.read()
    except:
@@ -40,9 +40,9 @@ def RunPEE(indices, training_data, tmpdir):
 
    if old_grammar is None or old_grammar != grammar:
       with open(tmpdir+"/grammar.bnf", 'w') as g: g.write(grammar)
-      os.system('cd ' + tmpdir + ' && cmake ' + args.pee + ' ' + args.cmake_args + ' -DGRAMMAR='+tmpdir+'/grammar.bnf -DLABEL=select -DCMAKE_BUILD_TYPE=RELEASE -DPROFILING=OFF > /dev/null && make -j -s')
+      os.system('cd ' + tmpdir + ' && cmake ' + args.ppi + ' ' + args.cmake_args + ' -DGRAMMAR='+tmpdir+'/grammar.bnf -DLABEL=select -DCMAKE_BUILD_TYPE=RELEASE -DPROFILING=OFF > /dev/null && make -j -s')
 
-   mae = float(subprocess.check_output(tmpdir + "/select -d " + args.output + " " + args.pee_args + " | grep -a '^> [0-9]' | cut -d';' -f3", shell=True))
+   mae = float(subprocess.check_output(tmpdir + "/select -d " + args.output + " " + args.ppi_args + " | grep -a '^> [0-9]' | cut -d';' -f3", shell=True))
 
    return mae
 
@@ -50,9 +50,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dataset", required=True, help="Dataset file")
 parser.add_argument("-t", "--threshold", required=False, type=float, default=0.01, help="Threshold value")
 parser.add_argument("-o", "--output", required=True, help="Output dataset with the selected features")
-parser.add_argument("-p", "--pee", default='', help="PEE directory")
-parser.add_argument("-pearson", "--pearson", action='store_true', default=False, help="Runs Pearson correlation instead of PEE")
-parser.add_argument("-pa", "--pee-args", default='', help="Arguments for PEE")
+parser.add_argument("-p", "--ppi", default='', help="PPI directory")
+parser.add_argument("-pearson", "--pearson", action='store_true', default=False, help="Runs Pearson correlation instead of PPI")
+parser.add_argument("-pa", "--ppi-args", default='', help="Arguments for PPI")
 parser.add_argument("-ca", "--cmake-args", default='', help="Arguments for CMAKE")
 parser.add_argument("-hy", "--has-y", action='store_true', default=False, help="Has dependent variable")
 parser.add_argument("-hh", "--has-header", action='store_true', default=False, help="Has header")
@@ -61,16 +61,16 @@ args = parser.parse_args()
 
 args.output = os.path.abspath(args.output)
 
-if args.pee:
-   args.pee = os.path.abspath(args.pee)
+if args.ppi:
+   args.ppi = os.path.abspath(args.ppi)
 
 if args.pearson: # don't make sense to use relative norm with Pearson
    args.no_relative = True
 else:
-   if not args.pee:
-      print >> sys.stderr, "> ERROR: PEE directory not given. Use -pearson if you would like to run a linear correlation analysis instead."
+   if not args.ppi:
+      print >> sys.stderr, "> ERROR: PPI directory not given. Use -pearson if you would like to run a linear correlation analysis instead."
       sys.exit(1)
-   # Create temporary directory for PEE
+   # Create temporary directory for PPI
    TMPDIR = tempfile.mkdtemp(prefix='build-')
    print "The temporary directory is: %s" % (TMPDIR)
 
@@ -123,7 +123,7 @@ for i in range(1, nvar):
    if args.pearson:
       entropy = RunCorrCoef(training_data)
    else:
-      entropy = RunPEE(indices, training_data, TMPDIR)
+      entropy = RunPPI(indices, training_data, TMPDIR)
    #######################
 
    if args.no_relative:

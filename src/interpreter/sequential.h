@@ -23,7 +23,7 @@ void seq_interpret( Symbol* phenotype, float* ephemeral, int* size,
 #ifdef PROFILING
 unsigned long sum_size_gen, 
 #endif
-float* vector, int nInd, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha );
+float* vector, int nInd, int* index, int* best_size, int ppp_mode, int prediction_mode, float alpha );
 
 /** ************************************************************************************************** **/
 /** ********************************** Function interpret_destroy ************************************ **/

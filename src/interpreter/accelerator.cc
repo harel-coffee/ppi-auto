@@ -182,10 +182,10 @@ int opencl_init( int platform_id, int device_id, cl_device_type type )
 }
 
 // -----------------------------------------------------------------------------
-int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
+int build_kernel( int maxlocalsize, int ppp_mode, int prediction_mode )
 {
    unsigned max_stack_size;
-   if( pep_mode && prediction_mode ) 
+   if( ppp_mode && prediction_mode ) 
    {
       max_stack_size = data.max_size;
    }
@@ -327,7 +327,7 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
       std::cout << "Local size: " << data.local_size1 << ", Global size: " << data.global_size1 << ", Work groups: " << data.global_size1/data.local_size1 << std::endl;
    }
 
-   if( !pep_mode )
+   if( !ppp_mode )
    {
       // Evenly distribute the workload among the compute units (but avoiding local size
       // being more than the maximum allowed).
@@ -346,7 +346,7 @@ int build_kernel( int maxlocalsize, int pep_mode, int prediction_mode )
 
 // -----------------------------------------------------------------------------
 
-void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode )
+void create_buffers( float** input, int ncol, int ppp_mode, int prediction_mode )
 {
 #ifdef PROFILING
    std::vector<cl::Event> events(2); 
@@ -463,7 +463,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
    data.buffer_ephemeral = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.max_size * data.population_size * sizeof( float ) );
    data.buffer_size      = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.population_size * sizeof( int ) );
 
-   if( pep_mode && prediction_mode ) // Buffer (memory on the device) of prediction (one por example)
+   if( ppp_mode && prediction_mode ) // Buffer (memory on the device) of prediction (one por example)
    { 
       data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, data.nlin * sizeof( float ) );
    }
@@ -474,7 +474,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
          data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.global_size1/data.local_size1) * data.population_size * sizeof( float ) );
 
          data.buffer_error = cl::Buffer( data.context, CL_MEM_READ_ONLY, data.population_size * sizeof( float ) );
-         if( !pep_mode) {data.kernel2.setArg( 0, data.buffer_error );}
+         if( !ppp_mode) {data.kernel2.setArg( 0, data.buffer_error );}
       }
       else
       {
@@ -483,7 +483,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
             // The evaluate's kernels WRITE in the vector; while the best_individual's kernel READ the vector
             data.buffer_vector = cl::Buffer( data.context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, data.population_size * sizeof( float ) );
 
-            if( !pep_mode) {data.kernel2.setArg( 0, data.buffer_vector );}
+            if( !ppp_mode) {data.kernel2.setArg( 0, data.buffer_vector );}
          }
       }
    }
@@ -506,7 +506,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
    }
 
 
-   if ( !pep_mode )
+   if ( !ppp_mode )
    {
       const unsigned num_work_groups2 = data.global_size2 / data.local_size2;
 
@@ -540,7 +540,7 @@ void create_buffers( float** input, int ncol, int pep_mode, int prediction_mode 
 /** ****************************************************************** **/
 
 // -----------------------------------------------------------------------------
-int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned max_arity, const unsigned population_size, float** input, int nlin, int ncol, int pep_mode, int prediction_mode )
+int acc_interpret_init( int argc, char** argv, const unsigned size, const unsigned max_arity, const unsigned population_size, float** input, int nlin, int ncol, int ppp_mode, int prediction_mode )
 {
    CmdLine::Parser Opts( argc, argv );
 
@@ -606,13 +606,13 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
       return 1;
    }
 
-   if ( build_kernel( Opts.Int.Get("-cl-mls"), pep_mode, prediction_mode ) )
+   if ( build_kernel( Opts.Int.Get("-cl-mls"), ppp_mode, prediction_mode ) )
    {
       fprintf(stderr,"Error in build the kernel.\n");
       return 1;
    }
 
-   create_buffers( input, ncol, pep_mode, prediction_mode );
+   create_buffers( input, ncol, ppp_mode, prediction_mode );
 
 //   try
 //   {
@@ -630,7 +630,7 @@ void acc_interpret( Symbol* phenotype, float* ephemeral, int* size,
 #ifdef PROFILING
 unsigned long sum_size_gen,
 #endif
-float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**), Population* migrants, int* nImmigrants, int* index, int* best_size, int pep_mode, int prediction_mode, float alpha )
+float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**), Population* migrants, int* nImmigrants, int* index, int* best_size, int ppp_mode, int prediction_mode, float alpha )
 {
 #ifdef PROFILING
    std::vector<cl::Event> events(6); 
@@ -687,7 +687,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
    // tem que criar uma segunda fila
    // TODO: data.queuetransfer.enqueuReadBuffer( data.buffer_vector, CL_FALSE, 0, size_which_depends_on_the_strategy, tmp, event0, &event4);
 
-   if ( !pep_mode )
+   if ( !ppp_mode )
    {
       if( data.strategy == "PPCU" || data.strategy == "PP" ) 
       {
@@ -711,7 +711,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
       data.queue.flush();
    }
 
-   if( !pep_mode )
+   if( !ppp_mode )
    {
       send( migrants );
       *nImmigrants = receive( migrants->genome );
@@ -723,7 +723,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
 
    // TODO: data.queuetransfer.finish();
    float *tmp;
-   if ( pep_mode && prediction_mode )
+   if ( ppp_mode && prediction_mode )
    {
       // TODO: vector = tmp (?) substituiu as duas linhas de baixo
       tmp = (float*) data.queue.enqueueMapBuffer( data.buffer_vector, CL_TRUE, CL_MAP_READ, 0, data.nlin * sizeof( float ) );
@@ -793,7 +793,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
 #endif
          );
 
-         if( !pep_mode )
+         if( !ppp_mode )
          {
             //std::cerr << "Global size: " << data.global_size2 << " Local size: " << data.local_size2 << " Work group: " << data.global_size2/data.local_size2 << std::endl;
             try
@@ -841,7 +841,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
          }
       }
 
-      if( !pep_mode )
+      if( !ppp_mode )
       {
 #ifdef PROFILING
          util::Timer t_time;
@@ -900,7 +900,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
    data.gpops_gen_kernel = (sum_size_gen * data.nlin) / data.time_gen_kernel1;
    data.gpops_gen_communication = (sum_size_gen * data.nlin) / (data.time_gen_kernel1 + data.time_gen_communication_send1 + data.time_gen_communication_receive1);
 
-   if( !pep_mode )
+   if( !ppp_mode )
    {
       events[4].getProfilingInfo( CL_PROFILING_COMMAND_START, &start );
       events[4].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );
