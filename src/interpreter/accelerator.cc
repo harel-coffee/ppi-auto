@@ -268,7 +268,7 @@ int build_kernel( int maxlocalsize, int ppp_mode, int prediction_mode )
       //It is necessary to respect the local memory size. Depending on the
       //maximum local size, there will not be enough space to allocate the
       //local variables.  The local size depends on the maximum local size. 
-      //The division by 4: 1 local vector in the FP and PPCU kernels (both are float vectors, so the division by 4 bytes)
+      //The division by 4: 1 local vector in the DP and PDP kernels (both are float vectors, so the division by 4 bytes)
       max_local_size1 = fmin( max_local_size1, data.device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>() / 4 );
    }
 
@@ -287,7 +287,7 @@ int build_kernel( int maxlocalsize, int ppp_mode, int prediction_mode )
    }
    else
    {
-      if( data.strategy == "FP" ) // Fitness-parallel
+      if( data.strategy == "DP" ) // Fitness-parallel
       {
          // Evenly distribute the workload among the compute units (but avoiding local size
          // being more than the maximum allowed).
@@ -295,11 +295,11 @@ int build_kernel( int maxlocalsize, int ppp_mode, int prediction_mode )
 
          // It is better to have global size divisible by local size
          data.global_size1 = (unsigned) ( ceil( data.nlin/(float) data.local_size1 ) * data.local_size1 );
-         data.kernel1 = cl::Kernel( program, "evaluate_fp" );
+         data.kernel1 = cl::Kernel( program, "evaluate_dp" );
       }
       else
       {
-         if( data.strategy == "PPCU" ) // Population-parallel computing unit
+         if( data.strategy == "PDP" ) // Population-parallel computing unit
          {
             if( data.nlin < max_local_size1 )
             {
@@ -312,18 +312,18 @@ int build_kernel( int maxlocalsize, int ppp_mode, int prediction_mode )
             //data.local_size1 = 128;
             // One individual per work-group
             data.global_size1 = data.population_size * data.local_size1;
-            data.kernel1 = cl::Kernel( program, "evaluate_ppcu" );
+            data.kernel1 = cl::Kernel( program, "evaluate_pdp" );
          }
          else
          {
-            fprintf(stderr, "Valid strategy: PP, FP and PPCU.\n");
+            fprintf(stderr, "Valid strategy: PP, DP and PDP.\n");
             return 1;
          }
       }
    }
 
    if (data.verbose) {
-      std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size 1 (FP and PPCU kernels): " << max_local_size1 << ", Max local size 2 (best kernel): " << max_local_size2 << std::endl;
+      std::cout << "\nDevice: " << data.device.getInfo<CL_DEVICE_NAME>() << ", Compute units: " << max_cu << ", Max local size 1 (DP and PDP kernels): " << max_local_size1 << ", Max local size 2 (best kernel): " << max_local_size2 << std::endl;
       std::cout << "Local size: " << data.local_size1 << ", Global size: " << data.global_size1 << ", Work groups: " << data.global_size1/data.local_size1 << std::endl;
    }
 
@@ -427,7 +427,7 @@ void create_buffers( float** input, int ncol, int ppp_mode, int prediction_mode 
    //}
    //else
    //{
-   //   if( data.strategy == "FP" || data.strategy == "PPCU" ) 
+   //   if( data.strategy == "DP" || data.strategy == "PDP" ) 
    //   {
    //      for( int i = 0; i < data.nlin; i++ )
    //      {
@@ -439,7 +439,7 @@ void create_buffers( float** input, int ncol, int ppp_mode, int prediction_mode 
    //   }
    //   else
    //   {
-   //      fprintf(stderr, "Valid strategy: PP, FP and PPCU.\n");
+   //      fprintf(stderr, "Valid strategy: PP, DP and PDP.\n");
    //   }
    //}
 
@@ -469,7 +469,7 @@ void create_buffers( float** input, int ncol, int ppp_mode, int prediction_mode 
    }
    else // Buffer (memory on the device) of prediction errors
    {
-      if( data.strategy == "FP" ) 
+      if( data.strategy == "DP" ) 
       {
          data.buffer_vector = cl::Buffer( data.context, CL_MEM_WRITE_ONLY | CL_MEM_ALLOC_HOST_PTR, (data.global_size1/data.local_size1) * data.population_size * sizeof( float ) );
 
@@ -478,7 +478,7 @@ void create_buffers( float** input, int ncol, int ppp_mode, int prediction_mode 
       }
       else
       {
-         if( data.strategy == "PPCU" || data.strategy == "PP" ) // (one por program)
+         if( data.strategy == "PDP" || data.strategy == "PP" ) // (one por program)
          {
             // The evaluate's kernels WRITE in the vector; while the best_individual's kernel READ the vector
             data.buffer_vector = cl::Buffer( data.context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, data.population_size * sizeof( float ) );
@@ -554,11 +554,19 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    Opts.Int.Add( "-cl-d", "--cl-device-id", -1, 0 );
    Opts.Int.Add( "-cl-mls", "--cl-max-local-size", -1 );
    Opts.String.Add( "-type" );
-   Opts.String.Add( "-strategy", "", "PPCU", "FP", "PP", "PPCU", NULL );
+   Opts.String.Add( "-strategy", "", "PDP", "pdp", "DP", "dp", "PP", "pp", "PDP", NULL );
    Opts.Process();
    data.verbose = Opts.Bool.Get("-v");
    data.transpose = Opts.Bool.Get("-transpose");
+
    data.strategy = Opts.String.Get("-strategy");
+   if (data.strategy == "pdp")
+      data.strategy = "PDP";
+   else if (data.strategy == "dp")
+      data.strategy = "DP";
+   else if (data.strategy == "pp")
+      data.strategy = "PP";
+
    data.max_size = size;
    data.max_arity = max_arity;
    data.nlin = nlin;
@@ -576,15 +584,15 @@ int acc_interpret_init( int argc, char** argv, const unsigned size, const unsign
    cl_device_type type = CL_INVALID_DEVICE_TYPE;
    if( Opts.String.Found("-type") )
    {
-      if( !strcmp(Opts.String.Get("-type").c_str(),"CPU") ) 
-      { 
-         type = CL_DEVICE_TYPE_CPU; 
+      if( Opts.String.Get("-type") == "CPU" || Opts.String.Get("-type") == "cpu" )
+      {
+         type = CL_DEVICE_TYPE_CPU;
       }
       else 
       {
-         if( !strcmp(Opts.String.Get("-type").c_str(),"GPU") ) 
+         if( Opts.String.Get("-type") == "GPU" || Opts.String.Get("-type") == "gpu" )
          {
-            type = CL_DEVICE_TYPE_GPU; 
+            type = CL_DEVICE_TYPE_GPU;
          }
          else
          {
@@ -661,7 +669,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
 #endif
    );
 
-   if( data.strategy == "FP" ) 
+   if( data.strategy == "DP" ) 
    {
       data.kernel1.setArg( 9, nInd );
    }
@@ -689,7 +697,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
 
    if ( !ppp_mode )
    {
-      if( data.strategy == "PPCU" || data.strategy == "PP" ) 
+      if( data.strategy == "PDP" || data.strategy == "PP" ) 
       {
          //std::cerr << "Global size: " << data.global_size2 << " Local size: " << data.local_size2 << " Work group: " << data.global_size2/data.local_size2 << std::endl;
          try 
@@ -731,7 +739,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
    }
    else
    {
-      if( data.strategy == "FP" ) 
+      if( data.strategy == "DP" ) 
       {
          // -----------------------------------------------------------------------
          /*
@@ -818,7 +826,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
       }
       else
       {
-         if( data.strategy == "PPCU" || data.strategy == "PP" ) 
+         if( data.strategy == "PDP" || data.strategy == "PP" ) 
          {
 #ifdef PROFILING
             util::Timer t_time;
@@ -908,7 +916,7 @@ float* vector, int nInd, void (*send)(Population*), int (*receive)(GENOME_TYPE**
       data.time_total_kernel2 += (end - start)/1.0E9;
    }
 
-   if( !prediction_mode && data.strategy == "FP" ) 
+   if( !prediction_mode && data.strategy == "DP" ) 
    {
       events[5].getProfilingInfo( CL_PROFILING_COMMAND_QUEUED, &start );
       events[5].getProfilingInfo( CL_PROFILING_COMMAND_END, &end );

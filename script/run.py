@@ -15,7 +15,7 @@ import subprocess
 # usage: run.py [-h] [-e EXE] -d DATASET [-i ISLANDS_FILE] -p PORT
 #               [-n NUMBER_TARGET_ISLANDS] [-st STAGNATION_TOLERANCE]
 #               [-cl-p CL_PLATFORM_ID] [-cl-d CL_DEVICE_ID]
-#               [-s {PPCU,ppcu,PP,pp,FP,fp}]
+#               [-s {PDP,pdp,PP,pp,DP,dp}]
 #               ...
 #
 # positional arguments:
@@ -39,8 +39,8 @@ import subprocess
 #                         OpenCL platform id [default=0]
 #   -cl-d CL_DEVICE_ID, --cl-device-id CL_DEVICE_ID
 #                         OpenCL device id [default=0]
-#   -s {PPCU,ppcu,PP,pp,FP,fp}, --strategy {PPCU,ppcu,PP,pp,FP,fp}
-#                         Parallelization strategy [default=PPCU]
+#   -s {PDP,pdp,PP,pp,DP,dp}, --strategy {PDP,pdp,PP,pp,DP,dp}
+#                         Parallelization strategy [default=PDP]
 #   -seq, --sequential    Enables sequential mode instead of accelerated
 #                         [default=false]
 #   -t, --threads         Number of OpenMP threads for the evolutionary part
@@ -65,7 +65,7 @@ parser.add_argument("-n", "--number-target-islands", type=int, default=0, help="
 parser.add_argument("-st", "--stagnation-tolerance", type=int, default=1000000, help="How many new individuals without improvement until the algorithm terminates [default=1000000]")
 parser.add_argument("-cl-p", "--cl-platform-id", required=False, default=0, help="OpenCL platform id [default=0]")
 parser.add_argument("-cl-d", "--cl-device-id", required=False, default=0, help="OpenCL device id [default=0]")
-parser.add_argument("-s", "--strategy", required=False, default="PPCU", choices=['PPCU', 'ppcu', 'PP', 'pp', 'FP', 'fp'], help="Parallelization strategy [default=PPCU]")
+parser.add_argument("-s", "--strategy", required=False, default="PDP", choices=['PDP', 'pdp', 'PP', 'pp', 'DP', 'dp'], help="Parallelization strategy [default=PDP]")
 parser.add_argument("args", nargs=argparse.REMAINDER, help="Extra arguments to be passed to the executable; use after -- (ex: ... -- -min -1.0 -max 1.0)")
 parser.add_argument('-seq', '--sequential', required=False, action='store_true', default=False, help="Sequential evaluation mode instead of accelerated [default=accelerated]")
 parser.add_argument("-t", "--threads", type=int, default=1, help="Number of OpenMP threads for the evolutionary part [default=1]")

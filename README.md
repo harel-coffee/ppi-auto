@@ -37,7 +37,7 @@ Note that `X` and `Y` are internally real-valued variables, so it is necessary t
 
 #### Other options (definitions) ###
 
- - `-DREDUCEMAX=<ON|OFF>`: in the PPCU strategy, one can also choose between the sum of the errors (the default) or the maximum error. To enable the latter, just add to cmake the option `-DREDUCEMAX=ON`
+ - `-DREDUCEMAX=<ON|OFF>`: in the PDP strategy, one can also choose between the sum of the errors (the default) or the maximum error. To enable the latter, just add to cmake the option `-DREDUCEMAX=ON`
  - `-DPROTECTED=<ON|OFF>`: use protected functions (do not generate NaN) instead of unprotected ones
  - `-DNATIVE=<ON|OFF>`: use OpenCL native functions (faster but less precise)
 

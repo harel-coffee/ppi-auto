@@ -83,7 +83,7 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
 }
 
 __kernel void
-evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, int nlin, int ncol, int prediction_mode, __local float* PE, int nInd )
+evaluate_dp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, int nlin, int ncol, int prediction_mode, __local float* PE, int nInd )
 {
    // Include the cost matrix definition if given
    #include <costmatrix>
@@ -167,7 +167,7 @@ evaluate_fp( __global const Symbol* phenotype, __global const float* ephemeral, 
 }
 
 __kernel void
-evaluate_ppcu( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, int nlin, int ncol, int prediction_mode, __local float* PE )
+evaluate_pdp( __global const Symbol* phenotype, __global const float* ephemeral, __global const int* size, __global const float* inputs, __global float* vector, int nlin, int ncol, int prediction_mode, __local float* PE )
 {
    // Include the cost matrix definition if given
    #include <costmatrix>
