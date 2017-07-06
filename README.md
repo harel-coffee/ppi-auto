@@ -1,4 +1,4 @@
-# PPI #
+# Parallel Program Induction (PPI) #
 
 ## Building ##
 
