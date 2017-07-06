@@ -1,6 +1,20 @@
 # Parallel Program Induction (PPI) #
 
+Parallel Program Induction (PPI) is a distributed and massively parallel grammatical evolution algorithm for inferring symbolic regression and classification models/programs.
+
+PPI relies on OpenCL to massively parallelize the program evaluations in a portable platform-independent way. The breeding is also parallelized via OpenMP threads. Finally, sockets are used to provide a fault-tolerant communication medium, where different instances of PPI can exchange solutions among them in a semi-isolated fashion.
+
+PPI is a Free Software covered by the [GPLv3+](https://www.gnu.org/licenses/gpl-3.0.en.html) license.
+
 ## Building ##
+
+### Requirements ###
+
+ - A C++ compiler (GNU GCC is recommended).
+ - [CMake](https://cmake.org) building system.
+ - [POCO C++](https://pocoproject.org/) libraries.
+ - At least one OpenCL platform should be installed on the machine (an accelerator is recommended but not mandatory). [POCL](http://portablecl.org/) is an open-source OpenCL implementation for CPUs and could be used to provide an OpenCL platform for PPI.
+
 
 ### Grammar assembling ###
 
