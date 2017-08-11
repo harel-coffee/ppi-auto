@@ -447,32 +447,6 @@ void ppi_send_individual( Population* population )
          //Testa se o thread ainda está mandando o indivíduo, escolhido na geração anterior, para a ilha.
          if( data.pool->isrunning[i] ) continue;
 
-         if (!Poco::ThreadPool::defaultPool().available())
-         {
-            std::cerr << "No more thread available in defaultPool()\n";
-
-            /* Force a collect */
-            Poco::ThreadPool::defaultPool().collect();
-
-            if (!Poco::ThreadPool::defaultPool().available())
-            {
-               /* Try to increase the capacity of defaultPool */
-               try {
-                  Poco::ThreadPool::defaultPool().addCapacity(1);
-               } catch (Poco::Exception& exc) {
-                  std::cerr << "ThreadPool: " << exc.displayText() << std::endl;
-               }
-            }
-
-            /* If we still don't have enough threads, just skip! */
-            if (!Poco::ThreadPool::defaultPool().available())
-            {
-               poco_warning( Common::m_logger, "ppi_send_individual(): Still no available threads, skipping..." );
-               continue;
-            }
-         }
-         //std::cerr << "Poco::ThreadPool: available " << Poco::ThreadPool::defaultPool().available() << " | allocated: " << Poco::ThreadPool::defaultPool().allocated() << "\n";
-
          const int idx = ppi_tournament( population->fitness );
 
          std::stringstream results;
@@ -485,7 +459,11 @@ void ppi_send_individual( Population* population )
          data.pool->ss[i] = new StreamSocket();
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str(), data.pool->isrunning[i], data.pool->mutexes[i] );
          data.pool->isrunning[i] = 1;
-         Poco::ThreadPool::defaultPool().start( *(data.pool->clients[i]) );
+         try {
+            data.pool->threadpool.start( *(data.pool->clients[i]) );
+         } catch (Poco::Exception& exc) {
+            std::cerr << "ThreadPool.start(): " << exc.displayText() << std::endl;
+         }
 
          if (data.verbose)
          {
@@ -1029,6 +1007,7 @@ void ppi_destroy()
    // Wait for awhile then kill the non-finished threads. This ensures a
    // graceful termination and prevents segmentation faults at the end
    Poco::ThreadPool::defaultPool().stopAll();
+   data.pool->threadpool.stopAll();
 
    for( int i = 0; i < data.best_size; i++ )
    {

@@ -63,11 +63,11 @@ public:
 
    Pool(unsigned size): ss(size, NULL), clients(size, NULL)
    {
-      /* Expands defaultPool() if the available number of threads is less than
+      /* Expands threadpool if the available number of threads is less than
        * the number of peers, otherwise the exception "No thread available" is
        * thrown. */
-      if (Poco::ThreadPool::defaultPool().available() < size)
-         Poco::ThreadPool::defaultPool().addCapacity(size - (Poco::ThreadPool::defaultPool().available()));
+      if (threadpool.available() < size)
+         threadpool.addCapacity(size - (threadpool.available()));
 
       // Create an array of mutexes (one for each id)
       mutexes = new Poco::FastMutex[size];
@@ -95,6 +95,7 @@ public:
    std::vector<Client*> clients;
 
    bool * isrunning;
+   Poco::ThreadPool threadpool;
    Poco::FastMutex * mutexes;
 };
 /******************************************************************************/
