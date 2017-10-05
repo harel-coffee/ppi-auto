@@ -484,6 +484,7 @@ void ppi_send_individual( Population* population )
 
          data.pool->ss[i] = new StreamSocket();
          data.pool->clients[i] = new Client( *(data.pool->ss[i]), data.peers[i].address.c_str(), results.str(), data.pool->isrunning[i], data.pool->mutexes[i] );
+         data.pool->isrunning[i] = 1;
          Poco::ThreadPool::defaultPool().start( *(data.pool->clients[i]) );
 
          if (data.verbose)

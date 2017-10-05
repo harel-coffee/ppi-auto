@@ -40,20 +40,6 @@ public:
 
    virtual void run()
    {
-      { // Lock begin
-         // Ensures that the following read and write to m_isrunning is done synchronously
-         Poco::FastMutex::ScopedLock lock(m_mutex);
-
-         if (m_isrunning)
-         {
-            poco_debug( m_logger, "Ops, some other thread took this task before me, exiting... (thread is already running)");
-            return;
-         }
-
-         // Tell to everybody that this task is now of my responsibility!
-         m_isrunning = 1;
-      } // Lock end
-
       try {
          SndIndividual();
       } catch (Poco::Exception& exc) {
