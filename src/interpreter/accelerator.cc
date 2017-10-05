@@ -183,7 +183,7 @@ int opencl_init( int platform_id, int device_id, cl_device_type type )
       return 1;
    }
 
-   data.context = cl::Context( devices.front() ); // just pick the first one as each instance supports a single device
+   data.context = cl::Context( devices );
 
    data.queue = cl::CommandQueue( data.context, data.device
 #ifdef PROFILING
