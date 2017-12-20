@@ -244,7 +244,16 @@ void ppi_init( float** input, int nlin, int ncol, int argc, char** argv )
    data.elitism = Opts.Bool.Get("-e");
 
    data.number_of_bits = Opts.Int.Get("-nb");
+
+   // Parse bits_per_gene, but also increase it automatically if the given value (-bg) cannot hold the largest number of symbols of all rules
    data.bits_per_gene = Opts.Int.Get("-bg");
+   const int number_of_rules = sizeof(gramatica)/sizeof(t_rule**);
+   for ( int i = 0; i < number_of_rules; ++i )
+   {
+      if ( std::ceil( std::log2( tamanhos[i] ) ) > data.bits_per_gene )
+         data.bits_per_gene = std::ceil( std::log2( tamanhos[i] ) );
+   }
+
    data.bits_per_constant = Opts.Int.Get("-bc");
 
    if( Opts.Float.Get("-min") > Opts.Float.Get("-max") )
