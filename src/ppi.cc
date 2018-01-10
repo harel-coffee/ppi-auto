@@ -250,8 +250,9 @@ void ppi_init( float** input, int nlin, int ncol, int argc, char** argv )
    const int number_of_rules = sizeof(gramatica)/sizeof(t_rule**);
    for ( int i = 0; i < number_of_rules; ++i )
    {
-      if ( std::ceil( std::log2( tamanhos[i] ) ) > data.bits_per_gene )
-         data.bits_per_gene = std::ceil( std::log2( tamanhos[i] ) );
+      int bits_needed = std::ceil( std::log10( tamanhos[i] ) / std::log10( 2.0 ) ); // log2 rounded up
+      if ( bits_needed > data.bits_per_gene )
+         data.bits_per_gene = bits_needed;
    }
 
    data.bits_per_constant = Opts.Int.Get("-bc");
