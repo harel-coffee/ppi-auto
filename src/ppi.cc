@@ -139,7 +139,11 @@ float decode_real( const GENOME_TYPE* genome, int* const allele )
 int decode( const GENOME_TYPE* genome, int* const allele, Symbol* phenotype, float* ephemeral, int pos, Symbol initial_symbol )
 {
    t_rule* r = decode_rule( genome, allele, initial_symbol ); 
-   if( !r ) { return 0; }
+   if( !r || pos >= data.max_size_phenotype ) { return 0; } /* When setting max_size_phenotype (via -mps) to a value less than
+                                                               what would be required (the true max size phenotype), it might
+                                                               happen that the decoding process will required more storage than
+                                                               what was allocated (indexed by 'pos'). In this case it is better
+                                                               to "kill" the individual (return 0). */
 
    for( int i = 0; i < r->quantity; ++i )
       if( r->symbols[i] >= TERMINAL_MIN )
@@ -210,6 +214,16 @@ void ppi_init( float** input, int nlin, int ncol, int argc, char** argv )
    Opts.Int.Add( "-nb", "--number-of-bits", 2000, 16 );
    Opts.Int.Add( "-bg", "--bits-per-gene", 8, 8, 31 );
    Opts.Int.Add( "-bc", "--bits-per-constant", 16, 4, 63 );
+
+   /* The --max-phenotype-size option (-mps) is useful when the computed
+      theoretical maximum value of the phenotype may be too large, which leads
+      to a large requirement of storage and stack size (during interpretation).
+      Since it is very unlikely to hit the theoretical maximum phenotype size,
+      in practical cases it is better to set a lower maximum value. This is
+      the purpose of the -mps option. If -mps happens to be smaller than the
+      ideal, the decoding process will simply invalidate the individual being
+      decoded; i.e., there is no other side effect. */
+   Opts.Int.Add( "-mps", "--max-phenotype-size", std::numeric_limits<int>::max(), 1 );
 
    Opts.Float.Add( "-min", "--min-constant", -10 );
    Opts.Float.Add( "-max", "--max-constant", 10 );
@@ -289,8 +303,9 @@ void ppi_init( float** input, int nlin, int ncol, int argc, char** argv )
    data.best_size = 1;
    data.best_individual.genome = NULL;
    data.best_individual.fitness = NULL;
-   
-   data.max_size_phenotype = MAX_QUANT_SIMBOLOS_POR_REGRA * data.number_of_bits/data.bits_per_gene;
+
+   data.max_size_phenotype = std::min( MAX_QUANT_SIMBOLOS_POR_REGRA * data.number_of_bits/data.bits_per_gene, Opts.Int.Get<int>("-mps") );
+
 
    data.nlin = nlin;
 
