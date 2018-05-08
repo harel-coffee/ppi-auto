@@ -10,7 +10,7 @@ evaluate_pp( __global const Symbol* phenotype, __global const float* ephemeral, 
    // Include the cost matrix definition if given
    #include <costmatrix>
 
-   float stack[MAX_STACK_SIZE];
+   float stack[MAX_STACK_SIZE+0]; // +0 is just a work-around a possible bug with Nvidia compilers
    int stack_top;
 
    int gl_id = get_global_id(0);
@@ -91,7 +91,7 @@ evaluate_dp( __global const Symbol* phenotype, __global const float* ephemeral, 
    // Include the cost matrix definition if given
    #include <costmatrix>
 
-   float stack[MAX_STACK_SIZE];
+   float stack[MAX_STACK_SIZE+0]; // +0 is just a work-around a possible bug with Nvidia compilers
    int stack_top;
 
    int lo_id = get_local_id(0);
@@ -176,7 +176,7 @@ evaluate_pdp( __global const Symbol* phenotype, __global const float* ephemeral,
    // Include the cost matrix definition if given
    #include <costmatrix>
 
-   float stack[MAX_STACK_SIZE];
+   float stack[MAX_STACK_SIZE+0]; // +0 is just a work-around a possible bug with Nvidia compilers
    int stack_top;
 
    int lo_id = get_local_id(0);
