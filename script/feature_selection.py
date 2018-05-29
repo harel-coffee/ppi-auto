@@ -112,6 +112,7 @@ if args.test_dataset:
 hh.append(header[-1])
 
 print "\n"+str(len(importances[importances > args.threshold]))+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:len(importances[importances > args.threshold])])
+print "features names: "+' '.join(i for i in hh[:-1])
 
 if args.output_dataset != False:
    if args.output_dataset == True: # -o was given but without argument, using default
