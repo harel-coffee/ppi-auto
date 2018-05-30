@@ -10,6 +10,8 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 
+from sklearn.feature_selection import SelectFromModel
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dataset", required=True, help="Training dataset")
 parser.add_argument("-tes", "--test-dataset", required=False, help="Test dataset with the selected features")
@@ -22,6 +24,7 @@ parser.add_argument("-n", "--number-trees", default='2000', help="Number of tree
 parser.add_argument("-cr", "--criterion-regression", default='mse', help="Function to measure the quality of a split for the regression problem [default=mse] [another option=mae]")
 parser.add_argument("-cc", "--criterion-classification", default='gini', help="Function to measure the quality of a split for the classification problem [default=gini] [another option=entropy]")
 parser.add_argument("-t", "--threshold", type=float, default=0.005, help="Threshold value [default=0.005]. Features with importance values above threshold will be retained")
+parser.add_argument("-num", "--number-features", nargs="?", type=int, const=True, action='store', required=False, default=None, help="Number of features retained")
 parser.add_argument("-o", "--output-dataset", nargs="?", const=True, action='store', required=False, default=False, help="Output dataset with the selected features")
 parser.add_argument("-outest", "--output-test", required=False, help="Output test dataset with the selected features")
 parser.add_argument("-fig", "--output-figure", required=False, help="Output figure. Plot the feature importances of the forest")
@@ -71,6 +74,13 @@ forest = forest.fit(X, y)
 
 importances = forest.feature_importances_
 
+if args.number_features is not None: # -num was given 
+   if args.number_features is True: # -num was given but without argument
+      model = SelectFromModel(forest, prefit=True)
+      num = model.transform(X).shape[1]
+   else:
+      num = args.number_features
+
 # For each tree, it calculates the importance of each feature; 
 # then, it calculates the std of each feature over the number of trees (for example 2000 trees).
 if args.output_figure:
@@ -80,9 +90,15 @@ if args.output_figure:
 indices = np.argsort(importances)[::-1]
 
 if args.test_dataset:
-   T_new = np.empty([T.shape[0], len(importances[importances > args.threshold])+1])
+   if args.number_features is not None: # -num was given 
+      T_new = np.empty([T.shape[0], num+1])
+   else:
+      T_new = np.empty([T.shape[0], len(importances[importances > args.threshold])+1])
 if args.output_dataset:
-   X_new = np.empty([X.shape[0], len(importances[importances > args.threshold])+1])
+   if args.number_features is not None: # -num was given 
+      X_new = np.empty([X.shape[0], num+1])
+   else:
+      X_new = np.empty([X.shape[0], len(importances[importances > args.threshold])+1])
 
 # Print the feature ranking
 if args.verbose_mode:
@@ -97,13 +113,22 @@ for f in range(X.shape[1]):
    if args.output_figure:
       xaxis.append(header[indices[f]])
 
-   if importances[f] >= args.threshold:
-      if args.output_dataset:
-         X_new[:,i] = X[:,f]
-      if args.test_dataset:
-         T_new[:,i] = T[:,f] 
-      hh.append(header[f])
-      i = i  + 1
+   if args.number_features is not None: # -num was given 
+      if f < num:
+         if args.output_dataset:
+            X_new[:,i] = X[:,indices[f]]
+         if args.test_dataset:
+            T_new[:,i] = T[:,indices[f]] 
+         hh.append(header[indices[f]])
+         i = i  + 1
+   else:
+      if importances[f] >= args.threshold:
+         if args.output_dataset:
+            X_new[:,i] = X[:,f]
+         if args.test_dataset:
+            T_new[:,i] = T[:,f] 
+         hh.append(header[f])
+         i = i  + 1
 
 if args.output_dataset:
    X_new[:,i] = y
@@ -111,7 +136,10 @@ if args.test_dataset:
    T_new[:,i] = T[:,-1]
 hh.append(header[-1])
 
-print "\n"+str(len(importances[importances > args.threshold]))+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:len(importances[importances > args.threshold])])
+if args.number_features is not None: # -num was given 
+   print "\n"+str(num)+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:num])
+else:
+   print "\n"+str(len(importances[importances > args.threshold]))+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:len(importances[importances > args.threshold])])
 print "features names: "+' '.join(i for i in hh[:-1])
 
 if args.output_dataset != False:
@@ -141,8 +169,13 @@ if args.output_figure:
    plt.tick_params(axis='y', which='major', labelsize=10)
 
    ticklabels = [t for t in plt.gca().get_xticklabels()]
-   for i in range(len(importances[importances > args.threshold])):
-      ticklabels[i].set_fontweight("bold")
+   if args.number_features is not None: # -num was given 
+      for i in range(num):
+         ticklabels[i].set_fontweight("bold")
+   else:
+      for i in range(len(importances[importances > args.threshold])):
+         ticklabels[i].set_fontweight("bold")
+   #plt.show()
    
    fig.savefig(args.output_figure, dpi=300, facecolor='w', edgecolor='w', orientation='portrait', papertype='letter', bbox_inches='tight')
    print "\nPlotted to file '%s'" % (args.output_figure)
