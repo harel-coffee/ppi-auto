@@ -25,6 +25,7 @@ parser.add_argument("-cr", "--criterion-regression", default='mse', help="Functi
 parser.add_argument("-cc", "--criterion-classification", default='gini', help="Function to measure the quality of a split for the classification problem [default=gini] [another option=entropy]")
 parser.add_argument("-t", "--threshold", type=float, default=0.005, help="Threshold value [default=0.005]. Features with importance values above threshold will be retained")
 parser.add_argument("-num", "--number-features", nargs="?", type=int, const=True, action='store', required=False, default=None, help="Number of features retained")
+parser.add_argument("-per", "--percentage-features", type=float, default=30, help="Percentage of features retained")
 parser.add_argument("-o", "--output-dataset", nargs="?", const=True, action='store', required=False, default=False, help="Output dataset with the selected features")
 parser.add_argument("-outest", "--output-test", required=False, help="Output test dataset with the selected features")
 parser.add_argument("-fig", "--output-figure", required=False, help="Output figure. Plot the feature importances of the forest")
@@ -61,10 +62,10 @@ X = nlin[:,:-1]; y = nlin[:,-1]
 
 # Build a forest and compute the feature importances
 if args.regression:
-   #forest = RandomForestRegressor(n_estimators=2000)
-   forest = ExtraTreesRegressor(n_estimators=int(args.number_trees), criterion=args.criterion_regression, bootstrap=False, n_jobs=-1, random_state=0)
+   #forest = RandomForestRegressor(n_estimators=int(args.number_trees), criterion=args.criterion_regression, bootstrap=True, n_jobs=-1, random_state=None)
+   forest = ExtraTreesRegressor(n_estimators=int(args.number_trees), criterion=args.criterion_regression, bootstrap=False, n_jobs=-1, random_state=0) #, max_features=None
 elif args.classification:
-   #forest = RandomForestClassifier(n_estimators=2000)
+   #forest = RandomForestClassifier(n_estimators=int(args.number_trees), random_state=None)
    forest = ExtraTreesClassifier(n_estimators=int(args.number_trees), random_state=0)
 else:
    print >> sys.stderr, "Is it a classification or regression problem? Define it."
@@ -92,11 +93,15 @@ indices = np.argsort(importances)[::-1]
 if args.test_dataset:
    if args.number_features is not None: # -num was given 
       T_new = np.empty([T.shape[0], num+1])
+   elif args.percentage_features:
+      T_new = np.empty([T.shape[0], int((args.percentage_features/100.)*T.shape[1])+1])
    else:
       T_new = np.empty([T.shape[0], len(importances[importances > args.threshold])+1])
 if args.output_dataset:
    if args.number_features is not None: # -num was given 
       X_new = np.empty([X.shape[0], num+1])
+   elif args.percentage_features:
+      X_new = np.empty([X.shape[0], int((args.percentage_features/100.)*X.shape[1])+1])
    else:
       X_new = np.empty([X.shape[0], len(importances[importances > args.threshold])+1])
 
@@ -121,6 +126,14 @@ for f in range(X.shape[1]):
             T_new[:,i] = T[:,indices[f]] 
          hh.append(header[indices[f]])
          i = i  + 1
+   elif args.percentage_features:
+      if f < int((args.percentage_features/100.)*X.shape[1]):
+         if args.output_dataset:
+            X_new[:,i] = X[:,indices[f]]
+         if args.test_dataset:
+            T_new[:,i] = T[:,indices[f]] 
+         hh.append(header[indices[f]])
+         i = i  + 1
    else:
       if importances[f] >= args.threshold:
          if args.output_dataset:
@@ -138,6 +151,8 @@ hh.append(header[-1])
 
 if args.number_features is not None: # -num was given 
    print "\n"+str(num)+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:num])
+elif args.percentage_features:
+   print "\n"+str(int((args.percentage_features/100.)*X.shape[1]))+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:int((args.percentage_features/100.)*X.shape[1])])
 else:
    print "\n"+str(len(importances[importances > args.threshold]))+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:len(importances[importances > args.threshold])])
 print "features names: "+' '.join(i for i in hh[:-1])
@@ -165,12 +180,15 @@ if args.output_figure:
    plt.bar(range(X.shape[1]), importances[indices], color="r", yerr=std[indices], align="center")
    plt.xlim([-1, X.shape[1]])
    plt.xticks(range(X.shape[1]), xaxis, rotation=90)
-   plt.tick_params(axis='x', which='major', labelsize=8)
+   plt.tick_params(axis='x', which='major', labelsize=5)
    plt.tick_params(axis='y', which='major', labelsize=10)
 
    ticklabels = [t for t in plt.gca().get_xticklabels()]
    if args.number_features is not None: # -num was given 
       for i in range(num):
+         ticklabels[i].set_fontweight("bold")
+   elif args.percentage_features: 
+      for i in range(int((args.percentage_features/100.)*X.shape[1])):
          ticklabels[i].set_fontweight("bold")
    else:
       for i in range(len(importances[importances > args.threshold])):
