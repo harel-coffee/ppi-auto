@@ -66,7 +66,7 @@ if args.regression:
    forest = ExtraTreesRegressor(n_estimators=int(args.number_trees), criterion=args.criterion_regression, bootstrap=False, n_jobs=-1, random_state=0) #, max_features=None
 elif args.classification:
    #forest = RandomForestClassifier(n_estimators=int(args.number_trees), random_state=None)
-   forest = ExtraTreesClassifier(n_estimators=int(args.number_trees), random_state=0)
+   forest = ExtraTreesClassifier(n_estimators=int(args.number_trees), criterion=args.criterion_classification, bootstrap=False, n_jobs=-1, random_state=0)
 else:
    print >> sys.stderr, "Is it a classification or regression problem? Define it."
    sys.exit(1)
