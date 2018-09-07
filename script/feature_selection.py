@@ -177,11 +177,17 @@ if args.test_dataset:
 if args.output_figure:
    fig = plt.figure(figsize=(16,8))
    plt.title("Feature importances", fontsize=14, fontweight='bold')
-   plt.bar(range(X.shape[1]), importances[indices], color="r", yerr=std[indices], align="center")
-   plt.xlim([-1, X.shape[1]])
-   plt.xticks(range(X.shape[1]), xaxis, rotation=90)
    plt.tick_params(axis='x', which='major', labelsize=5)
    plt.tick_params(axis='y', which='major', labelsize=10)
+
+   if args.number_features is None: # -num was not given 
+      num = X.shape[1]
+   elif args.percentage_features: 
+      num = int((args.percentage_features/100.)*X.shape[1])
+
+   plt.bar(range(num), importances[indices[:num]], color="r", yerr=std[indices[:num]], align="center")
+   plt.xlim([-1, num])
+   plt.xticks(range(num), xaxis[:num], rotation=90)
 
    ticklabels = [t for t in plt.gca().get_xticklabels()]
    if args.number_features is not None: # -num was given 
