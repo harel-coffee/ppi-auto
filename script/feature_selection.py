@@ -25,7 +25,7 @@ parser.add_argument("-cr", "--criterion-regression", default='mse', help="Functi
 parser.add_argument("-cc", "--criterion-classification", default='gini', help="Function to measure the quality of a split for the classification problem [default=gini] [another option=entropy]")
 parser.add_argument("-t", "--threshold", type=float, default=0.005, help="Threshold value [default=0.005]. Features with importance values above threshold will be retained")
 parser.add_argument("-num", "--number-features", nargs="?", type=int, const=True, action='store', required=False, default=None, help="Number of features retained")
-parser.add_argument("-per", "--percentage-features", type=float, default=30, help="Percentage of features retained")
+parser.add_argument("-per", "--percentage-features", type=float, default=100, help="Percentage of features retained")
 parser.add_argument("-o", "--output-dataset", nargs="?", const=True, action='store', required=False, default=False, help="Output dataset with the selected features")
 parser.add_argument("-outest", "--output-test", required=False, help="Output test dataset with the selected features")
 parser.add_argument("-fig", "--output-figure", required=False, help="Output figure. Plot the feature importances of the forest")
@@ -181,8 +181,6 @@ if args.output_figure:
    plt.tick_params(axis='y', which='major', labelsize=10)
 
    if args.number_features is None: # -num was not given 
-      num = X.shape[1]
-   elif args.percentage_features: 
       num = int((args.percentage_features/100.)*X.shape[1])
 
    plt.bar(range(num), importances[indices[:num]], color="r", yerr=std[indices[:num]], align="center")
