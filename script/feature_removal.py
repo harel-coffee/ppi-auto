@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import numpy as np
@@ -10,7 +10,7 @@ def RunCorrCoef(training_data):
    # Compute the correlation of the last column with all other columns
    correlations = np.corrcoef(training_data, rowvar=0)[-1][:-1]
    # Return 1.0 minus the maximum absolute correlation, so the greater the value, the less correlated the last column is with the remaining columns
-   entropy = 1.0 - np.max(map(abs, correlations))
+   entropy = 1.0 - np.max(list(map(abs, correlations)))
    if np.isnan(entropy):
       return 0.0 # It is probably a zero array and can be surely eliminated
    return entropy
@@ -68,11 +68,11 @@ if args.pearson: # don't make sense to use relative norm with Pearson
    args.no_relative = True
 else:
    if not args.ppi:
-      print >> sys.stderr, "> ERROR: PPI directory not given. Use -pearson if you would like to run a linear correlation analysis instead."
+      print("> ERROR: PPI directory not given. Use -pearson if you would like to run a linear correlation analysis instead.", file=sys.stderr)
       sys.exit(1)
    # Create temporary directory for PPI
    TMPDIR = tempfile.mkdtemp(prefix='build-')
-   print "The temporary directory is: %s" % (TMPDIR)
+   print("The temporary directory is: %s" % (TMPDIR))
 
 
 header = []
@@ -133,32 +133,32 @@ for i in range(1, nvar):
       mean_norm = linalg.norm(i_values, 1)/len(i_values) # Compute the L1 norm divided by the number of values on the column
       if abs(mean_norm) <= 1e-8:
          mean_norm = 1.0
-   print "\n:: [ATTR-%d: '%s']: ENTROPY=%f, MEAN L1 NORM=%f, RELATIVE ENTROPY=%f -> " % (i, ','.join([h for j, h in enumerate(header) if j == i]), entropy, mean_norm, entropy/mean_norm),
+   print("\n:: [ATTR-%d: '%s']: ENTROPY=%f, MEAN L1 NORM=%f, RELATIVE ENTROPY=%f -> " % (i, ','.join([h for j, h in enumerate(header) if j == i]), entropy, mean_norm, entropy/mean_norm), end=' ')
 
    if entropy/mean_norm <= args.threshold: # Use Relative entropy to account for different magnitudes so the threshold can be applied to non-normalized datasets
       indices.pop()
-      print "CORRELATED feature @ t=%s" % (args.threshold)
+      print("CORRELATED feature @ t=%s" % (args.threshold))
    else:
       entropies.append(entropy/mean_norm)
-      print "NON-CORRELATED feature @ t=%s" % (args.threshold)
-      print ":: Selected %d features (%.2f%%):" % (len(indices), 100.0*len(indices)/float(i+1)), indices
-      print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies]
+      print("NON-CORRELATED feature @ t=%s" % (args.threshold))
+      print(":: Selected %d features (%.2f%%):" % (len(indices), 100.0*len(indices)/float(i+1)), indices)
+      print(":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies])
       if args.has_header:
-         print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices])
-   print
+         print(":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices]))
+   print()
 
 if args.has_y:
    indices.append(len(data[0])-1)
 
 #print ":: Excluded feature indices:", list(set(range(nvar)).symmetric_difference(set(indices)))
-print ":: Excluded feature indices:", [j for j in range(0,nvar) if j not in indices]
+print(":: Excluded feature indices:", [j for j in range(0,nvar) if j not in indices])
 if args.has_header:
-   print ":: Excluded feature names:", ','.join([h for j, h in enumerate(header) if j not in indices])
+   print(":: Excluded feature names:", ','.join([h for j, h in enumerate(header) if j not in indices]))
 
-print "\n:: Selected %d features indices (%.2f%%):" % (len(indices), 100.0*len(indices)/float(i+1)), indices
-print ":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies]
+print("\n:: Selected %d features indices (%.2f%%):" % (len(indices), 100.0*len(indices)/float(i+1)), indices)
+print(":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies])
 if args.has_header:
-   print ":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices])
+   print(":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices]))
 
 np.savetxt(args.output, dataset[:,indices], delimiter=",", header=','.join([h for j, h in enumerate(header) if j in indices]), comments='', fmt='%.8f')
 
