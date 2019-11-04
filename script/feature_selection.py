@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -68,7 +69,7 @@ elif args.classification:
    #forest = RandomForestClassifier(n_estimators=int(args.number_trees), random_state=None)
    forest = ExtraTreesClassifier(n_estimators=int(args.number_trees), criterion=args.criterion_classification, bootstrap=False, n_jobs=-1, random_state=0)
 else:
-   print >> sys.stderr, "Is it a classification or regression problem? Define it."
+   print("Is it a classification or regression problem? Define it.", file=sys.stderr)
    sys.exit(1)
 
 forest = forest.fit(X, y)
@@ -113,7 +114,7 @@ hh = []; i = 0
 for f in range(X.shape[1]):
 
    if args.verbose_mode:
-      print("%d. %s(%d): %f" % (f + 1, header[indices[f]], indices[f], importances[indices[f]]))
+      print(("%d. %s(%d): %f" % (f + 1, header[indices[f]], indices[f], importances[indices[f]])))
 
    if args.output_figure:
       xaxis.append(header[indices[f]])
@@ -150,28 +151,28 @@ if args.test_dataset:
 hh.append(header[-1])
 
 if args.number_features is not None: # -num was given 
-   print "\n"+str(num)+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:num])
+   print("\n"+str(num)+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:num]))
 elif args.percentage_features:
-   print "\n"+str(int((args.percentage_features/100.)*X.shape[1]))+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:int((args.percentage_features/100.)*X.shape[1])])
+   print("\n"+str(int((args.percentage_features/100.)*X.shape[1]))+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:int((args.percentage_features/100.)*X.shape[1])]))
 else:
-   print "\n"+str(len(importances[importances > args.threshold]))+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:len(importances[importances > args.threshold])])
-print "features names: "+' '.join(i for i in hh[:-1])
+   print("\n"+str(len(importances[importances > args.threshold]))+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:len(importances[importances > args.threshold])]))
+print("features names: "+' '.join(i for i in hh[:-1]))
 
 if args.output_dataset != False:
    if args.output_dataset == True: # -o was given but without argument, using default
       np.savetxt(args.dataset+'.out', X_new , fmt='%.2f', delimiter=',', header=','.join(hh), comments='')
-      print "\nSaved to file '%s'" % (args.dataset+'.out')
+      print("\nSaved to file '%s'" % (args.dataset+'.out'))
    else:
       np.savetxt(args.output_dataset, X_new , fmt='%.2f', delimiter=',', header=','.join(hh), comments='')
-      print "\nSaved to file '%s'" % (args.output_dataset)
+      print("\nSaved to file '%s'" % (args.output_dataset))
 
 if args.test_dataset:
    if args.output_test:
       np.savetxt(args.output_test, T_new , fmt='%.2f', delimiter=',', header=','.join(hh), comments='')
-      print "\nSaved to file '%s'" % (args.output_test)
+      print("\nSaved to file '%s'" % (args.output_test))
    else:
       np.savetxt(args.test_dataset+'.out', T_new , fmt='%.2f', delimiter=',', header=','.join(hh), comments='')
-      print "\nSaved to file '%s'" % (args.test_dataset+'.out')
+      print("\nSaved to file '%s'" % (args.test_dataset+'.out'))
 
 # Plot the feature importances of the forest
 if args.output_figure:
@@ -183,9 +184,10 @@ if args.output_figure:
    if args.number_features is None: # -num was not given 
       num = int((args.percentage_features/100.)*X.shape[1])
 
-   plt.bar(range(num), importances[indices[:num]], color="r", yerr=std[indices[:num]], align="center")
+   #plt.bar(range(num), importances[indices[:num]], color="r", yerr=std[indices[:num]], align="center")
+   plt.bar(list(range(num)), importances[indices[:num]], color="r", align="center")
    plt.xlim([-1, num])
-   plt.xticks(range(num), xaxis[:num], rotation=90)
+   plt.xticks(list(range(num)), xaxis[:num], rotation=90)
 
    ticklabels = [t for t in plt.gca().get_xticklabels()]
    if args.number_features is not None: # -num was given 
@@ -200,5 +202,5 @@ if args.output_figure:
    #plt.show()
    
    fig.savefig(args.output_figure, dpi=300, facecolor='w', edgecolor='w', orientation='portrait', papertype='letter', bbox_inches='tight')
-   print "\nPlotted to file '%s'" % (args.output_figure)
+   print("\nPlotted to file '%s'" % (args.output_figure))
    plt.close(fig)
