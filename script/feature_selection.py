@@ -26,7 +26,7 @@ parser.add_argument("-cr", "--criterion-regression", default='mse', help="Functi
 parser.add_argument("-cc", "--criterion-classification", default='gini', help="Function to measure the quality of a split for the classification problem [default=gini] [another option=entropy]")
 parser.add_argument("-t", "--threshold", type=float, default=0.005, help="Threshold value [default=0.005]. Features with importance values above threshold will be retained")
 parser.add_argument("-num", "--number-features", nargs="?", type=int, const=True, action='store', required=False, default=None, help="Number of features retained")
-parser.add_argument("-per", "--percentage-features", type=float, default=100, help="Percentage of features retained")
+parser.add_argument("-per", "--percentage-features", type=float, default=None, help="Percentage of features retained")
 parser.add_argument("-o", "--output-dataset", nargs="?", const=True, action='store', required=False, default=False, help="Output dataset with the selected features")
 parser.add_argument("-outest", "--output-test", required=False, help="Output test dataset with the selected features")
 parser.add_argument("-fig", "--output-figure", required=False, help="Output figure. Plot the feature importances of the forest")
@@ -94,14 +94,14 @@ indices = np.argsort(importances)[::-1]
 if args.test_dataset:
    if args.number_features is not None: # -num was given 
       T_new = np.empty([T.shape[0], num+1])
-   elif args.percentage_features:
+   elif args.percentage_features is not None:
       T_new = np.empty([T.shape[0], int((args.percentage_features/100.)*T.shape[1])+1])
    else:
       T_new = np.empty([T.shape[0], len(importances[importances > args.threshold])+1])
 if args.output_dataset:
    if args.number_features is not None: # -num was given 
       X_new = np.empty([X.shape[0], num+1])
-   elif args.percentage_features:
+   elif args.percentage_features is not None:
       X_new = np.empty([X.shape[0], int((args.percentage_features/100.)*X.shape[1])+1])
    else:
       X_new = np.empty([X.shape[0], len(importances[importances > args.threshold])+1])
@@ -127,7 +127,7 @@ for f in range(X.shape[1]):
             T_new[:,i] = T[:,indices[f]] 
          hh.append(header[indices[f]])
          i = i  + 1
-   elif args.percentage_features:
+   elif args.percentage_features is not None:
       if f < int((args.percentage_features/100.)*X.shape[1]):
          if args.output_dataset:
             X_new[:,i] = X[:,indices[f]]
@@ -152,7 +152,7 @@ hh.append(header[-1])
 
 if args.number_features is not None: # -num was given 
    print("\n"+str(num)+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:num]))
-elif args.percentage_features:
+elif args.percentage_features is not None:
    print("\n"+str(int((args.percentage_features/100.)*X.shape[1]))+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:int((args.percentage_features/100.)*X.shape[1])]))
 else:
    print("\n"+str(len(importances[importances > args.threshold]))+"/"+str(X.shape[1])+" features: "+' '.join(str(i+1) for i in indices[:len(importances[importances > args.threshold])]))
@@ -181,8 +181,12 @@ if args.output_figure:
    plt.tick_params(axis='x', which='major', labelsize=5)
    plt.tick_params(axis='y', which='major', labelsize=10)
 
-   if args.number_features is None: # -num was not given 
+   if args.number_features is not None: # -num was given 
+      pass
+   elif args.percentage_features is not None:
       num = int((args.percentage_features/100.)*X.shape[1])
+   else:
+      num = len(importances[importances > args.threshold])
 
    #plt.bar(range(num), importances[indices[:num]], color="r", yerr=std[indices[:num]], align="center")
    plt.bar(list(range(num)), importances[indices[:num]], color="r", align="center")
@@ -193,7 +197,7 @@ if args.output_figure:
    if args.number_features is not None: # -num was given 
       for i in range(num):
          ticklabels[i].set_fontweight("bold")
-   elif args.percentage_features: 
+   elif args.percentage_features is not None:
       for i in range(int((args.percentage_features/100.)*X.shape[1])):
          ticklabels[i].set_fontweight("bold")
    else:
