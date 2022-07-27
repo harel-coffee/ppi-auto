@@ -96,7 +96,7 @@ dataset = genfromtxt(args.dataset, delimiter=',', skip_header=skip_header)
 data = (dataset - np.min(dataset, axis=0)) / (np.max(dataset, axis=0)-np.min(dataset,axis=0))
 
 # Copy unmodified from dataset those columns that ended up having NaNs in data
-# (e.g, columns with fixed values becaused max-min=0):
+# (e.g, columns with fixed values because max-min=0):
 columns_with_nans = np.any(np.isnan(data), axis=0)
 data[:,columns_with_nans] = dataset[:,columns_with_nans]
 
@@ -113,6 +113,10 @@ else:
 indices = [0]
 entropies = [np.inf]
 for i in range(1, nvar):
+   if np.min(data[:,i]) == np.max(data[:,i]):
+      print("\n:: [ATTR-%d: '%s'] -> CONSTANT VALUED feature" % (i, ','.join([h for j, h in enumerate(header) if j == i]) ) )
+      continue
+
    # Make 'i' the dependent variable (y), because we want to check if it can
    # be expressed by the other features.
    indices.append(i)
