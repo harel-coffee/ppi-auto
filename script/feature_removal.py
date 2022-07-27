@@ -15,6 +15,11 @@ def RunCorrCoef(training_data):
       return 0.0 # It is probably a zero array and can be surely eliminated
    return entropy
 
+def RunVIF(training_data):
+   # Compute the VIF of the last column with all other columns
+   vif = variance_inflation_factor( training_data, training_data.shape[1]-1 )
+   return 1./vif # Returns the inverse because we are estimating the entropy (the greater the less correlated) instead of degree of multicollinearity (the greater the more correlated)
+
 def RunPPI(indices, training_data, tmpdir):
    # Save the training dataset to a file (no need to save the header at this time, but doing it anyway)
    np.savetxt(args.output, training_data, delimiter=",", header=','.join([h for j, h in enumerate(header) if j in indices]), comments='', fmt='%.8f')
@@ -48,10 +53,11 @@ def RunPPI(indices, training_data, tmpdir):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dataset", required=True, help="Dataset file")
-parser.add_argument("-t", "--threshold", required=False, type=float, default=0.01, help="Threshold value")
+parser.add_argument("-t", "--threshold", required=False, type=float, default=0.01, help="Threshold value. For VIF the recommended threshold is 0.2 (which corresponding to VIF >= 5)")
 parser.add_argument("-o", "--output", required=True, help="Output dataset with the selected features")
 parser.add_argument("-p", "--ppi", default='', help="PPI directory")
 parser.add_argument("-pearson", "--pearson", action='store_true', default=False, help="Runs Pearson correlation instead of PPI")
+parser.add_argument("-vif", "--vif", action='store_true', default=False, help="Runs Variance Inflation Factor instead of PPI")
 parser.add_argument("-pa", "--ppi-args", default='', help="Arguments for PPI")
 parser.add_argument("-ca", "--cmake-args", default='', help="Arguments for CMAKE")
 parser.add_argument("-hy", "--has-y", action='store_true', default=False, help="Has dependent variable")
@@ -61,10 +67,13 @@ args = parser.parse_args()
 
 args.output = os.path.abspath(args.output)
 
+if args.vif: # only load the module if necessary
+   from statsmodels.stats.outliers_influence import variance_inflation_factor
+
 if args.ppi:
    args.ppi = os.path.abspath(args.ppi)
 
-if args.pearson: # don't make sense to use relative norm with Pearson
+if args.pearson or args.vif: # don't make sense to use relative norm with Pearson and VIF
    args.no_relative = True
 else:
    if not args.ppi:
@@ -86,6 +95,10 @@ else:
    skip_header=0
 
 dataset = genfromtxt(args.dataset, delimiter=',', skip_header=skip_header)
+
+# Remove NaN and Infs because VIF cannot handle them
+if args.vif:
+   dataset = np.nan_to_num( dataset, copy=False )
 
 # Rescale to [0,1]:
 #
@@ -126,6 +139,8 @@ for i in range(1, nvar):
    #######################
    if args.pearson:
       entropy = RunCorrCoef(training_data)
+   elif args.vif:
+      entropy = RunVIF(training_data)
    else:
       entropy = RunPPI(indices, training_data, TMPDIR)
    #######################
@@ -167,5 +182,5 @@ if args.has_header:
 np.savetxt(args.output, dataset[:,indices], delimiter=",", header=','.join([h for j, h in enumerate(header) if j in indices]), comments='', fmt='%.8f')
 
 # Remove temporary directory
-if not args.pearson:
+if not args.pearson and not args.vif:
    shutil.rmtree(TMPDIR, ignore_errors=True)
