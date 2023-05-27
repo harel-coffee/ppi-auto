@@ -179,7 +179,7 @@ print(":: Relative entropies:", [float('{:.3}'.format(r)) for r in entropies])
 if args.has_header:
    print(":: Selected feature names:", ','.join([h for j, h in enumerate(header) if j in indices]))
 
-np.savetxt(args.output, dataset[:,indices], delimiter=",", header=','.join([h for j, h in enumerate(header) if j in indices]), comments='', fmt='%.8f')
+np.savetxt(args.output, dataset[:,indices], delimiter=",", header=','.join([h for j, h in enumerate(header) if j in indices]), comments='', fmt='%.10f')
 
 # Remove temporary directory
 if not args.pearson and not args.vif:
