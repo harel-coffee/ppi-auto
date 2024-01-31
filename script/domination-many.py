@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import argparse
@@ -12,7 +12,7 @@ better = less
 
 def dominated(x, y):
    if len(x) != len(y):
-      print "Error: size mismatch!"
+      print("Error: size mismatch!")
       return None
    dominated = False
    for i,j in zip(x,y):
@@ -58,11 +58,11 @@ if args.action=='dominated':
    for y in points_dataset:
       result = dominated(point,y)
       if result: exit = 0
-      print "Is", point, "dominated by", y, "? ->", result
+      print("Is", point, "dominated by", y, "? ->", result)
 elif args.action=='dominates':
    for y in points_dataset:
       result = dominates(point,y)
       if result: exit = 0
-      print "Does", point, "dominate", y, "? ->", result
+      print("Does", point, "dominate", y, "? ->", result)
 
 sys.exit(exit)

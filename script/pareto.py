@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os, sys
 import argparse
@@ -8,7 +8,7 @@ try:
    import filelock
    lock = filelock.FileLock
 except: # Fallback to simple lock (not as good, but...)
-   print >> sys.stderr, "> Warning: fallbacking to module simpleflock, but module filelock would be better."
+   print("> Warning: fallbacking to module simpleflock, but module filelock would be better.", file=sys.stderr)
    import simpleflock
    lock = simpleflock.SimpleFlock
 
@@ -37,28 +37,30 @@ def UpdatePareto(pareto, candidate, FIELD_END_DUPLICATE):
       if p.split(';')[FIELD_START:FIELD_END_DUPLICATE] == candidate.split(';')[FIELD_START:FIELD_END_DUPLICATE]:
          return False, pareto # candidate is already a pareto front member
 
+      complexity_error = "%s\n"%(','.join(p.split(';')[FIELD_START:FIELD_END]))
       domination = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-      output, error = domination.communicate("%s\n"%(','.join(p.split(';')[FIELD_START:FIELD_END])))
+      output, error = domination.communicate( complexity_error.encode() )
       if error is not None:
-         print >> stderr, error
+         print(error, file=stderr)
       if domination.returncode == 0: # candidate is dominated by someone
          return False, pareto
 
    # Hmmm, dominated by none of them, it deserves inclusion as a new member of the pareto front
-   print "\n> New pareto front member: [%s]" % (';'.join(candidate.split(';')[FIELD_START:FIELD_END]))
+   print("\n> New pareto front member: [%s]" % (';'.join(candidate.split(';')[FIELD_START:FIELD_END])))
 
    new_pareto = []
    # Now, check if one or more members will leave the pareto front because of the introduction of candidate
    cmd = [os.path.dirname(os.path.realpath(__file__))+"/"+"domination-many.py", "-t", "less", "-a", "dominates", ','.join(candidate.split(';')[FIELD_START:FIELD_END])]
    for p in pareto:
+      complexity_error = "%s\n"%(','.join(p.split(';')[FIELD_START:FIELD_END]))
       domination = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-      output, error = domination.communicate("%s\n"%(','.join(p.split(';')[FIELD_START:FIELD_END])))
+      output, error = domination.communicate( complexity_error.encode() )
       if error is not None:
-         print >> stderr, error
+         print(error, file=stderr)
       if domination.returncode == 1: # candidate does not dominate p
          new_pareto.append(p)
       else:
-         print "\n> Member [%s] has left the pareto front due to the domination of the new member [%s]" % (';'.join(p.split(';')[FIELD_START:FIELD_END]),';'.join(candidate.split(';')[FIELD_START:FIELD_END]))
+         print("\n> Member [%s] has left the pareto front due to the domination of the new member [%s]" % (';'.join(p.split(';')[FIELD_START:FIELD_END]),';'.join(candidate.split(';')[FIELD_START:FIELD_END])))
 
    # Add the new non-dominated member at the end of the list
    new_pareto.append(candidate)
@@ -75,10 +77,10 @@ def main():
 
    # Some validation regarding the given candidate
    if not IsValid(args.candidate):
-      print >> sys.stderr, "[INVALID Candidate: %s]" % (args.candidate)
+      print("[INVALID Candidate: %s]" % (args.candidate), file=sys.stderr)
       sys.exit(0)
 
-   print >> sys.stderr, "[Candidate: %s]" % (args.candidate)
+   print("[Candidate: %s]" % (args.candidate), file=sys.stderr)
 
    if args.allow_duplicate: # Includes the "solution" itself in order to whether consider duplicate or not
       FIELD_END_DUPLICATE=FIELD_END+1

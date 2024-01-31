@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import socket, argparse, sys, csv, random
 
@@ -37,7 +37,7 @@ for peer in args.peers:
    try:
       port = int(port)
    except:
-      print >> sys.stderr, "Invalid port: %s" % (peer)
+      print("Invalid port: %s" % (peer), file=sys.stderr)
 
    if address is None or len(address) == 0:
       address = 'localhost'
@@ -51,14 +51,14 @@ for peer in args.peers:
       sock.connect( (address,port) )
       # Send the header (Ex: "I000000023")
       header = 'I%s' % (str(len(message)).rjust(9, '0'))
-      print >> sys.stderr, "[%s:%d] Trying to send header: %s" % (address,port,header)
+      print("[%s:%d] Trying to send header: %s" % (address,port,header), file=sys.stderr)
       if sock.send(header) != 10:
          raise Exception()
       # Send the message
-      print >> sys.stderr, "[%s:%d] Trying to send message of size %dB: [%s]" % (address,port,len(message),message)
+      print("[%s:%d] Trying to send message of size %dB: [%s]" % (address,port,len(message),message), file=sys.stderr)
       if sock.send(message) != len(message):
          raise Exception()
    except:
-      print >> sys.stderr, "[%s:%d] Couldn't communicate!" % (address,port)
+      print("[%s:%d] Couldn't communicate!" % (address,port), file=sys.stderr)
    else:
-      print "[%s:%d] Sent genome" % (address,port)
+      print("[%s:%d] Sent genome" % (address,port))

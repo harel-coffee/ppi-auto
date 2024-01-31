@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import random
@@ -83,7 +83,7 @@ if args.number_target_islands > 0:
    try:
       f = open(args.islands_file,"r")
    except IOError:
-      print "Could not open file '" + args.islands_file + "'"
+      print("Could not open file '" + args.islands_file + "'")
       sys.exit(1)
    lines = f.readlines()
    f.close()
@@ -138,19 +138,19 @@ if peers:
 if args.args: # Adds extra arguments to the executable if any
    cmd.append(" " + ' '.join(args.args[1:]))
 
-print "\n" + ''.join(cmd) + "\n"
+print("\n" + ''.join(cmd) + "\n")
 
 try:
    process = subprocess.Popen(''.join(cmd).split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
    for out in iter(lambda: process.stdout.read(1), ''): # Outputs char by char
    #for out in iter(process.stdout.readline, ''): # Outputs line by line
-      sys.stdout.write(out)
+      sys.stdout.write(out.decode('utf-8'))
       sys.stdout.flush()
-      sys.stderr.write(out)
+      sys.stderr.write(out.decode('utf-8'))
    process.wait() # Wait for the completion and sets the returncode (if used communicate() this wouldn't be necessary)
    if process.returncode != 0:
       raise Exception("'%s (return code: %d)'" % (''.join(process.stderr.readlines()), process.returncode))
 except Exception as e:
-   print >> sys.stderr, "<> ", "The following error occurred when running the command ('%s'): %s" % (''.join(cmd), e)
+   print("<> ", "The following error occurred when running the command ('%s'): %s" % (''.join(cmd), e), file=sys.stderr)
 
 sys.exit(0) # Always exit with SUCCESS!
