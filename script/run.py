@@ -141,12 +141,12 @@ if args.args: # Adds extra arguments to the executable if any
 print("\n" + ''.join(cmd) + "\n")
 
 try:
-   process = subprocess.Popen(''.join(cmd).split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+   process = subprocess.Popen(''.join(cmd).split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
    for out in iter(lambda: process.stdout.read(1), ''): # Outputs char by char
    #for out in iter(process.stdout.readline, ''): # Outputs line by line
-      sys.stdout.write(out.decode('utf-8'))
+      sys.stdout.write(out)
       sys.stdout.flush()
-      sys.stderr.write(out.decode('utf-8'))
+      sys.stderr.write(out)
    process.wait() # Wait for the completion and sets the returncode (if used communicate() this wouldn't be necessary)
    if process.returncode != 0:
       raise Exception("'%s (return code: %d)'" % (''.join(process.stderr.readlines()), process.returncode))
