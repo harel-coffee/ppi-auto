@@ -44,7 +44,7 @@ def read_file(filename):
    try:
       f = open(filename, "r")
    except IOError:
-      print "Could not open file '" + filename + "'"
+      print("Could not open file '" + filename + "'")
    lines = f.readlines()
    f.close()
    return lines
@@ -132,7 +132,7 @@ while i < len(grammar):
                   if grammar[ini] in ['+', '-', '*', '/', '<', '<=', '>', '>=', '=', '!=']:
                      value = interpreter(grammar[ini])
                      if value is None:
-                        print "Problem with interpreter."
+                        print("Problem with interpreter.")
                         exit()
                      else:
                         text0.append("t_rule " + nterminal + "_" + str(n) + " = { " + str(rule) + ", {T_" + value)
@@ -166,7 +166,7 @@ while i < len(grammar):
                      if grammar[j] in ['+', '-', '*', '/', '<', '<=', '>', '>=', '=', '!=']:
                         value = interpreter(grammar[j])
                         if value is None:
-                           print "Problem with interpreter."
+                           print("Problem with interpreter.")
                            exit()
                         else:
                            text0.append(", T_" + value)
@@ -321,7 +321,7 @@ lst = [i for i in lst if not "TERMINAL_MIN" in i]
 missing = [i for i in lst if not i in terminais]
 for i in range(0,len(missing)):
    if missing[i] != "T_CONST" and missing[i] != "":
-      print "Missing terminal:", missing[i], "\nPlease check the '" + args.interpreter + "' file"
+      print("Missing terminal:", missing[i], "\nPlease check the '" + args.interpreter + "' file")
 
 lines = read_file(args.interpreter_print)
 
@@ -401,5 +401,5 @@ lst = [i for i in lst if not "TERMINAL_MIN" in i]
 missing = [i for i in lst if not i in terminais]
 for i in range(0,len(missing)):
    if missing[i] != "":
-      print "Missing terminal:", missing[i], "\nPlease check the '" + args.interpreter_print + "' file"
+      print("Missing terminal:", missing[i], "\nPlease check the '" + args.interpreter_print + "' file")
  
