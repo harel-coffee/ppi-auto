@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 
 import numpy as np
@@ -58,13 +58,13 @@ parser.add_argument("-sbl", "--second-bar-label", default="Test set", help="Labe
 parser.add_argument("-out", "--out-file", default="plot.pdf", help="Figure output filename [default=plot.pdf]")
 parser.add_argument("-dup", "--plot-duplicate", action='store_true', default=False, help="Plot duplicate entries instead of taking their mean [default=false]")
 parser.add_argument("-min", "--min", type=int, default=0, help="Ignore sizes less than the given minimum size [default=0]")
-parser.add_argument("-max", "--max", type=int, default=sys.maxint, help="Ignore sizes greater than the given maximum size [default=inf]")
+parser.add_argument("-max", "--max", type=int, default=sys.maxsize, help="Ignore sizes greater than the given maximum size [default=inf]")
 args = parser.parse_args()
 
 try:
    f = open(args.front_file,"r")
 except IOError:
-   print >> sys.stderr, "Could not open file '" + args.front_file + "'"
+   print("Could not open file '" + args.front_file + "'", file=sys.stderr)
    sys.exit(1)
 lines = f.readlines()
 f.close()
@@ -85,20 +85,20 @@ tra_error = np.array(tra_error).astype(float)
 try:
    f = open(args.test_dataset,"r")
 except IOError:
-   print >> sys.stderr, "Could not open file '" + args.test_dataset + "'"
+   print("Could not open file '" + args.test_dataset + "'", file=sys.stderr)
    sys.exit(1)
 lines = f.readlines()
 f.close()
 
 
 tes_error = np.empty(len(solution)); 
-print "# training error -> '%s'" % (args.first_bar_label)
-print "# test error     -> '%s'" % (args.second_bar_label)
-print "ID    size :: training error :: test error     :: solution (encoded terminals)"
-print "--    ----    --------------    --------------    ----------------------------"
+print("# training error -> '%s'" % (args.first_bar_label))
+print("# test error     -> '%s'" % (args.second_bar_label))
+print("ID    size :: training error :: test error     :: solution (encoded terminals)")
+print("--    ----    --------------    --------------    ----------------------------")
 for i in range(len(solution)):
     tes_error[i] = subprocess.check_output(["./" + args.exe, "-d", args.test_dataset, "-sol", str(size[i]) + " " + str(solution[i].rstrip())])
-    print "[%-3d] %-4s :: %-14s :: %-14s :: %s" % (i+1, size[i], tra_error[i], tes_error[i], str(solution[i].rstrip()))
+    print("[%-3d] %-4s :: %-14s :: %-14s :: %s" % (i+1, size[i], tra_error[i], tes_error[i], str(solution[i].rstrip())))
 
 min_value = sys.float_info.max; max_value = 0.
 
@@ -123,7 +123,7 @@ for i in range(1,max(size[tes_error<1.e+30])+1):
        if len(tra_error[(tes_error<1.e+30) & (size==i)]) > 0:
            marks.append(i)
            vector.append(np.mean(tra_error[(tes_error<1.e+30) & (size==i)]))
-ax.bar(range(1,len(marks)+1), vector, width, color='b', label=args.first_bar_label)
+ax.bar(list(range(1,len(marks)+1)), vector, width, color='b', label=args.first_bar_label)
 
 vector = []
 for i in range(1,max(size[tes_error<1.e+30])+1):
@@ -150,5 +150,5 @@ plt.setp(xtickNames, rotation=45, fontsize=8)
 ax.legend(loc='upper right', scatterpoints=1, ncol=1, fontsize=12)
 fig.savefig(args.out_file, dpi=300, facecolor='w', edgecolor='w', orientation='portrait', papertype='letter', bbox_inches='tight')
 
-print "\nPlotted to file '%s'" % (args.out_file)
+print("\nPlotted to file '%s'" % (args.out_file))
 #plt.show()
